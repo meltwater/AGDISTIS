@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.aksw</groupId>
     <artifactId>AGDISTIS</artifactId>
-    <version>0.4.0</version>
-    <packaging>war</packaging>
+    <version>0.4.0-meltwater-0.2</version>
+    <packaging>jar</packaging>
     <!-- BUILD -->
     <build>
         <plugins>
