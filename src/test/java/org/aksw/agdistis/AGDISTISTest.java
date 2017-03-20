@@ -10,6 +10,7 @@ import org.aksw.agdistis.datatypes.Document;
 import org.aksw.agdistis.datatypes.NamedEntitiesInText;
 import org.aksw.agdistis.datatypes.NamedEntityInText;
 import org.aksw.agdistis.webapp.GetDisambiguation;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class AGDISTISTest {
@@ -79,6 +80,7 @@ public class AGDISTISTest {
     }
   }
 
+  @Ignore
   @Test
   public void testContext() throws InterruptedException, IOException {
     final String angelina = "Angelina";
