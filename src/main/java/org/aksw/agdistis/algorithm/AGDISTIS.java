@@ -123,4 +123,7 @@ public class AGDISTIS {
     }
   }
 
+  public TripleIndex getIndex() {
+    return cu.getIndex();
+  }
 }
