@@ -3,7 +3,9 @@ package org.aksw.agdistis.graph;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.HashSet;
-import java.util.Properties;
+
+import org.aksw.agdistis.Algorithm;
+import org.apache.commons.lang3.StringUtils;
 
 public class Node implements Comparable<Node> {
 
@@ -19,23 +21,13 @@ public class Node implements Comparable<Node> {
   private double authorityWeight;
   private double pageRank;
   private double pageRankNew;
-  private final static Properties prop = new Properties();
-  private static String algorithm;
-  private final static String _DEFAULT_ALGORITHM = "hits";
-
-  static {
-    try {
-      prop.load(Node.class.getResourceAsStream("/config/agdistis.properties"));
-      algorithm = prop.getProperty("algorithm");
-    } catch (final IOException ioe) {
-      algorithm = _DEFAULT_ALGORITHM;
-    }
-  }
+  private final Algorithm algorithm;
 
   private final HashSet<Node> predecessors;
   private final HashSet<Node> successors;
 
-  public Node(final String uri, final double activation, final int level) throws IOException {
+  public Node(final String uri, final double activation, final int level, final Algorithm algorithm)
+      throws IOException {
     candidateURI = uri;
     this.activation = activation;
     this.level = level;
@@ -45,13 +37,15 @@ public class Node implements Comparable<Node> {
     successors = new HashSet<Node>();
     predecessors = new HashSet<Node>();
     pageRank = 0;
+    this.algorithm = algorithm;
   }
 
   @Override
   public String toString() {
     final DecimalFormat df = new DecimalFormat("#.####");
-    return candidateURI + ":" + String.valueOf(df.format(activation)) + " H: " + String.valueOf(df.format(hubWeight)
-        + " A: " + String.valueOf(df.format(authorityWeight) + " PR: " + String.valueOf(df.format(pageRank))));
+    return StringUtils.join(candidateURI, ":", String.valueOf(df.format(activation)), " H: ",
+        String.valueOf(df.format(hubWeight)), " A: ", String.valueOf(df.format(authorityWeight)), " PR: ",
+        String.valueOf(df.format(pageRank)));
   }
 
   @Override
@@ -74,7 +68,7 @@ public class Node implements Comparable<Node> {
   // change to hub score
   public int compareTo(final Node m) {
 
-    if (algorithm.equals("hits")) {
+    if (m.algorithm == Algorithm.HITS) {
       // System.out.println("AuthorityWeight");
       if (m.getAuthorityWeight() == getAuthorityWeight()) {
         return 0;
@@ -83,7 +77,7 @@ public class Node implements Comparable<Node> {
       } else {
         return -1;
       }
-    } else if (algorithm.equals("pagerank")) {
+    } else if (m.algorithm == Algorithm.PAGERANK) {
       // System.out.println("PageRank compareTo");
       if (m.getPageRank() == getPageRank()) {
         return 0;
@@ -95,27 +89,6 @@ public class Node implements Comparable<Node> {
     } else {
       return -1;
     }
-    // HubWeight
-    // if (m.getHubWeight() == this.getHubWeight()) {
-    // return 0;
-    // } else if (m.getHubWeight() > this.getHubWeight()) {
-    // return 1;
-    // } else {
-    // return -1;
-    // }
-
-    // AuthorityWeight && PageRank
-    // if (m.getPageRank() * (2*(m.getAuthorityWeight() + m.getHubWeight()))
-    // == this.getPageRank() * (2*(this.getAuthorityWeight() +
-    // this.getHubWeight()))) {
-    // return 0;
-    // } else if (m.getPageRank() * (2*(m.getAuthorityWeight() +
-    // m.getHubWeight())) > this.getPageRank() *
-    // (2*(this.getAuthorityWeight() + this.getHubWeight()))) {
-    // return 1;
-    // } else {
-    // return -1;
-    // }
   }
 
   public boolean containsId(final int id) {

@@ -3,4 +3,4 @@ http://dbpedia.org/ontology/Person
 http://dbpedia.org/ontology/Organisation
 http://dbpedia.org/class/yago/YagoGeoEntity
 http://xmlns.com/foaf/0.1/Person
-http://dbpedia.org/ontology/WrittenWork
+http://dbpedia.org/page/Product_(business)

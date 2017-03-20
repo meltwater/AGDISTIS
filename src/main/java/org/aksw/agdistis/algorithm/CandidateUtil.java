@@ -1,14 +1,14 @@
 package org.aksw.agdistis.algorithm;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 
+import org.aksw.agdistis.AGDISTISConfiguration;
+import org.aksw.agdistis.Algorithm;
 import org.aksw.agdistis.datatypes.Document;
 import org.aksw.agdistis.datatypes.NamedEntitiesInText;
 import org.aksw.agdistis.datatypes.NamedEntityInText;
@@ -19,7 +19,7 @@ import org.aksw.agdistis.util.Triple;
 import org.aksw.agdistis.util.TripleIndex;
 import org.aksw.agdistis.util.TripleIndexContext;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.search.spell.NGramDistance;
+import org.apache.lucene.search.spell.StringDistance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,49 +31,46 @@ public class CandidateUtil {
   private final String nodeType;
   private final TripleIndex index;
   private TripleIndexContext index2;
-  private final NGramDistance nGramDistance;
+  private final StringDistance metric;
   private final CorporationAffixCleaner corporationAffixCleaner;
   private final DomainWhiteLister domainWhiteLister;
   private final boolean popularity;
-  private final boolean context;
+  private final Algorithm algorithm;
   private final boolean acronym;
   private final boolean commonEntities;
 
   public CandidateUtil() throws IOException {
-    final Properties prop = new Properties();
-    final InputStream input = CandidateUtil.class.getResourceAsStream("/config/agdistis.properties");
-    prop.load(input);
+    nodeType = AGDISTISConfiguration.INSTANCE.getNodeType().toString();
 
-    nodeType = prop.getProperty("nodeType");
-    nGramDistance = new NGramDistance(Integer.valueOf(prop.getProperty("ngramDistance")));
     index = new TripleIndex();
-    context = Boolean.valueOf(prop.getProperty("context"));
-    if (context == true) { // in case the index by context exist
+    if (AGDISTISConfiguration.INSTANCE.getUseContext()) { // in case the index by context exist
       index2 = new TripleIndexContext();
     }
+    metric = AGDISTISConfiguration.INSTANCE.getCandidatePruningMetric();
     corporationAffixCleaner = new CorporationAffixCleaner();
     domainWhiteLister = new DomainWhiteLister(index);
-    popularity = Boolean.valueOf(prop.getProperty("popularity"));
-    acronym = Boolean.valueOf(prop.getProperty("acronym"));
-    commonEntities = Boolean.valueOf(prop.getProperty("commonEntities"));
+    popularity = AGDISTISConfiguration.INSTANCE.getUsePopularity();
+    acronym = AGDISTISConfiguration.INSTANCE.getUseAcronym();
+    commonEntities = AGDISTISConfiguration.INSTANCE.getUseCommonEntities();
+    algorithm = AGDISTISConfiguration.INSTANCE.getAlgorithm();
   }
 
   public void insertCandidatesIntoText(final DirectedSparseGraph<Node, String> graph, final Document document,
-      final double threshholdTrigram, final Boolean heuristicExpansionOn) throws IOException {
+      final double threshholdTrigram, final Boolean heuristicExpansionOn, final Boolean useSurfaceForms)
+      throws IOException {
     final NamedEntitiesInText namedEntities = document.getNamedEntitiesInText();
     final String text = document.DocumentText().getText();
     final HashMap<String, Node> nodes = new HashMap<String, Node>();
 
     // used for heuristic label expansion start with longest Named Entities
     Collections.sort(namedEntities.getNamedEntities(), new NamedEntityLengthComparator());
-    Collections.reverse(namedEntities.getNamedEntities());
 
     final StringBuffer sb = new StringBuffer();
     for (final NamedEntityInText namedEntity : namedEntities) {
       sb.append(namedEntity.getLabel());
       sb.append(" ");
     }
-    final String entities = StringUtils.trim(sb.toString());
+    final String entities = StringUtils.normalizeSpace(sb.toString());
     log.info("entities" + entities);
     final HashSet<String> heuristicExpansion = new HashSet<String>();
     for (final NamedEntityInText entity : namedEntities) {
@@ -82,12 +79,13 @@ public class CandidateUtil {
       log.info("\tLabel: " + label);
       final long start = System.currentTimeMillis();
 
+      // Heuristic expansion is a rough approximation of a coreference resolution.
       if (heuristicExpansionOn) {
         label = heuristicExpansion(heuristicExpansion, label);
       }
-      checkLabelCandidates(graph, threshholdTrigram, nodes, entity, label, true, entities);
+      checkLabelCandidates(graph, threshholdTrigram, nodes, entity, label, useSurfaceForms, entities);
 
-      log.info("\tGraph size: " + graph.getVertexCount() + " took: " + (System.currentTimeMillis() - start) + " ms");
+      log.info("\tGraph size: {} took {} ms", graph.getVertexCount(), (System.currentTimeMillis() - start));
     }
   }
 
@@ -100,12 +98,12 @@ public class CandidateUtil {
         if ((tmp.length() > key.length()) && (tmp != label)) {
           tmp = key;
           expansion = true;
-          log.debug("Heuristic expansion: " + label + "-->" + key);
+          log.debug("Heuristic expansion: {} --> {}", label, key);
         }
         if ((tmp.length() < key.length()) && (tmp == label)) {
           tmp = key;
           expansion = true;
-          log.debug("Heuristic expansion: " + label + "-->" + key);
+          log.debug("Heuristic expansion: {} --> {}", label, key);
         }
       }
     }
@@ -118,7 +116,7 @@ public class CandidateUtil {
 
   public void addNodeToGraph(final DirectedSparseGraph<Node, String> graph, final HashMap<String, Node> nodes,
       final NamedEntityInText entity, final Triple c, final String candidateURL) throws IOException {
-    final Node currentNode = new Node(candidateURL, 0, 0);
+    final Node currentNode = new Node(candidateURL, 0, 0, algorithm);
     log.debug("CandidateURL: " + candidateURL);
     // candidates are connected to a specific label in the text via their
     // start position
@@ -159,7 +157,7 @@ public class CandidateUtil {
         for (final Triple triple : acronymCandidatesTemp) {
           acronymCandidatesTemp2 = searchAcronymByLabel(triple.getSubject(), searchInSurfaceForms, entity.getType());
           for (final Triple triple2 : acronymCandidatesTemp2) {
-            if (nGramDistance.getDistance(triple.getSubject(), triple2.getObject()) > threshholdTrigram) {
+            if (metric.getDistance(triple.getSubject(), triple2.getObject()) > threshholdTrigram) {
               // iff it is a disambiguation resource, skip it
               if (isDisambiguationResource(triple2.getSubject())) {
                 continue;
@@ -214,7 +212,8 @@ public class CandidateUtil {
         candidates = searchCandidatesByLabel(temp, searchInSurfaceForms, "", popularity);
         log.info("\t\tnumber of all candidates by stemming: " + candidates.size());
       }
-      // Here starts the similarity by trigram
+
+      // Prune candidates using string similarity.
       boolean added = false;
       for (final Triple c : candidates) {
         log.debug("Candidate triple to check: " + c);
@@ -225,25 +224,26 @@ public class CandidateUtil {
         if (candidateURL.startsWith(nodeType)) {
           // trigram similarity
           if (c.getPredicate().equals("http://www.w3.org/2000/01/rdf-schema#label")) {
-            if (nGramDistance.getDistance(surfaceForm, label) < 1.0) {// Here
-                                                                      // we
-                                                                      // set
-                                                                      // the
-                                                                      // similarity
-                                                                      // as
-                                                                      // maximum
-                                                                      // because
-                                                                      // rfds:label
-                                                                      // refers
-                                                                      // to
-                                                                      // the
-                                                                      // main
-                                                                      // reference
-                                                                      // of
-                                                                      // a
-                                                                      // given
-                                                                      // resource
+            if (metric.getDistance(surfaceForm, label) < 1.0) {// Here
+              // we
+              // set
+              // the
+              // similarity
+              // as
+              // maximum
+              // because
+              // rfds:label
+              // refers
+              // to
+              // the
+              // main
+              // reference
+              // of
+              // a
+              // given
+              // resource
               continue;
+
             }
           } else if (!c.getPredicate().equals("http://www.w3.org/2000/01/rdf-schema#label")) { // Here
                                                                                                // the
@@ -255,11 +255,10 @@ public class CandidateUtil {
                                                                                                // the
                                                                                                // user's
                                                                                                // choice.
-            if (nGramDistance.getDistance(surfaceForm, label) < threshholdTrigram) {
+            if (metric.getDistance(surfaceForm, label) < threshholdTrigram) {
               continue;
             }
-          }
-          // if it is a disambiguation resource, skip it
+          } // if it is a disambiguation resource, skip it
           if (isDisambiguationResource(candidateURL)) {
             continue;
           }
@@ -282,7 +281,7 @@ public class CandidateUtil {
         }
       }
       // Looking by context starts here.
-      if (!added && !searchInSurfaceForms && (context == true)) {
+      if (!added && !searchInSurfaceForms && AGDISTISConfiguration.INSTANCE.getUseContext()) {
         log.info("searchByContext");
         candidatesContext = searchCandidatesByContext(entities, label); // looking
                                                                         // for
@@ -298,6 +297,7 @@ public class CandidateUtil {
             candidatesContextbyLabel.addAll(searchCandidatesByUrl(url, searchInSurfaceForms));
           }
         }
+
         // Here, we apply two filters for increasing the quality of
         // possible candidates
         for (final Triple c : candidatesContextbyLabel) {
@@ -307,7 +307,7 @@ public class CandidateUtil {
           cleanCandidateURL = nlp.Preprocessing(cleanCandidateURL);
           if (candidateURL.startsWith(nodeType)) {
             // trigram similarity over the URIS
-            if (nGramDistance.getDistance(cleanCandidateURL, label) < 0.3) {
+            if (metric.getDistance(cleanCandidateURL, label) < 0.3) {
               continue;
             }
             // finding direct connections

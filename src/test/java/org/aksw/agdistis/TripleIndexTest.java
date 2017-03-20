@@ -1,3 +1,4 @@
+package org.aksw.agdistis;
 
 import static org.junit.Assert.assertTrue;
 

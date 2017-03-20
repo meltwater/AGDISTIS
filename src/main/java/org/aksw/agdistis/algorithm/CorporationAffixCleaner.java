@@ -1,42 +1,28 @@
 package org.aksw.agdistis.algorithm;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.Properties;
+
+import org.aksw.agdistis.AGDISTISConfiguration;
+import org.apache.commons.io.IOUtils;
 
 public class CorporationAffixCleaner {
 
-	HashSet<String> corporationAffixes = new HashSet<String>();
+  HashSet<String> corporationAffixes = new HashSet<String>();
 
-	public CorporationAffixCleaner() throws IOException {
-		Properties prop = new Properties();
-		InputStream input = CorporationAffixCleaner.class.getResourceAsStream("/config/agdistis.properties");
-		prop.load(input);
-		String file = prop.getProperty("corporationAffixes");
+  public CorporationAffixCleaner() throws IOException {
+    final Path path = AGDISTISConfiguration.INSTANCE.getCorporationAffixesPath();
+    corporationAffixes.addAll(IOUtils.readLines(CorporationAffixCleaner.class.getResourceAsStream(path.toString())));
+  }
 
-		loadCorporationAffixes(file);
-	}
-
-	private void loadCorporationAffixes(String file) throws IOException {
-		BufferedReader br = new BufferedReader(
-				new InputStreamReader(CorporationAffixCleaner.class.getResourceAsStream(file)));
-		while (br.ready()) {
-			String line = br.readLine();
-			corporationAffixes.add(line);
-		}
-		br.close();
-	}
-
-	String cleanLabelsfromCorporationIdentifier(String label) {
-		for (String corporationAffix : corporationAffixes) {
-			if (label.endsWith(corporationAffix)) {
-				label = label.substring(0, label.lastIndexOf(corporationAffix));
-			}
-		}
-		return label.trim();
-	}
+  String cleanLabelsfromCorporationIdentifier(String label) {
+    for (final String corporationAffix : corporationAffixes) {
+      if (label.endsWith(corporationAffix)) {
+        label = label.substring(0, label.lastIndexOf(corporationAffix));
+      }
+    }
+    return label.trim();
+  }
 
 }

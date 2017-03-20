@@ -1,10 +1,11 @@
+package org.aksw.agdistis;
 
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.aksw.agdistis.algorithm.NEDAlgo_HITS;
+import org.aksw.agdistis.algorithm.AGDISTIS;
 import org.aksw.agdistis.datatypes.Document;
 import org.aksw.agdistis.datatypes.NamedEntitiesInText;
 import org.aksw.agdistis.datatypes.NamedEntityInText;
@@ -26,7 +27,7 @@ public class AGDISTISTest {
     final String preAnnotatedText = "<entity>" + taisho + "</entity> was the 123rd Emperor of <entity>" + japan
         + "</entity>.";
 
-    final NEDAlgo_HITS agdistis = new NEDAlgo_HITS();
+    final AGDISTIS agdistis = new AGDISTIS();
     final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
@@ -61,7 +62,7 @@ public class AGDISTISTest {
     final String preAnnotatedText = "<entity>" + obama + "</entity> visits <entity>" + merkel + "</entity> in <entity>"
         + city + "</entity>.";
 
-    final NEDAlgo_HITS agdistis = new NEDAlgo_HITS();
+    final AGDISTIS agdistis = new AGDISTIS();
     final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
@@ -95,7 +96,7 @@ public class AGDISTISTest {
     final String preAnnotatedText = "<entity>" + angelina + "</entity>, her father <entity>" + jon
         + "</entity>, and her partner <entity>" + brad + "</entity> never played together in the same movie.";
 
-    final NEDAlgo_HITS agdistis = new NEDAlgo_HITS();
+    final AGDISTIS agdistis = new AGDISTIS();
     final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
@@ -116,7 +117,7 @@ public class AGDISTISTest {
   public void testContext2() throws InterruptedException, IOException {
     final String e1 = "Jorn Lyseggen";
     final String dis1 = "http://dbpedia.org/resource/Jørn_Lyseggen";
-    final String e2 = "Chief Executive Officer";
+    final String e2 = "CEO";
     final String dis2 = "http://dbpedia.org/resource/CEO";
     final String e3 = "Meltwater";
     final String dis3 = "http://dbpedia.org/resource/Meltwater_Group";
@@ -129,7 +130,7 @@ public class AGDISTISTest {
     final String preAnnotatedText = "<entity>" + e1 + "</entity> is the <entity>" + e2 + "</entity> of <entity>" + e3
         + "</entity>.";
 
-    final NEDAlgo_HITS agdistis = new NEDAlgo_HITS();
+    final AGDISTIS agdistis = new AGDISTIS();
     final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 

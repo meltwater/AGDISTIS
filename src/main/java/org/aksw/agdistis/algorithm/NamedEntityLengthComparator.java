@@ -6,15 +6,13 @@ import org.aksw.agdistis.datatypes.NamedEntityInText;
 
 /**
  * Comparator for sorting Named Entities according to their length
- * 
  * @author r.usbeck
- * 
  */
 public class NamedEntityLengthComparator implements Comparator<NamedEntityInText> {
 
-	@Override
-	public int compare(NamedEntityInText o1, NamedEntityInText o2) {
-		return Double.compare(o1.getLength(), o2.getLength());
-	}
+  @Override
+  public int compare(final NamedEntityInText o1, final NamedEntityInText o2) {
+    return o2.getLength() - o1.getLength();
+  }
 
 }
