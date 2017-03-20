@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.aksw.agdistis.AGDISTISConfiguration;
+import org.aksw.agdistis.AGDISTISConfigurationException;
 import org.aksw.agdistis.Algorithm;
 import org.aksw.agdistis.datatypes.Document;
 import org.aksw.agdistis.datatypes.NamedEntitiesInText;
@@ -18,6 +19,7 @@ import org.aksw.agdistis.util.Stemming;
 import org.aksw.agdistis.util.Triple;
 import org.aksw.agdistis.util.TripleIndex;
 import org.aksw.agdistis.util.TripleIndexContext;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.spell.StringDistance;
 import org.slf4j.Logger;
@@ -39,20 +41,25 @@ public class CandidateUtil {
   private final boolean acronym;
   private final boolean commonEntities;
 
-  public CandidateUtil() throws IOException {
-    nodeType = AGDISTISConfiguration.INSTANCE.getNodeType().toString();
+  public CandidateUtil() {
+    try {
+      nodeType = AGDISTISConfiguration.INSTANCE.getNodeType().toString();
 
-    index = new TripleIndex();
-    if (AGDISTISConfiguration.INSTANCE.getUseContext()) { // in case the index by context exist
-      index2 = new TripleIndexContext();
+      index = new TripleIndex();
+      if (AGDISTISConfiguration.INSTANCE.getUseContext()) { // in case the index by context exist
+        index2 = new TripleIndexContext();
+      }
+      metric = AGDISTISConfiguration.INSTANCE.getCandidatePruningMetric();
+      corporationAffixCleaner = new CorporationAffixCleaner();
+      domainWhiteLister = new DomainWhiteLister(index);
+      popularity = AGDISTISConfiguration.INSTANCE.getUsePopularity();
+      acronym = AGDISTISConfiguration.INSTANCE.getUseAcronym();
+      commonEntities = AGDISTISConfiguration.INSTANCE.getUseCommonEntities();
+      algorithm = AGDISTISConfiguration.INSTANCE.getAlgorithm();
+    } catch (final IOException ioe) {
+      throw new AGDISTISConfigurationException(
+          "Unable to load configuration file. StackTrace: " + ExceptionUtils.getStackTrace(ioe));
     }
-    metric = AGDISTISConfiguration.INSTANCE.getCandidatePruningMetric();
-    corporationAffixCleaner = new CorporationAffixCleaner();
-    domainWhiteLister = new DomainWhiteLister(index);
-    popularity = AGDISTISConfiguration.INSTANCE.getUsePopularity();
-    acronym = AGDISTISConfiguration.INSTANCE.getUseAcronym();
-    commonEntities = AGDISTISConfiguration.INSTANCE.getUseCommonEntities();
-    algorithm = AGDISTISConfiguration.INSTANCE.getAlgorithm();
   }
 
   public void insertCandidatesIntoText(final DirectedSparseGraph<Node, String> graph, final Document document,

@@ -1,6 +1,5 @@
 package org.aksw.agdistis.algorithm;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +36,7 @@ public class AGDISTIS {
   private final boolean useSurfaceForms;
   private final Algorithm algorithm;
 
-  public AGDISTIS() throws IOException {
+  public AGDISTIS() {
 
     heuristicExpansionOn = AGDISTISConfiguration.INSTANCE.getHeuristicExpansion();
     algorithm = AGDISTISConfiguration.INSTANCE.getAlgorithm();

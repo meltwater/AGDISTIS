@@ -54,13 +54,7 @@ public class GetDisambiguation extends ServerResource {
     final InputStream input1 = new ByteArrayInputStream(byteArray);
     final InputStream input2 = new ByteArrayInputStream(byteArray);
 
-    try {
-      agdistis = new AGDISTIS();
-    } catch (final IOException e) {
-      log.error("Can not load index due to either wrong properties in agdistis.properties or missing index at location",
-          e);
-      System.exit(0);
-    }
+    agdistis = new AGDISTIS();
 
     final String string = IOUtils.toString(input1);
     // Parse the given representation and retrieve data
