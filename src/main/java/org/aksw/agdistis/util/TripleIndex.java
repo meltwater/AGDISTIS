@@ -2,13 +2,14 @@ package org.aksw.agdistis.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.aksw.agdistis.AGDISTISConfiguration;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.validator.routines.UrlValidator;
+import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
@@ -28,6 +29,7 @@ import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.NumericUtils;
 import org.apache.lucene.util.Version;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.Cache;
@@ -37,7 +39,7 @@ public class TripleIndex {
 
   private static final Version LUCENE44 = Version.LUCENE_44;
 
-  private final org.slf4j.Logger log = LoggerFactory.getLogger(TripleIndex.class);
+  private final Logger log = LoggerFactory.getLogger(TripleIndex.class);
 
   public static final String FIELD_NAME_SUBJECT = "subject";
   public static final String FIELD_NAME_PREDICATE = "predicate";
@@ -59,10 +61,12 @@ public class TripleIndex {
 
   public TripleIndex() throws IOException {
     final String index = AGDISTISConfiguration.INSTANCE.getMainIndexPath().toString();
-    log.info("The index will be here: " + index);
+    log.info("The index will be loaded from: " + index);
 
     directory = new MMapDirectory(new File(index));
+    final long start = System.currentTimeMillis();
     ireader = DirectoryReader.open(directory);
+    log.debug("Index loaded in {} msec", System.currentTimeMillis() - start);
     isearcher = new IndexSearcher(ireader);
     urlValidator = new UrlValidator();
 
@@ -76,7 +80,7 @@ public class TripleIndex {
   public List<Triple> search(final String subject, final String predicate, String object,
       final int maxNumberOfResults) {
     final BooleanQuery bq = new BooleanQuery();
-    List<Triple> triples = new ArrayList<Triple>();
+    List<Triple> triples;
 
     try {
       if ((subject != null) && subject.equals("http://aksw.org/notInWiki")) {
@@ -135,18 +139,20 @@ public class TripleIndex {
       }
 
       // use the cache
-      // if (null == (triples = cache.getIfPresent(bq))) {
-      triples = getFromIndex(maxNumberOfResults, bq);
-      cache.put(bq, triples);
-      // }
-
+      if (null == (triples = cache.getIfPresent(bq))) {
+        triples = getFromIndex(maxNumberOfResults, bq);
+        cache.put(bq, triples);
+      }
+      return triples;
     } catch (final IOException ioe) {
       log.error("I/O exception occurred while reading from the index. Corrupt?. StackTrace {}",
           ExceptionUtils.getStackTrace(ioe), subject);
+      return Lists.newLinkedList();
     } catch (final ParseException pe) {
       log.error("Unable to parse the object from the triple <{},{},{}>.", subject, predicate, object);
+      return Lists.newLinkedList();
     }
-    return triples;
+
   }
 
   private List<Triple> getFromIndex(final int maxNumberOfResults, final BooleanQuery bq) throws IOException {
@@ -157,7 +163,7 @@ public class TripleIndex {
     isearcher.search(bq, collector);
     final ScoreDoc[] hits = collector.topDocs().scoreDocs;
 
-    final List<Triple> triples = new ArrayList<Triple>();
+    final List<Triple> triples = new LinkedList<Triple>();
     String s, p, o;
     for (final ScoreDoc hit : hits) {
       final Document hitDoc = isearcher.doc(hit.doc);

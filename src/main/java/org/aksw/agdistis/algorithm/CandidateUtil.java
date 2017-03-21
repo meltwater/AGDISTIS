@@ -25,6 +25,10 @@ import org.apache.lucene.search.spell.StringDistance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Lists;
+
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 
 public class CandidateUtil {
@@ -40,6 +44,7 @@ public class CandidateUtil {
   private final Algorithm algorithm;
   private final boolean acronym;
   private final boolean commonEntities;
+  private final Cache<String, Boolean> disambiguationCache = CacheBuilder.newBuilder().maximumSize(50000).build();
 
   public CandidateUtil() {
     try {
@@ -78,12 +83,12 @@ public class CandidateUtil {
       sb.append(" ");
     }
     final String entities = StringUtils.normalizeSpace(sb.toString());
-    log.info("entities" + entities);
+    log.debug("entities" + entities);
     final HashSet<String> heuristicExpansion = new HashSet<String>();
     for (final NamedEntityInText entity : namedEntities) {
       String label = text.substring(entity.getStartPos(), entity.getEndPos());
 
-      log.info("\tLabel: " + label);
+      log.debug("\tLabel: " + label);
       final long start = System.currentTimeMillis();
 
       // Heuristic expansion is a rough approximation of a coreference resolution.
@@ -154,7 +159,7 @@ public class CandidateUtil {
     final PreprocessingNLP nlp = new PreprocessingNLP();
     // Label treatment
     label = corporationAffixCleaner.cleanLabelsfromCorporationIdentifier(label);
-    log.info("Label:" + label);
+    log.debug("Label:" + label);
     label = nlp.preprocess(label);
     // label treatment finished ->
     // searchByAcronym
@@ -184,7 +189,7 @@ public class CandidateUtil {
           }
           acronymCandidatesTemp2.clear();
         }
-        log.info("\t\tnumber of candidates by acronym: " + countFinalCandidates);
+        log.debug("\t\tnumber of candidates by acronym: " + countFinalCandidates);
       }
     }
     // searchByAcronymFinished
@@ -192,23 +197,23 @@ public class CandidateUtil {
     if (countFinalCandidates == 0) {
       candidates = searchCandidatesByLabel(label, searchInSurfaceForms, "", popularity);
       if (searchInSurfaceForms) {
-        log.info("\t\tnumber of candidates by SF label: " + candidates.size());
+        log.debug("\t\tnumber of candidates by SF label: " + candidates.size());
       } else {
-        log.info("\t\tnumber of candidates by main label: " + candidates.size());
+        log.debug("\t\tnumber of candidates by main label: " + candidates.size());
       }
 
       if (candidates.size() == 0) {
-        log.info("\t\t\tNo candidates for: " + label);
+        log.debug("\t\t\tNo candidates for: " + label);
         if (label.endsWith("'s")) {
           // removing plural s
           label = label.substring(0, label.lastIndexOf("'s"));
           candidates = searchCandidatesByLabel(label, searchInSurfaceForms, "", popularity);
-          log.info("\t\t\tEven not with expansion");
+          log.debug("\t\t\tEven not with expansion");
         } else if (label.endsWith("s")) {
           // removing genitive s
           label = label.substring(0, label.lastIndexOf("s"));
           candidates = searchCandidatesByLabel(label, searchInSurfaceForms, "", popularity);
-          log.info("\t\t\tEven not with expansion");
+          log.debug("\t\t\tEven not with expansion");
         }
       }
       // If the set of candidates is still empty, here we apply stemming
@@ -219,7 +224,7 @@ public class CandidateUtil {
         if (StringUtils.isNotBlank(temp)) {
           candidates = searchCandidatesByLabel(temp, searchInSurfaceForms, "", popularity);
         }
-        log.info("\t\tnumber of all candidates by stemming: " + candidates.size());
+        log.debug("\t\tnumber of all candidates by stemming: " + candidates.size());
       }
 
       // Prune candidates using string similarity.
@@ -267,13 +272,13 @@ public class CandidateUtil {
       }
       // Looking by context starts here.
       if (!added && !searchInSurfaceForms && AGDISTISConfiguration.INSTANCE.getUseContext()) {
-        log.info("searchByContext");
+        log.debug("searchByContext");
         candidatesContext = searchCandidatesByContext(entities, label); // looking
                                                                         // for
                                                                         // all
                                                                         // entities
                                                                         // together
-        log.info("\t\tnumber of candidates by context: " + candidatesContext.size());
+        log.debug("\t\tnumber of candidates by context: " + candidatesContext.size());
 
         // taking all possibles SF for each resource found.
         if (candidatesContext != null) {
@@ -329,19 +334,19 @@ public class CandidateUtil {
       }
       // Looking for the given label among the set of surface forms.
       if (!added && !searchInSurfaceForms) {
-        log.info("Search using SF from disambiguation, redirects and from anchors web pages");
+        log.debug("Search using SF from disambiguation, redirects and from anchors web pages");
         checkLabelCandidates(graph, threshholdTrigram, nodes, entity, label, true, entities);
       }
 
     }
-    log.info("\t\tnumber of final candidates " + countFinalCandidates);
+    log.debug("\t\tnumber of final candidates " + countFinalCandidates);
   }
 
-  private ArrayList<Triple> searchCandidatesByLabel(final String label, final boolean searchInSurfaceFormsToo,
+  private List<Triple> searchCandidatesByLabel(final String label, final boolean searchInSurfaceFormsToo,
       final String type, final boolean popularity) {
-    final ArrayList<Triple> tmp = new ArrayList<Triple>();
-    final ArrayList<Triple> tmp2 = new ArrayList<Triple>();
-    final ArrayList<Triple> finalTmp = new ArrayList<Triple>();
+    List<Triple> tmp = Lists.newLinkedList();
+    final List<Triple> tmp2 = Lists.newLinkedList();
+    final List<Triple> finalTmp = Lists.newLinkedList();
     ArrayList<Triple> candidatesScore = new ArrayList<Triple>();
 
     if (popularity) { // Frequency of entities.
@@ -390,27 +395,22 @@ public class CandidateUtil {
       }
       return finalTmp;
     } else {
-      tmp.addAll(index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label));
+      tmp = index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label);
       if (searchInSurfaceFormsToo) {
         tmp.clear();
-        tmp.addAll(index.search(null, "http://www.w3.org/2004/02/skos/core#altLabel", label));
+        tmp = index.search(null, "http://www.w3.org/2004/02/skos/core#altLabel", label);
       }
       return tmp;
     }
   }
 
-  public ArrayList<Triple> searchbyAcronym(final String label, final boolean searchInSurfaceFormsToo,
-      final String type) {
-    final ArrayList<Triple> tmp = new ArrayList<Triple>();
-    tmp.addAll(index.search(null, "http://dbpedia.org/property/acronym", label, 100));
-    return tmp;
+  public List<Triple> searchbyAcronym(final String label, final boolean searchInSurfaceFormsToo, final String type) {
+    return index.search(null, "http://dbpedia.org/property/acronym", label, 100);
   }
 
-  public ArrayList<Triple> searchAcronymByLabel(final String label, final boolean searchInSurfaceFormsToo,
+  public List<Triple> searchAcronymByLabel(final String label, final boolean searchInSurfaceFormsToo,
       final String type) {
-    final ArrayList<Triple> tmp = new ArrayList<Triple>();
-    tmp.addAll(index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label, 100));
-    return tmp;
+    return index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label, 100);
   }
 
   ArrayList<Triple> searchCandidatesByContext(final String entities, final String label) {
@@ -427,21 +427,18 @@ public class CandidateUtil {
     return tmp;
   }
 
-  ArrayList<Triple> searchbyConnections(final String uri, final String uri2) {
-    final ArrayList<Triple> tmp = new ArrayList<Triple>();
-    tmp.addAll(index.search(uri, null, uri2));
-
-    return tmp;
+  List<Triple> searchbyConnections(final String uri, final String uri2) {
+    return index.search(uri, null, uri2);
   }
 
-  ArrayList<Triple> searchCandidatesByUrl(final String url, final boolean searchInSurfaceFormsToo) {
-    final ArrayList<Triple> tmp = new ArrayList<Triple>();
-    final ArrayList<Triple> tmp2 = new ArrayList<Triple>();
+  List<Triple> searchCandidatesByUrl(final String url, final boolean searchInSurfaceFormsToo) {
+    
+    final List<Triple> tmp2 = Lists.newLinkedList();
     final ArrayList<Triple> finalTmp = new ArrayList<Triple>();
     ArrayList<Triple> candidatesScore = new ArrayList<Triple>();
 
     if (popularity) {
-      tmp.addAll(index.search(url, "http://www.w3.org/2000/01/rdf-schema#label", null, 500));
+      final List<Triple> tmp = index.search(url, "http://www.w3.org/2000/01/rdf-schema#label", null, 500);
 
       for (final Triple c : tmp) {
         tmp2.add(new Triple(c.getSubject(), c.getPredicate(), c.getObject()));
@@ -482,16 +479,23 @@ public class CandidateUtil {
       }
       return finalTmp;
     } else {
-      tmp.addAll(index.search(url, "http://www.w3.org/2000/01/rdf-schema#label", null));
-      return tmp;
+      return index.search(url, "http://www.w3.org/2000/01/rdf-schema#label", null);
     }
   }
 
   private boolean isDisambiguationResource(final String candidateURL) {
+
+    final Boolean in = disambiguationCache.getIfPresent(candidateURL);
+    if (in != null) {
+      return in;
+    }
+
     final List<Triple> tmp = index.search(candidateURL, "http://dbpedia.org/ontology/wikiPageDisambiguates", null);
     if (tmp.isEmpty()) {
+      disambiguationCache.put(candidateURL, false);
       return false;
     } else {
+      disambiguationCache.put(candidateURL, true);
       return true;
     }
   }
