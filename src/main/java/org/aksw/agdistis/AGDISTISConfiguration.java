@@ -378,7 +378,7 @@ public class AGDISTISConfiguration {
   }
 
   public String toString() {
-    final StringBuffer sb = new StringBuffer("AGDISTIS Configuration:");
+    final StringBuilder sb = new StringBuilder("AGDISTIS Configuration:");
 
     sb.append(IOUtils.LINE_SEPARATOR);
     sb.append(IOUtils.LINE_SEPARATOR);

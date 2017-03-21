@@ -72,7 +72,7 @@ public class CandidateUtil {
     // used for heuristic label expansion start with longest Named Entities
     Collections.sort(namedEntities.getNamedEntities(), new NamedEntityLengthComparator());
 
-    final StringBuffer sb = new StringBuffer();
+    final StringBuilder sb = new StringBuilder();
     for (final NamedEntityInText namedEntity : namedEntities) {
       sb.append(namedEntity.getLabel());
       sb.append(" ");
@@ -231,37 +231,14 @@ public class CandidateUtil {
         if (candidateURL.startsWith(nodeType)) {
           // trigram similarity
           if (c.getPredicate().equals("http://www.w3.org/2000/01/rdf-schema#label")) {
-            if (metric.getDistance(surfaceForm, label) < 1.0) {// Here
-              // we
-              // set
-              // the
-              // similarity
-              // as
-              // maximum
-              // because
-              // rfds:label
-              // refers
-              // to
-              // the
-              // main
-              // reference
-              // of
-              // a
-              // given
+            if (metric.getDistance(surfaceForm, label) < 1.0) {
+              // Here we set the similarity as maximum because rfds:label refers to the main reference of a given
               // resource
               continue;
 
             }
-          } else if (!c.getPredicate().equals("http://www.w3.org/2000/01/rdf-schema#label")) { // Here
-                                                                                               // the
-                                                                                               // similarity
-                                                                                               // is
-                                                                                               // in
-                                                                                               // accordance
-                                                                                               // with
-                                                                                               // the
-                                                                                               // user's
-                                                                                               // choice.
+          } else if (!c.getPredicate().equals("http://www.w3.org/2000/01/rdf-schema#label")) {
+            // Here the similarity is in accordance with the user's choice.
             if (metric.getDistance(surfaceForm, label) < threshholdTrigram) {
               continue;
             }
@@ -271,10 +248,8 @@ public class CandidateUtil {
           }
           // follow redirect
           candidateURL = redirect(candidateURL);
-          if (commonEntities == true) { // Being able to get all kinds
-                                        // of resource not only
-                                        // Person, Organization,
-                                        // Location
+          if (commonEntities == true) {
+            // Domain white list does not apply. All entities are accepted.
             addNodeToGraph(graph, nodes, entity, c, candidateURL);
             added = true;
             countFinalCandidates++;
