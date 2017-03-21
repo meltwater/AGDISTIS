@@ -16,53 +16,42 @@
  */
 package org.aksw.agdistis.util;
 
+import org.apache.commons.lang.StringUtils;
+
 /**
- *
  * @author diegomoussallem
  */
 public class PreprocessingNLP {
 
-	public String Preprocessing(String label) {
+  private final static String[] _SPECIAL_CHARS = new String[] { "#", ",", "_", "-", "." };
+  private final static String[] _SPECIAL_CHARS_REPLACEMENTS = new String[] { "", "", " ", " ", "" };
 
-		Word2num w2n = new Word2num(); // test conversion of numbers
-		// Label treatment
-		// System.out.println("before preprocessing: " + label);
-		String result = w2n.replaceNumbers(label);
-		if (!result.equals("000")) {
-			label = result;
-		}
-		label = label.trim();
+  public String preprocess(String label) {
 
-		if (label.contains("#")) {
-			label = label.replace("#", "");
-		}
-		if (label.contains(",")) {
-			label = label.replace(",", "");
-		}
-		if (label.contains("_")) {
-			label = label.replace("_", " ");
-		}
-		if (label.contains("-")) {
-			label = label.replace("-", " ");
-		}
-		if (label.contains(".")) {
-			label = label.replace(".", "");
-		}
+    final Word2num w2n = new Word2num(); // test conversion of numbers
+    // Label treatment
+    // System.out.println("before preprocessing: " + label);
+    final String result = w2n.replaceNumbers(label);
+    if (!result.equals("000")) {
+      label = result;
+    }
+    label = label.trim();
+    label = StringUtils.replaceEachRepeatedly(label, _SPECIAL_CHARS, _SPECIAL_CHARS_REPLACEMENTS);
+    label = StringUtils.remove(label, (char) 8203);
+    if (label.equals(label.toUpperCase()) && (label.length() > 4)) {
+      label = label.substring(0, 1).toUpperCase() + label.substring(1).toLowerCase();
 
-		if (label.equals(label.toUpperCase()) && label.length() > 4) {
-			label = label.substring(0, 1).toUpperCase() + label.substring(1).toLowerCase();
+    }
 
-		}
+    if (label.equals(label.toLowerCase()) && (label.length() > 4)) {
+      label = label.substring(0, 1).toUpperCase() + label.substring(1);
+    }
 
-		if (label.equals(label.toLowerCase()) && label.length() > 4) {
-			label = label.substring(0, 1).toUpperCase() + label.substring(1);
-		}
-
-		if (!label.contains(" ")) {
-			label = label.replaceAll("(?<=[a-z])([A-Z])", " $1");
-			label = label.trim();
-		}
-		// System.out.println("after preprocessing: " + label);
-		return label;
-	}
+    if (!label.contains(" ")) {
+      label = label.replaceAll("(?<=[a-z])([A-Z])", " $1");
+      label = label.trim();
+    }
+    // System.out.println("after preprocessing: " + label);
+    return label;
+  }
 }

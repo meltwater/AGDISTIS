@@ -24,6 +24,7 @@ import org.aksw.gerbil.transfer.nif.TurtleNIFDocumentCreator;
 import org.aksw.gerbil.transfer.nif.TurtleNIFDocumentParser;
 import org.aksw.gerbil.transfer.nif.data.NamedEntity;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.restlet.data.Form;
@@ -39,10 +40,11 @@ public class GetDisambiguation extends ServerResource {
   private final TurtleNIFDocumentParser parser = new TurtleNIFDocumentParser();
   private final TurtleNIFDocumentCreator creator = new TurtleNIFDocumentCreator();
   private final NIFParser nifParser = new NIFParser();
+  private final AGDISTIS agdistis = new AGDISTIS();
 
   @Post
   public String postText(final Representation entity) throws IOException, Exception {
-    AGDISTIS agdistis = null;
+
     log.info("Start working on Request for AGDISTIS");
     String result = "";
     String text = "";
@@ -54,9 +56,7 @@ public class GetDisambiguation extends ServerResource {
     final InputStream input1 = new ByteArrayInputStream(byteArray);
     final InputStream input2 = new ByteArrayInputStream(byteArray);
 
-    agdistis = new AGDISTIS();
-
-    final String string = IOUtils.toString(input1);
+    final String string = IOUtils.toString(input1, "UTF-8");
     // Parse the given representation and retrieve data
     final Form form = new Form(string);
     text = form.getFirstValue("text");
@@ -115,19 +115,26 @@ public class GetDisambiguation extends ServerResource {
     final Document document = new Document();
     final ArrayList<NamedEntityInText> list = new ArrayList<NamedEntityInText>();
     log.info("\tText: " + preAnnotatedText);
-    int startpos = 0, endpos = 0;
-    final StringBuilder sb = new StringBuilder();
-    startpos = preAnnotatedText.indexOf("<entity>", startpos);
-    while (startpos >= 0) {
-      sb.append(preAnnotatedText.substring(endpos, startpos));
-      startpos += 8;
-      endpos = preAnnotatedText.indexOf("</entity>", startpos);
-      final int newStartPos = sb.length();
-      final String entityLabel = preAnnotatedText.substring(startpos, endpos);
-      list.add(new NamedEntityInText(newStartPos, entityLabel.length(), entityLabel, ""));
-      sb.append(entityLabel);
-      endpos += 9;
+    try {
+      int startpos = 0, endpos = 0;
+      final StringBuilder sb = new StringBuilder();
       startpos = preAnnotatedText.indexOf("<entity>", startpos);
+      while (startpos >= 0) {
+        sb.append(preAnnotatedText.substring(endpos, startpos));
+        startpos += 8;
+        endpos = preAnnotatedText.indexOf("</entity>", startpos);
+        final int newStartPos = sb.length();
+
+        final String entityLabel = preAnnotatedText.substring(startpos, endpos);
+
+        list.add(new NamedEntityInText(newStartPos, entityLabel.length(), entityLabel, ""));
+        sb.append(entityLabel);
+        endpos += 9;
+        startpos = preAnnotatedText.indexOf("<entity>", startpos);
+      }
+    } catch (final IndexOutOfBoundsException iobe) {
+      log.error("Error while processing text {}{}{}. StackTrace {}", IOUtils.LINE_SEPARATOR, preAnnotatedText,
+          IOUtils.LINE_SEPARATOR, ExceptionUtils.getStackTrace(iobe));
     }
 
     final NamedEntitiesInText nes = new NamedEntitiesInText(list);

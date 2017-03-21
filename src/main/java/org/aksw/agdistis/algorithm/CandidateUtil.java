@@ -155,7 +155,7 @@ public class CandidateUtil {
     // Label treatment
     label = corporationAffixCleaner.cleanLabelsfromCorporationIdentifier(label);
     log.info("Label:" + label);
-    label = nlp.Preprocessing(label);
+    label = nlp.preprocess(label);
     // label treatment finished ->
     // searchByAcronym
     if (acronym == true) {
@@ -216,7 +216,9 @@ public class CandidateUtil {
       if (candidates.isEmpty()) {
         final Stemming stemmer = new Stemming();
         final String temp = stemmer.stemming(label);
-        candidates = searchCandidatesByLabel(temp, searchInSurfaceForms, "", popularity);
+        if (StringUtils.isNotBlank(temp)) {
+          candidates = searchCandidatesByLabel(temp, searchInSurfaceForms, "", popularity);
+        }
         log.info("\t\tnumber of all candidates by stemming: " + candidates.size());
       }
 
@@ -226,11 +228,12 @@ public class CandidateUtil {
         log.debug("Candidate triple to check: " + c);
         String candidateURL = c.getSubject();
         String surfaceForm = c.getObject();
-        surfaceForm = nlp.Preprocessing(surfaceForm);
+        surfaceForm = nlp.preprocess(surfaceForm);
         // rule of thumb: no year numbers in candidates
         if (candidateURL.startsWith(nodeType)) {
           // trigram similarity
           if (c.getPredicate().equals("http://www.w3.org/2000/01/rdf-schema#label")) {
+
             if (metric.getDistance(surfaceForm, label) < 1.0) {
               // Here we set the similarity as maximum because rfds:label refers to the main reference of a given
               // resource
@@ -286,7 +289,7 @@ public class CandidateUtil {
           log.debug("Candidate triple to check: " + c);
           String candidateURL = c.getSubject();
           String cleanCandidateURL = candidateURL.replace(nodeType, "");
-          cleanCandidateURL = nlp.Preprocessing(cleanCandidateURL);
+          cleanCandidateURL = nlp.preprocess(cleanCandidateURL);
           if (candidateURL.startsWith(nodeType)) {
             // trigram similarity over the URIS
             if (metric.getDistance(cleanCandidateURL, label) < 0.3) {
@@ -501,7 +504,7 @@ public class CandidateUtil {
     if (redirect.size() == 1) {
       return redirect.get(0).getObject();
     } else if (redirect.size() > 1) {
-      log.error("Several redirects detected for :" + candidateURL);
+      log.warn("Several redirects detected for :" + candidateURL);
       return candidateURL;
     } else {
       return candidateURL;

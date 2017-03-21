@@ -7,11 +7,13 @@ import java.util.List;
 
 import org.aksw.agdistis.AGDISTISConfiguration;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.apache.lucene.search.BooleanClause;
@@ -41,6 +43,8 @@ public class TripleIndex {
   public static final String FIELD_NAME_PREDICATE = "predicate";
   public static final String FIELD_NAME_OBJECT_URI = "object_uri";
   public static final String FIELD_NAME_OBJECT_LITERAL = "object_literal";
+  private static final String[] _LUCENE_KEYWORDS = new String[] { "AND", "OR", "NOT", "TO" };
+  private static final String[] _LUCENE_KEYWORDS_REPLACEMENTS = new String[] { "\\AND", "\\OR", "\\NOT", "\\TO" };
   // public static final String FIELD_URI_COUNT = "uri_counts";
   public static final String FIELD_FREQ = "freq";
 
@@ -69,7 +73,7 @@ public class TripleIndex {
     return search(subject, predicate, object, defaultMaxNumberOfDocsRetrievedFromIndex);
   }
 
-  public List<Triple> search(final String subject, final String predicate, final String object,
+  public List<Triple> search(final String subject, final String predicate, String object,
       final int maxNumberOfResults) {
     final BooleanQuery bq = new BooleanQuery();
     List<Triple> triples = new ArrayList<Triple>();
@@ -94,6 +98,7 @@ public class TripleIndex {
       // bq.add(tq, BooleanClause.Occur.MUST);
       // }
       if (object != null) {
+        object = StringUtils.replaceEach(object, _LUCENE_KEYWORDS, _LUCENE_KEYWORDS_REPLACEMENTS);
         Query q = null;
         if (urlValidator.isValid(object)) {
 
@@ -135,8 +140,11 @@ public class TripleIndex {
       cache.put(bq, triples);
       // }
 
-    } catch (final Exception e) {
-      log.error("{} -> {}", e.getLocalizedMessage(), subject);
+    } catch (final IOException ioe) {
+      log.error("I/O exception occurred while reading from the index. Corrupt?. StackTrace {}",
+          ExceptionUtils.getStackTrace(ioe), subject);
+    } catch (final ParseException pe) {
+      log.error("Unable to parse the object from the triple <{},{},{}>.", subject, predicate, object);
     }
     return triples;
   }
