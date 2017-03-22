@@ -102,7 +102,6 @@ public class TripleIndex {
       // bq.add(tq, BooleanClause.Occur.MUST);
       // }
       if (object != null) {
-        object = StringUtils.replaceEach(object, _LUCENE_KEYWORDS, _LUCENE_KEYWORDS_REPLACEMENTS);
         Query q = null;
         if (urlValidator.isValid(object)) {
 
@@ -132,7 +131,8 @@ public class TripleIndex {
           final Analyzer analyzer = new LiteralAnalyzer(LUCENE44);
           final QueryParser parser = new QueryParser(LUCENE44, FIELD_NAME_OBJECT_LITERAL, analyzer);
           parser.setDefaultOperator(QueryParser.Operator.AND);
-          q = parser.parse(QueryParserBase.escape(object));
+          q = parser.parse(QueryParserBase
+              .escape(object = StringUtils.replaceEach(object, _LUCENE_KEYWORDS, _LUCENE_KEYWORDS_REPLACEMENTS)));
           bq.add(q, BooleanClause.Occur.MUST);
         }
         // bq.add(q, BooleanClause.Occur.MUST);

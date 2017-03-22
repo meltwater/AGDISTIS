@@ -45,6 +45,7 @@ public class CandidateUtil {
   private final boolean acronym;
   private final boolean commonEntities;
   private final Cache<String, Boolean> disambiguationCache = CacheBuilder.newBuilder().maximumSize(50000).build();
+  private final Stemming stemmer = new Stemming();
 
   public CandidateUtil() {
     try {
@@ -219,7 +220,7 @@ public class CandidateUtil {
       // If the set of candidates is still empty, here we apply stemming
       // technique
       if (candidates.isEmpty()) {
-        final Stemming stemmer = new Stemming();
+
         final String temp = stemmer.stemming(label);
         if (StringUtils.isNotBlank(temp)) {
           candidates = searchCandidatesByLabel(temp, searchInSurfaceForms, "", popularity);
@@ -432,7 +433,7 @@ public class CandidateUtil {
   }
 
   List<Triple> searchCandidatesByUrl(final String url, final boolean searchInSurfaceFormsToo) {
-    
+
     final List<Triple> tmp2 = Lists.newLinkedList();
     final ArrayList<Triple> finalTmp = new ArrayList<Triple>();
     ArrayList<Triple> candidatesScore = new ArrayList<Triple>();
