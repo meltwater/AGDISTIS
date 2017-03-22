@@ -3,7 +3,6 @@ package org.aksw.agdistis;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.HashMap;
 
 import org.aksw.agdistis.algorithm.AGDISTIS;
@@ -11,7 +10,6 @@ import org.aksw.agdistis.datatypes.Document;
 import org.aksw.agdistis.datatypes.NamedEntitiesInText;
 import org.aksw.agdistis.datatypes.NamedEntityInText;
 import org.aksw.agdistis.webapp.GetDisambiguation;
-import org.apache.commons.io.IOUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -133,33 +131,6 @@ public class AGDISTISTest {
 
     final String preAnnotatedText = "<entity>" + e1 + "</entity> is the <entity>" + e2 + "</entity> of <entity>" + e3
         + "</entity>.";
-
-    final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
-    agdistis.run(d, null);
-
-    final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
-    final HashMap<NamedEntityInText, String> results = new HashMap<NamedEntityInText, String>();
-    for (final NamedEntityInText namedEntity : namedEntities) {
-      final String disambiguatedURL = namedEntity.getNamedEntityUri();
-      results.put(namedEntity, disambiguatedURL);
-    }
-    for (final NamedEntityInText namedEntity : namedEntities) {
-      final String disambiguatedURL = namedEntity.getNamedEntityUri();
-      System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
-    }
-  }
-
-  @Test
-  public void testFromFile() throws InterruptedException, IOException {
-
-    final HashMap<String, String> correct = new HashMap<String, String>();
-
-    final StringWriter writer = new StringWriter();
-    IOUtils.copy(AGDISTISTest.class.getResourceAsStream("gigsalad.004.HpoBt0KqIMOgwsNiFYtRTzqHqN4.txt"), writer,
-        "UTF-8");
-
-    final String preAnnotatedText = writer.toString();
 
     final AGDISTIS agdistis = new AGDISTIS();
     final Document d = GetDisambiguation.textToDocument(preAnnotatedText);

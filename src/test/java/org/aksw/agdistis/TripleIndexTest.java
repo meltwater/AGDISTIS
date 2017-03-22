@@ -49,7 +49,7 @@ public class TripleIndexTest {
     for (final Triple t : redirect) {
       log.debug(t.toString());
     }
-    assertTrue(redirect.size() >= 1);
+    assertTrue(redirect.size() == 1);
     candidateURL = "http://dbpedia.org/resource/Barack_Obama";
     redirect = index.search(candidateURL, "http://dbpedia.org/ontology/wikiPageRedirects", null);
     assertTrue(redirect.size() == 0);
