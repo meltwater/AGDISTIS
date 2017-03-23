@@ -490,4 +490,8 @@ public class AGDISTISConfiguration {
     return sb.toString();
   }
 
+  public AGDISTISConfiguration getInstance() {
+    return AGDISTISConfiguration.INSTANCE;
+  }
+
 }

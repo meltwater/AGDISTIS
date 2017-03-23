@@ -101,7 +101,7 @@ public class TripleIndex {
       // object));
       // bq.add(tq, BooleanClause.Occur.MUST);
       // }
-      if (object != null) {
+      if (object != null && !StringUtils.isBlank(object)) {
         Query q = null;
         if (urlValidator.isValid(object)) {
 

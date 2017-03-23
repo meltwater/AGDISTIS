@@ -56,24 +56,27 @@ public class AGDISTIS {
       final NamedEntitiesInText namedEntities = document.getNamedEntitiesInText();
       final DirectedSparseGraph<Node, String> graph = new DirectedSparseGraph<Node, String>();
 
-      // 0) insert candidates into Text
-      log.debug("\tinsert candidates");
+      log.debug("Selecting candidates.");
+      long start = System.currentTimeMillis();
       cu.insertCandidatesIntoText(graph, document, threshholdTrigram, heuristicExpansionOn, useSurfaceForms);
+      log.debug("Candidates computed in {} msecs", System.currentTimeMillis() - start);
 
+      log.debug("Performing graph-based disambiguation.");
+      start = System.currentTimeMillis();
       // 1) let spread activation/ breadth first search run
-      log.info("\tGraph size before BFS: " + graph.getVertexCount());
+      log.trace("Graph size before BFS: " + graph.getVertexCount());
       final BreadthFirstSearch bfs = new BreadthFirstSearch(index, algorithm);
       bfs.run(maxDepth, graph, edgeType, nodeType);
-      log.info("\tGraph size after BFS: " + graph.getVertexCount());
+      log.trace("Graph size after BFS: " + graph.getVertexCount());
 
       if (algorithm == Algorithm.HITS) {
         // 2.1) let HITS run
-        log.info("\trun HITS");
+        log.debug("Run HITS");
         final HITS h = new HITS();
         h.runHits(graph, 20);
       } else if (algorithm == Algorithm.PAGERANK) {
         // 2.2) let Pagerank run
-        log.info("\trun PageRank");
+        log.debug("Run PAGERANK");
         final PageRank pr = new PageRank();
         pr.runPr(graph, 50, 0.1);
       }
@@ -81,7 +84,7 @@ public class AGDISTIS {
       // 3) store the candidate with the highest hub, highest authority
       // ratio
       // manipulate which value to use directly in node.compareTo
-      log.debug("\torder results");
+      log.trace("Sort results");
       final ArrayList<Node> orderedList = new ArrayList<Node>();
       orderedList.addAll(graph.getVertices());
       Collections.sort(orderedList);
@@ -117,7 +120,7 @@ public class AGDISTIS {
           candidatesPerNE.put(entity, listCandidates);
         }
       }
-
+      log.debug("Disambiguation completed in {} msecs.", System.currentTimeMillis() - start);
     } catch (final Exception e) {
       log.error("AGDISTIS cannot be run on this document.", e);
     }

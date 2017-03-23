@@ -3,6 +3,7 @@ package org.aksw.agdistis;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.HashMap;
 
 import org.aksw.agdistis.algorithm.AGDISTIS;
@@ -10,10 +11,16 @@ import org.aksw.agdistis.datatypes.Document;
 import org.aksw.agdistis.datatypes.NamedEntitiesInText;
 import org.aksw.agdistis.datatypes.NamedEntityInText;
 import org.aksw.agdistis.webapp.GetDisambiguation;
+import org.apache.commons.io.IOUtils;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AGDISTISTest {
+
+  private final Logger log = LoggerFactory.getLogger(AGDISTISTest.class);
 
   @Test
   public void testUmlaute() throws InterruptedException, IOException {
@@ -111,12 +118,51 @@ public class AGDISTISTest {
     for (final NamedEntityInText namedEntity : namedEntities) {
       final String disambiguatedURL = namedEntity.getNamedEntityUri();
       System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
-      assertTrue(correct.get(namedEntity.getLabel()).equals(disambiguatedURL));
+      Assert.assertEquals(correct.get(namedEntity.getLabel()), disambiguatedURL);
     }
   }
 
   @Test
-  public void testContext2() throws InterruptedException, IOException {
+  public void testCasingMatch() throws InterruptedException, IOException {
+    final String entity = "ConforMIS";
+    final String entityURL = "http://dbpedia.org/resource/fhai/45fdb6ae-966a-3024-885e-14b5aa8ecac0";
+    final String entity2 = "GigSalad";
+    final String entity2URL = "http://dbpedia.org/resource/fhai/09edd628-520e-38fd-b720-d9e6741c758b";
+    final String entity3 = "eOasia";
+    final String entity3URL = "http://dbpedia.org/resource/fhai/fbd807a2-9678-3df8-b57c-e0063d5bda2f";
+    final String entity4 = "DermaDoctor";
+    final String entity4URL = "http://dbpedia.org/resource/fhai/a6f4d86b-69f7-3c4c-a2b0-473fc0e80cd4";
+
+    final HashMap<String, String> correct = new HashMap<String, String>();
+    correct.put(entity, entityURL);
+    correct.put(entity2, entity2URL);
+    correct.put(entity3, entity3URL);
+    correct.put(entity4, entity4URL);
+
+    final String preAnnotatedText = "<entity>" + entity
+        + "</entity>, has sold more than 50,000 implants, each individually sized and shaped to fit each patient’s unique anatomy but <entity>"
+        + entity2 + "</entity> is catching up together with <entity>" + entity3
+        + "</entity> partners and the other <entity>" + entity4 + "</entity>.";
+
+    final AGDISTIS agdistis = new AGDISTIS();
+    final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
+    agdistis.run(d, null);
+
+    final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
+    final HashMap<NamedEntityInText, String> results = new HashMap<NamedEntityInText, String>();
+    for (final NamedEntityInText namedEntity : namedEntities) {
+      final String disambiguatedURL = namedEntity.getNamedEntityUri();
+      results.put(namedEntity, disambiguatedURL);
+    }
+    for (final NamedEntityInText namedEntity : namedEntities) {
+      final String disambiguatedURL = namedEntity.getNamedEntityUri();
+      System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
+      Assert.assertEquals(correct.get(namedEntity.getLabel()), disambiguatedURL);
+    }
+  }
+
+  @Test
+  public void testPartialMatches1() throws InterruptedException, IOException {
     final String e1 = "Jorn Lyseggen";
     final String dis1 = "http://dbpedia.org/resource/Jørn_Lyseggen";
     final String e2 = "CEO";
@@ -145,6 +191,66 @@ public class AGDISTISTest {
     for (final NamedEntityInText namedEntity : namedEntities) {
       final String disambiguatedURL = namedEntity.getNamedEntityUri();
       System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
+      Assert.assertEquals(namedEntity.getNamedEntityUri(), disambiguatedURL);
+    }
+  }
+
+  @Ignore
+  @Test
+  public void testFromFile() throws InterruptedException, IOException {
+
+    final StringWriter writer = new StringWriter();
+    IOUtils.copy(AGDISTISTest.class.getResourceAsStream("conformis.002.hfhOMts4rIvDSJvHuhCXgV5CnUU"), writer, "UTF-8");
+
+    final String preAnnotatedText = writer.toString();
+    long start = System.currentTimeMillis();
+    final AGDISTIS agdistis = new AGDISTIS();
+    log.info("AGDISTIS loaded in: {} msecs.", (System.currentTimeMillis() - start));
+    final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
+    start = System.currentTimeMillis();
+    agdistis.run(d, null);
+    log.info("Done in: {} msecs.", (System.currentTimeMillis() - start));
+
+    final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
+    final HashMap<NamedEntityInText, String> results = new HashMap<NamedEntityInText, String>();
+    for (final NamedEntityInText namedEntity : namedEntities) {
+      final String disambiguatedURL = namedEntity.getNamedEntityUri();
+      results.put(namedEntity, disambiguatedURL);
+    }
+    for (final NamedEntityInText namedEntity : namedEntities) {
+      final String disambiguatedURL = namedEntity.getNamedEntityUri();
+      System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
+    }
+  }
+
+  @Test
+  public void testPartialMatches2() throws InterruptedException, IOException {
+    final String e1 = "Pendolino";
+    final String dis1 = "http://dbpedia.org/resource/Pendolino";
+    final String e2 = "Giugiaro";
+    final String dis2 = "http://dbpedia.org/resource/Giorgetto_Giugiaro";
+
+    final HashMap<String, String> correct = new HashMap<String, String>();
+    correct.put(e1, dis1);
+    correct.put(e2, dis2);
+
+    final String preAnnotatedText = "The <entity>" + e1 + "</entity> is a family of trains designed by <entity>" + e2
+        + "</entity>.";
+
+    final AGDISTIS agdistis = new AGDISTIS();
+    final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
+    agdistis.run(d, null);
+
+    final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
+    final HashMap<NamedEntityInText, String> results = new HashMap<NamedEntityInText, String>();
+    for (final NamedEntityInText namedEntity : namedEntities) {
+      final String disambiguatedURL = namedEntity.getNamedEntityUri();
+      results.put(namedEntity, disambiguatedURL);
+    }
+    for (final NamedEntityInText namedEntity : namedEntities) {
+      final String disambiguatedURL = namedEntity.getNamedEntityUri();
+      System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
+      Assert.assertEquals(namedEntity.getNamedEntityUri(), disambiguatedURL);
     }
   }
 

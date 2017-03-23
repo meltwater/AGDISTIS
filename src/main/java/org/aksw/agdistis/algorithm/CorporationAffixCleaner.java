@@ -9,7 +9,7 @@ import org.apache.commons.io.IOUtils;
 
 public class CorporationAffixCleaner {
 
-  HashSet<String> corporationAffixes = new HashSet<String>();
+  private final HashSet<String> corporationAffixes = new HashSet<String>();
 
   public CorporationAffixCleaner() throws IOException {
     final Path path = AGDISTISConfiguration.INSTANCE.getCorporationAffixesPath();

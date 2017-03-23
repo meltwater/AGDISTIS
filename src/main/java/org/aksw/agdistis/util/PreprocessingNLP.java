@@ -35,7 +35,7 @@ public class PreprocessingNLP {
     if (!result.equals("000")) {
       label = result;
     }
-    label = label.trim();
+    label = StringUtils.normalizeSpace(label);
     label = StringUtils.replaceEachRepeatedly(label, _SPECIAL_CHARS, _SPECIAL_CHARS_REPLACEMENTS);
     label = StringUtils.remove(label, (char) 8203);
     if (label.equals(label.toUpperCase()) && (label.length() > 4)) {
@@ -47,11 +47,6 @@ public class PreprocessingNLP {
       label = label.substring(0, 1).toUpperCase() + label.substring(1);
     }
 
-    if (!label.contains(" ")) {
-      label = label.replaceAll("(?<=[a-z])([A-Z])", " $1");
-      label = label.trim();
-    }
-    // System.out.println("after preprocessing: " + label);
     return label;
   }
 }

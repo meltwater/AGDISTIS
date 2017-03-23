@@ -29,5 +29,5 @@ package org.aksw.agdistis;
  * @version 0.1
  **/
 public enum DistanceMetric {
-  NGram, QGram, Damerau, Levenshtein, JaroWinkler, Cosine, Jaccard
+  NGramDistance, LevensteinDistance, JaroWinklerDistance;
 }
