@@ -195,12 +195,11 @@ public class AGDISTISTest {
     }
   }
 
-  @Ignore
   @Test
   public void testFromFile() throws InterruptedException, IOException {
 
     final StringWriter writer = new StringWriter();
-    IOUtils.copy(AGDISTISTest.class.getResourceAsStream("conformis.002.hfhOMts4rIvDSJvHuhCXgV5CnUU"), writer, "UTF-8");
+    IOUtils.copy(AGDISTISTest.class.getResourceAsStream("bboxx.001.2HGKDTz2IbqdLejzQ-9ssP3My1U"), writer, "UTF-8");
 
     final String preAnnotatedText = writer.toString();
     long start = System.currentTimeMillis();

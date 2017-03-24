@@ -114,7 +114,7 @@ public class DisambiguationService extends ServerResource {
   public static Document textToDocument(final String preAnnotatedText) {
     final Document document = new Document();
     final ArrayList<NamedEntityInText> list = new ArrayList<NamedEntityInText>();
-    log.info("\tText: " + preAnnotatedText);
+    log.debug("Text: " + preAnnotatedText);
     try {
       int startpos = 0, endpos = 0;
       final StringBuilder sb = new StringBuilder();

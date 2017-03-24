@@ -1,39 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<!-- For assistance related to logback-translator or configuration -->
-<!-- files in general, please contact the logback user mailing list -->
-<!-- at http://www.qos.ch/mailman/listinfo/logback-user -->
-<!-- -->
-<!-- For professional support please see -->
-<!-- http://www.qos.ch/shop/products/professionalSupport -->
-<!-- -->
 <configuration>
-	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-		<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-			<timeZone>UTC</timeZone>
-			<fieldNames>
-				<levelValue>[ignore]</levelValue>
-				<thread>[ignore]</thread>
-				<logger>[ignore]</logger>
-				<version>[ignore]</version>
-			</fieldNames>
-			<customFields>{"module":"agdistis"}</customFields>
+	<appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d %p [%c] %m;%n</pattern>
 		</encoder>
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-			<level>DEBUG</level>
+			<level>TRACE</level>
 		</filter>
 	</appender>
-
-	<appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
-		<appender-ref ref="STDOUT" />
-	</appender>
-
-	<logger name="org.aksw.agdistis" level="TRACE"
-		additivity="true" />
-	<logger name="edu.stanford.nlp" level="OFF" additivity="true"/>
-	<logger name="org.reflections" level="OFF" additivity="false"/>
-
 	<root level="TRACE">
-		<appender-ref ref="ASYNCSTDOUT" />
+		<appender-ref ref="stdout" />
 	</root>
 </configuration>

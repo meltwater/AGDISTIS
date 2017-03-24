@@ -44,8 +44,10 @@ public class CandidateUtil {
   private final Algorithm algorithm;
   private final boolean acronym;
   private final boolean commonEntities;
-  private final Cache<String, Boolean> disambiguationCache = CacheBuilder.newBuilder().maximumSize(50000).build();
-  private final Cache<String, List<Triple>> candidateCache = CacheBuilder.newBuilder().maximumSize(50000).build();
+  private final static Cache<String, Boolean> disambiguationCache = CacheBuilder.newBuilder().maximumSize(50000)
+      .build();
+  private final static Cache<String, List<Triple>> candidateCache = CacheBuilder.newBuilder().maximumSize(50000)
+      .build();
   private final static Stemming stemmer = new Stemming();
 
   public CandidateUtil() {

@@ -26,7 +26,6 @@ public class AGDISTIS {
   private final Logger log = LoggerFactory.getLogger(AGDISTIS.class);
   private final String edgeType;
   private final String nodeType;
-  // private CandidateBKP cu;
   private final CandidateUtil cu;
   private final TripleIndex index;
   // needed for the experiment about which properties increase accuracy
