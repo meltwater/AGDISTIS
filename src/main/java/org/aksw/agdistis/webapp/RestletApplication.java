@@ -12,11 +12,11 @@ public class RestletApplication extends Application {
 	@Override
 	public Restlet createInboundRoot() {
 		// Create a router Restlet that routes each call to a
-		// new instance of GetDisambiguation.
+		// new instance of DisambiguationService.
 		final Router router = new Router(getContext());
 
 		// Defines only one route
-		router.attachDefault(GetDisambiguation.class);
+		router.attachDefault(DisambiguationService.class);
 		// System.gc();
 		return router;
 	}

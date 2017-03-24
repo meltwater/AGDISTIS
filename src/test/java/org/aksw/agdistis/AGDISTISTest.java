@@ -10,7 +10,7 @@ import org.aksw.agdistis.algorithm.AGDISTIS;
 import org.aksw.agdistis.datatypes.Document;
 import org.aksw.agdistis.datatypes.NamedEntitiesInText;
 import org.aksw.agdistis.datatypes.NamedEntityInText;
-import org.aksw.agdistis.webapp.GetDisambiguation;
+import org.aksw.agdistis.webapp.DisambiguationService;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -36,7 +36,7 @@ public class AGDISTISTest {
         + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
+    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -71,7 +71,7 @@ public class AGDISTISTest {
         + city + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
+    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -106,7 +106,7 @@ public class AGDISTISTest {
         + "</entity>, and her partner <entity>" + brad + "</entity> never played together in the same movie.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
+    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -145,7 +145,7 @@ public class AGDISTISTest {
         + "</entity> partners and the other <entity>" + entity4 + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
+    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -179,7 +179,7 @@ public class AGDISTISTest {
         + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
+    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -206,7 +206,7 @@ public class AGDISTISTest {
     long start = System.currentTimeMillis();
     final AGDISTIS agdistis = new AGDISTIS();
     log.info("AGDISTIS loaded in: {} msecs.", (System.currentTimeMillis() - start));
-    final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
+    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
     start = System.currentTimeMillis();
     agdistis.run(d, null);
     log.info("Done in: {} msecs.", (System.currentTimeMillis() - start));
@@ -238,7 +238,7 @@ public class AGDISTISTest {
         + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = GetDisambiguation.textToDocument(preAnnotatedText);
+    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();

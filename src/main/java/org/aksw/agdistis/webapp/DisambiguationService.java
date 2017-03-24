@@ -34,9 +34,9 @@ import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GetDisambiguation extends ServerResource {
+public class DisambiguationService extends ServerResource {
 
-  private static Logger log = LoggerFactory.getLogger(GetDisambiguation.class);
+  private static Logger log = LoggerFactory.getLogger(DisambiguationService.class);
   private final TurtleNIFDocumentParser parser = new TurtleNIFDocumentParser();
   private final TurtleNIFDocumentCreator creator = new TurtleNIFDocumentCreator();
   private final NIFParser nifParser = new NIFParser();
