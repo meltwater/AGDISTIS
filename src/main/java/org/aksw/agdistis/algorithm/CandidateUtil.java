@@ -19,8 +19,8 @@ import org.aksw.agdistis.util.Stemming;
 import org.aksw.agdistis.util.Triple;
 import org.aksw.agdistis.util.TripleIndex;
 import org.aksw.agdistis.util.TripleIndexContext;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.lucene.search.spell.StringDistance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,7 @@ public class CandidateUtil {
   private final boolean commonEntities;
   private final Cache<String, Boolean> disambiguationCache = CacheBuilder.newBuilder().maximumSize(50000).build();
   private final Cache<String, List<Triple>> candidateCache = CacheBuilder.newBuilder().maximumSize(50000).build();
-  private final Stemming stemmer = new Stemming();
+  private final static Stemming stemmer = new Stemming();
 
   public CandidateUtil() {
     try {

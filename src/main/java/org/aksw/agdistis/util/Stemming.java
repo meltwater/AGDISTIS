@@ -62,7 +62,9 @@ public class Stemming {
      *
      * StanfordCoreNLP loads a lot of models, so you probably only want to do this once per execution
      */
-    pipeline = new StanfordCoreNLP(props);
+    synchronized (this) {
+      pipeline = new StanfordCoreNLP(props);
+    }
   }
 
   public String stemming(final String documentText) {

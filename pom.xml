@@ -1,10 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+	
 	<groupId>org.aksw</groupId>
 	<artifactId>AGDISTIS</artifactId>
 	<version>0.9.0-meltwater</version>
 	<packaging>jar</packaging>
+	
+	<name>AGDISTIS</name>
+	
 	<!-- BUILD -->
 	<build>
 		<plugins>
@@ -74,7 +78,10 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<mavenVersion>4.0</mavenVersion>
 		<info.debatty.java-string-similarity.version>0.23</info.debatty.java-string-similarity.version>
-
+		<edu.stanford.nlp.version>3.7.0</edu.stanford.nlp.version>
+		<org.restlet.version>2.3.0</org.restlet.version>
+		
+		<com.google.guava.version>20.0</com.google.guava.version>
 		<!-- Utils: Logback -->
 		<ch.qos.logback.version>1.2.1</ch.qos.logback.version>
 
@@ -205,17 +212,17 @@
 		<dependency>
 			<groupId>org.restlet.jse</groupId>
 			<artifactId>org.restlet</artifactId>
-			<version>2.2.0</version>
+			<version>${org.restlet.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.restlet.jse</groupId>
 			<artifactId>org.restlet.ext.simple</artifactId>
-			<version>2.2.0</version>
+			<version>${org.restlet.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.restlet.jee</groupId>
 			<artifactId>org.restlet.ext.servlet</artifactId>
-			<version>2.2.0</version>
+			<version>${org.restlet.version}</version>
 		</dependency>
 		<!-- ~~~~~~~~~~~~~~~~~~~ End Restlet for restful API ~~~~~~~~~~~~~~~~~~~~~~ -->
 		<!-- ~~~~~~~~~~~~~~~~~~~ Validating URIs ~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -229,7 +236,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>18.0</version>
+			<version>${com.google.guava.version}</version>
 		</dependency>
 		<!-- ~~~~~~~~~~~~~~~~~~~ End Cache for TripleIndex ~~~~~~~~~~~~~~~~~~~~~~ -->
 		<dependency>
@@ -241,12 +248,12 @@
 		<dependency>
 			<groupId>edu.stanford.nlp</groupId>
 			<artifactId>stanford-corenlp</artifactId>
-			<version>3.6.0</version>
+			<version>${edu.stanford.nlp.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>edu.stanford.nlp</groupId>
 			<artifactId>stanford-corenlp</artifactId>
-			<version>3.6.0</version>
+			<version>${edu.stanford.nlp.version}</version>
 			<classifier>models</classifier>
 		</dependency>
 		<dependency>
@@ -260,11 +267,7 @@
 			<version>3.4</version>
 			<type>jar</type>
 		</dependency>
-		<dependency>
-			<groupId>commons-lang</groupId>
-			<artifactId>commons-lang</artifactId>
-			<version>2.6</version>
-		</dependency>
+		
 		<dependency>
 			<groupId>xml-apis</groupId>
 			<artifactId>xml-apis</artifactId>
@@ -276,7 +279,6 @@
 			<version>${info.debatty.java-string-similarity.version}</version>
 		</dependency>
 	</dependencies>
-	<name>AGDISTIS</name>
 
 	<distributionManagement>
 		<repository>
