@@ -89,17 +89,15 @@ public class CandidateUtil {
     log.trace("entities" + entities);
     final HashSet<String> heuristicExpansion = new HashSet<String>();
     for (final NamedEntityInText entity : namedEntities) {
-      String label = entity.getLabel();
-
-      log.debug("Disambiguating label: " + label);
+      log.debug("Disambiguating label: " + entity.getLabel());
       final long start = System.currentTimeMillis();
       // Heuristic expansion is a rough approximation of a coreference resolution.
+      String expandedlabel = entity.getLabel();
       if (heuristicExpansionOn) {
-        label = heuristicExpansion(heuristicExpansion, label);
+        expandedlabel = heuristicExpansion(heuristicExpansion, entity.getLabel());
       }
-      checkLabelCandidates(graph, threshholdTrigram, nodes, entity, label, useSurfaceForms, entities);
-
-      log.trace("Candidates for {} located in {} msecs.", label, (System.currentTimeMillis() - start));
+      checkLabelCandidates(graph, threshholdTrigram, nodes, entity, expandedlabel, useSurfaceForms, entities);
+      log.trace("Candidates for {} located in {} msecs.", entity.getLabel(), (System.currentTimeMillis() - start));
     }
   }
 
@@ -148,10 +146,11 @@ public class CandidateUtil {
   }
 
   private void checkLabelCandidates(final DirectedSparseGraph<Node, String> graph, final double threshholdTrigram,
-      final HashMap<String, Node> nodes, final NamedEntityInText entity, String label,
+      final HashMap<String, Node> nodes, final NamedEntityInText entity, final String expandedLabel,
       final boolean searchInSurfaceForms, final String entities) throws IOException {
 
     List<Triple> toBeAdded;
+    String label = entity.getLabel();
     // Check the cache
     if (null == (toBeAdded = candidateCache.getIfPresent(label))) {
       List<Triple> candidates = new ArrayList<Triple>();
@@ -235,6 +234,12 @@ public class CandidateUtil {
           }
           log.debug("Found {} candidates by splitting {} into {}.", candidates.size(), label, camelSplit);
         }
+
+        // If the set of candidates is empty, try the expanded label
+        if (candidates.isEmpty() && !label.equals(expandedLabel)) {
+          candidates = searchCandidatesByLabel(expandedLabel, searchInSurfaceForms, "", popularity);
+        }
+        log.debug("Found {} candidates for expanded label  {} of label {}.", candidates.size(), expandedLabel, label);
 
         // If the set of candidates is still empty, here we apply stemming
         // technique
