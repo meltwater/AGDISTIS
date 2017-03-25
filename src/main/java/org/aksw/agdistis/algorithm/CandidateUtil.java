@@ -75,7 +75,6 @@ public class CandidateUtil {
       final double threshholdTrigram, final Boolean heuristicExpansionOn, final Boolean useSurfaceForms)
       throws IOException {
     final NamedEntitiesInText namedEntities = document.getNamedEntitiesInText();
-    final String text = document.DocumentText().getText();
     final HashMap<String, Node> nodes = new HashMap<String, Node>();
 
     // used for heuristic label expansion start with longest Named Entities
@@ -90,7 +89,7 @@ public class CandidateUtil {
     log.trace("entities" + entities);
     final HashSet<String> heuristicExpansion = new HashSet<String>();
     for (final NamedEntityInText entity : namedEntities) {
-      String label = text.substring(entity.getStartPos(), entity.getEndPos());
+      String label = entity.getLabel();
 
       log.debug("Disambiguating label: " + label);
       final long start = System.currentTimeMillis();
@@ -98,7 +97,7 @@ public class CandidateUtil {
       if (heuristicExpansionOn) {
         label = heuristicExpansion(heuristicExpansion, label);
       }
-      checkLabelCandidates(graph, threshholdTrigram, nodes, entity, label, useSurfaceForms, entities);
+      checkLabelCandidates(graph, threshholdTrigram, nodes, entity, useSurfaceForms, entities);
 
       log.trace("Candidates for {} located in {} msecs.", label, (System.currentTimeMillis() - start));
     }
@@ -149,10 +148,11 @@ public class CandidateUtil {
   }
 
   private void checkLabelCandidates(final DirectedSparseGraph<Node, String> graph, final double threshholdTrigram,
-      final HashMap<String, Node> nodes, final NamedEntityInText entity, String label,
-      final boolean searchInSurfaceForms, final String entities) throws IOException {
+      final HashMap<String, Node> nodes, final NamedEntityInText entity, final boolean searchInSurfaceForms,
+      final String entities) throws IOException {
 
     List<Triple> toBeAdded;
+    String label = entity.getLabel();
     // Check the cache
     if (null == (toBeAdded = candidateCache.getIfPresent(label))) {
       List<Triple> candidates = new ArrayList<Triple>();
@@ -362,7 +362,7 @@ public class CandidateUtil {
         // Looking for the given label among the set of surface forms.
         if (!added && !searchInSurfaceForms) {
           log.debug("Search using SF from disambiguation, redirects and from anchors web pages");
-          checkLabelCandidates(graph, threshholdTrigram, nodes, entity, label, true, entities);
+          checkLabelCandidates(graph, threshholdTrigram, nodes, entity, true, entities);
         }
 
       }
