@@ -97,7 +97,7 @@ public class CandidateUtil {
       if (heuristicExpansionOn) {
         label = heuristicExpansion(heuristicExpansion, label);
       }
-      checkLabelCandidates(graph, threshholdTrigram, nodes, entity, useSurfaceForms, entities);
+      checkLabelCandidates(graph, threshholdTrigram, nodes, entity, label, useSurfaceForms, entities);
 
       log.trace("Candidates for {} located in {} msecs.", label, (System.currentTimeMillis() - start));
     }
@@ -148,11 +148,10 @@ public class CandidateUtil {
   }
 
   private void checkLabelCandidates(final DirectedSparseGraph<Node, String> graph, final double threshholdTrigram,
-      final HashMap<String, Node> nodes, final NamedEntityInText entity, final boolean searchInSurfaceForms,
-      final String entities) throws IOException {
+      final HashMap<String, Node> nodes, final NamedEntityInText entity, String label,
+      final boolean searchInSurfaceForms, final String entities) throws IOException {
 
     List<Triple> toBeAdded;
-    String label = entity.getLabel();
     // Check the cache
     if (null == (toBeAdded = candidateCache.getIfPresent(label))) {
       List<Triple> candidates = new ArrayList<Triple>();
@@ -362,7 +361,7 @@ public class CandidateUtil {
         // Looking for the given label among the set of surface forms.
         if (!added && !searchInSurfaceForms) {
           log.debug("Search using SF from disambiguation, redirects and from anchors web pages");
-          checkLabelCandidates(graph, threshholdTrigram, nodes, entity, true, entities);
+          checkLabelCandidates(graph, threshholdTrigram, nodes, entity, label, true, entities);
         }
 
       }
