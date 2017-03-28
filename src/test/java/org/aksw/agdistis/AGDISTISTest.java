@@ -199,7 +199,7 @@ public class AGDISTISTest {
   public void testFromFile() throws InterruptedException, IOException {
 
     final StringWriter writer = new StringWriter();
-    IOUtils.copy(AGDISTISTest.class.getResourceAsStream("axonify.008.TZspit4lAkx987YlxUUZEEnLLdQ"), writer, "UTF-8");
+    IOUtils.copy(AGDISTISTest.class.getResourceAsStream("clinton-test"), writer, "UTF-8");
 
     final String preAnnotatedText = writer.toString();
     long start = System.currentTimeMillis();

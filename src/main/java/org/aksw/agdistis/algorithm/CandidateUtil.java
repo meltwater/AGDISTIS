@@ -235,7 +235,6 @@ public class CandidateUtil {
           log.debug("Found {} candidates by splitting {} into {}.", candidates.size(), label, camelSplit);
         }
 
-        // If the set of candidates is empty, try the expanded label
         if (candidates.isEmpty() && !label.equals(expandedLabel)) {
           candidates = searchCandidatesByLabel(expandedLabel, searchInSurfaceForms, "", popularity);
         }
@@ -265,7 +264,8 @@ public class CandidateUtil {
             // trigram similarity
             if (c.getPredicate().equals("http://www.w3.org/2000/01/rdf-schema#label")) {
 
-              if (metric.getDistance(surfaceForm.toLowerCase(), label.toLowerCase()) < 1.0) {
+              if ((metric.getDistance(surfaceForm.toLowerCase(), label.toLowerCase()) < 1.0)
+                  && !surfaceForm.equals(expandedLabel)) {
                 // Here we set the similarity as maximum because rfds:label refers to the main reference of a given
                 // resource
                 continue;
@@ -366,7 +366,7 @@ public class CandidateUtil {
         // Looking for the given label among the set of surface forms.
         if (!added && !searchInSurfaceForms) {
           log.debug("Search using SF from disambiguation, redirects and from anchors web pages");
-          checkLabelCandidates(graph, threshholdTrigram, nodes, entity, label, true, entities);
+          checkLabelCandidates(graph, threshholdTrigram, nodes, entity, expandedLabel, true, entities);
         }
 
       }
