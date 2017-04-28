@@ -12,11 +12,16 @@ import org.aksw.agdistis.datatypes.NamedEntitiesInText;
 import org.aksw.agdistis.datatypes.NamedEntityInText;
 import org.aksw.agdistis.webapp.DisambiguationService;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.meltwater.fhai.kg.ned.agdistis.model.InputEntity;
+import com.meltwater.fhai.kg.ned.agdistis.model.Occurrence;
 
 public class AGDISTISTest {
 
@@ -87,6 +92,50 @@ public class AGDISTISTest {
     }
   }
 
+  @Test
+  public void testMinimalExamplePlainTextWithEntities() throws InterruptedException, IOException {
+
+    final String obamaURL = "http://dbpedia.org/resource/Barack_Obama";
+    final String merkelURL = "http://dbpedia.org/resource/Angela_Merkel";
+    final String berlinURL = "http://dbpedia.org/resource/Berlin";
+
+    final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
+
+    Occurrence occ = new Occurrence(0, "Barack Obama".length());
+    final InputEntity obama = new InputEntity("Barack Obama", "person", occ.getStartOffset(), occ.getEndOffset());
+    entities.put(occ, obama);
+
+    occ = new Occurrence(20, "Angela Merkel".length() + 20);
+    final InputEntity merkel = new InputEntity("Angela Merkel", "person", occ.getStartOffset(), occ.getEndOffset());
+    entities.put(occ, merkel);
+
+    occ = new Occurrence(37, "Berlin".length() + 37);
+    final InputEntity berlin = new InputEntity("Berlin", "city", occ.getStartOffset(), occ.getEndOffset());
+    entities.put(occ, berlin);
+
+    final String plainText = obama.getName() + " visits " + merkel.getName() + " in " + berlin.getName() + ".";
+    final AGDISTIS agdistis = new AGDISTIS();
+    final Document d = DisambiguationService.textToDocument(plainText, entities);
+    agdistis.run(d, null);
+
+    final HashMap<String, String> correct = new HashMap<String, String>();
+    correct.put(obama.getName(), obamaURL);
+    correct.put(merkel.getName(), merkelURL);
+    correct.put(berlin.getName(), berlinURL);
+
+    final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
+    final HashMap<NamedEntityInText, String> results = new HashMap<NamedEntityInText, String>();
+    for (final NamedEntityInText namedEntity : namedEntities) {
+      final String disambiguatedURL = namedEntity.getNamedEntityUri();
+      results.put(namedEntity, disambiguatedURL);
+    }
+    for (final NamedEntityInText namedEntity : namedEntities) {
+      final String disambiguatedURL = namedEntity.getNamedEntityUri();
+      System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
+      assertTrue(correct.get(namedEntity.getLabel()).equals(disambiguatedURL));
+    }
+  }
+
   @Ignore
   @Test
   public void testContext() throws InterruptedException, IOException {
@@ -119,6 +168,18 @@ public class AGDISTISTest {
       final String disambiguatedURL = namedEntity.getNamedEntityUri();
       System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
       Assert.assertEquals(correct.get(namedEntity.getLabel()), disambiguatedURL);
+    }
+  }
+
+  @Test
+  public void testEnconding() throws InterruptedException, IOException {
+    final String text = "One hundred and fifty-one years after the first oil well was torpedoed (h/t Colonel E.A.L. Roberts), and the crude complex is blowing up again. Groundhog day has arrived early this year, as financial markets are stuck in a downward spiral, like a cat chasing its tail (um, on a downhill slope).\\n\\n.\\n\\nRelated: Does Buffett See A Bottom In Oil Prices\\n\\nEquity markets overnight have again sold off on fears of a slowing global economy, which has then tag-teamed with immediate oversupply to send crude prices lower, which is then raising fears of contagion in equity markets, and egging on further selling. Rinse and repeat.\\n\\nBut wait! We have had comments out of ECB President Mario Draghi (always sounds like a Formula 1 driver to me), who has signaled further quantitative easing is likely to be announced at the next ECB meeting. This has lent support to equities, but due to its negative impact on the euro, has provided further headwinds to a crude price rebound.\\n\\nIn terms of economic data flow, aside from the ECB decision to keep rates at 0.05 percent, the U.S. has seen disappointing releases from both weekly jobless claims and Philly Fed Manufacturing. Weekly claims came in at 293.000, the worst since last July, while Philly Fed has jumped in the conga line with other regional manufacturing indices to highlight deterioration from the sector.\\n\\nRelated: OPEC Still Sees Oil Markets Balancing This Year\\n\\nThe latest weekly inventory data is providing no modicum of support, although it never seemed likely to given the fact that current U.S. refinery maintenance is taking well over 1 million barrels per day of crude oil demand out of the U.S. market. Last night\u00E2\u20AC\u2122s API report is pointing to a solid build from today\u00E2\u20AC\u2122s EIA release, as it revealed a 4.6 million barrel build to crude stocks.\\n\\nIt was, however, the 4.7 million barrel build to gasoline stocks which provided the sucker punch. While the EIA looks to be underestimating gasoline demand (a knock-on effect of it overestimating exports), another large build to gasoline stocks is tough for the market to take.\\n\\nAs prices plumb the depths of twenty-dollardom, this graphic (hark, above left) illustrates how key petrostates now see oil prices well below the level needed to balance their budgets. Libya remains in the biggest trouble, some $180 a barrel adrift from meeting its budget due to the ongoing conflict with the Islamic State (oil infrastructure near the port of Ras Lanuf was attacked last night, with the promise of further attacks elsewhere in the coming days\u00E2\u20AC\u00A6and the oil market just shrugged\u00E2\u20AC\u00A6).\\n\\nRelated:The Condensate Con: How Real Is The Oil Glut?\\n\\nWhile last year the key theme in the crude market was oversupply, this year we are already seeing a new theme coming to the forefront: that of weakening oil demand growth. We are starkly seeing this in our ClipperData, as Chinese crude imports continue to head lower. Waterborne imports for this month are on target to reach their lowest volume since mid-2013, with monthly volumes set to be below year-ago levels for the fourth consecutive month.\\n\\n.\\n\\nThe chart below puts emerging markets in context somewhat from an economic standpoint. Despite rapid economic growth in the past few decades, BRIC\u00E2\u20AC\u2122s share of global GDP remains considerably adrift of G-7\u00E2\u20AC\u2122s share (G7 = U.S., Japan, Germany, U.K., France, Italy, Canada):\\n\\n.\\n\\n(Click to enlarge)\\n\\nFinally, a barrel of oil in Canada now costs five cauliflowers, while some crude in North Dakota is being given away. It is nutty times we live in.\\n\\nBy Matt Smith\\n\\nMore Top Reads From Oilprice.com:\\n\\nOil Sold for -$0.50 per Barrel. A Negative Price!\\n$329 Billion Invested in Clean Energy in 2015\\nOman Offers to Slash Oil Production If OPEC Follows Suit";
+    System.out.println(text.substring(1768, 1771));
+    int index = 0;
+    while (index >= 0) {
+      final int found = text.indexOf("EIA", index + 1);
+      System.out.println(found + " " + (found + StringUtils.length("EIA")));
+      index = found;
     }
   }
 
@@ -192,6 +253,26 @@ public class AGDISTISTest {
       final String disambiguatedURL = namedEntity.getNamedEntityUri();
       System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
       Assert.assertEquals(namedEntity.getNamedEntityUri(), disambiguatedURL);
+    }
+  }
+
+  @Test
+  public void testSingle() throws InterruptedException, IOException {
+    final String preAnnotatedText = "<entity>TomTom Extends Multi</entity> acquired <entity>MapQuest</entity> for 3 dollars.";
+
+    final AGDISTIS agdistis = new AGDISTIS();
+    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
+    agdistis.run(d, null);
+
+    final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
+    final HashMap<NamedEntityInText, String> results = new HashMap<NamedEntityInText, String>();
+    for (final NamedEntityInText namedEntity : namedEntities) {
+      final String disambiguatedURL = namedEntity.getNamedEntityUri();
+      results.put(namedEntity, disambiguatedURL);
+    }
+    for (final NamedEntityInText namedEntity : namedEntities) {
+      final String disambiguatedURL = namedEntity.getNamedEntityUri();
+      System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
     }
   }
 

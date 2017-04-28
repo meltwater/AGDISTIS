@@ -93,6 +93,7 @@ public class AGDISTIS {
           // there can be one node (candidate) for two labels
           if (m.containsId(entity.getStartPos())) {
             entity.setNamedEntity(m.getCandidateURI());
+            entity.setDisambiguatedTypes(cu.getDisambiguatedTypes(m.getCandidateURI(), index));
             break;
           }
 

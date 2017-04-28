@@ -44,7 +44,7 @@ public class DomainWhiteLister {
     }
     for (final Triple triple : tmp) {
       if (!triple.getObject().contains("wordnet") && !triple.getObject().contains("wikicategory")) {
-        if (whiteList.contains(triple.getObject())) {
+        if (whiteList.contains(triple.getObject()) || whiteList.isEmpty()) {
           whiteListCache.put(candidateURL, true);
           return true;
         }

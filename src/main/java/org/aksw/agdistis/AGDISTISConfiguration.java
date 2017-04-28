@@ -168,7 +168,7 @@ public class AGDISTISConfiguration {
   }
 
   /*
-   * Getteers
+   * Getters
    */
   public Path getWorkingDir() {
     return _PATH_WORKING_DIR;

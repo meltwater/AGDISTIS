@@ -520,6 +520,19 @@ public class CandidateUtil {
     }
   }
 
+  public List<String> getDisambiguatedTypes(final String entityURI, final TripleIndex index) {
+    final List<String> types = Lists.newLinkedList();
+
+    // get the type from the redirection.
+    final List<Triple> triples = index.search(redirect(entityURI), "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+        null);
+
+    for (final Triple triple : triples) {
+      types.add(triple.getObject());
+    }
+    return types;
+  }
+
   private boolean isDisambiguationResource(final String candidateURL) {
 
     final Boolean in = disambiguationCache.getIfPresent(candidateURL);

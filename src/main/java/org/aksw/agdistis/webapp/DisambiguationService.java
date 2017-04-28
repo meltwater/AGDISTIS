@@ -34,6 +34,9 @@ import org.restlet.resource.ServerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltwater.fhai.kg.ned.agdistis.model.InputEntity;
+import com.meltwater.fhai.kg.ned.agdistis.model.Occurrence;
+
 public class DisambiguationService extends ServerResource {
 
   private static Logger log = LoggerFactory.getLogger(DisambiguationService.class);
@@ -111,10 +114,33 @@ public class DisambiguationService extends ServerResource {
     }
   }
 
-  public static Document textToDocument(final String preAnnotatedText) {
+  private static Document documentFrom(final String text, final List<NamedEntityInText> entities) {
+    final NamedEntitiesInText nes = new NamedEntitiesInText(entities);
+    final DocumentText docText = new DocumentText(text);
+
     final Document document = new Document();
+    document.addText(docText);
+    document.addNamedEntitiesInText(nes);
+    return document;
+  }
+
+  public static Document textToDocument(final String plainText, final HashMap<Occurrence, InputEntity> entities) {
     final ArrayList<NamedEntityInText> list = new ArrayList<NamedEntityInText>();
-    log.debug("Text: " + preAnnotatedText);
+    log.debug("Input text: " + plainText);
+    log.debug("Input named entities: " + entities);
+    for (final Occurrence occurrence : entities.keySet()) {
+      final int start = occurrence.getStartOffset();
+      final InputEntity entity = entities.get(occurrence);
+      list.add(new NamedEntityInText(start, occurrence.getEndOffset() - start, entity.getName(), entity.getType()));
+    }
+
+    return documentFrom(plainText, list);
+  }
+
+  public static Document textToDocument(final String preAnnotatedText) {
+
+    final ArrayList<NamedEntityInText> list = new ArrayList<NamedEntityInText>();
+    log.debug("Input annotated text: " + preAnnotatedText);
     try {
       int startpos = 0, endpos = 0;
       final StringBuilder sb = new StringBuilder();
@@ -137,12 +163,8 @@ public class DisambiguationService extends ServerResource {
           IOUtils.LINE_SEPARATOR, ExceptionUtils.getStackTrace(iobe));
     }
 
-    final NamedEntitiesInText nes = new NamedEntitiesInText(list);
-    final DocumentText text = new DocumentText(preAnnotatedText.replaceAll("<entity>", "").replaceAll("</entity>", ""));
+    return documentFrom(preAnnotatedText.replaceAll("<entity>", "").replaceAll("</entity>", ""), list);
 
-    document.addText(text);
-    document.addNamedEntitiesInText(nes);
-    return document;
   }
 
   public String NIFGerbil(final InputStream input, final AGDISTIS agdistis) throws IOException {
@@ -180,24 +202,40 @@ public class DisambiguationService extends ServerResource {
     return nifDocument;
   }
 
+  public String standardAG(final String text, final HashMap<Occurrence, InputEntity> entities,
+      final AGDISTIS agdistis) {
+    final Document d = textToDocument(text, entities);
+    return runAG(d);
+  }
+
   public String standardAG(final String text, final AGDISTIS agdistis) {
-    final JSONArray arr = new org.json.simple.JSONArray();
 
     final Document d = textToDocument(text);
+    return runAG(d);
+  }
+
+  public String runAG(final Document d) {
+
     agdistis.run(d, null);
 
+    final JSONArray arr = new JSONArray();
     for (final NamedEntityInText namedEntity : d.getNamedEntitiesInText()) {
       final JSONObject obj = new JSONObject();
       obj.put("namedEntity", namedEntity.getLabel());
       obj.put("start", namedEntity.getStartPos());
       obj.put("offset", namedEntity.getLength());
       obj.put("disambiguatedURL", namedEntity.getNamedEntityUri());
+
+      final JSONArray nedTypesArray = new JSONArray();
+      for (final String type : namedEntity.getDisambiguatedTypes()) {
+        nedTypesArray.add(type);
+      }
+      obj.put("disambiguatedTypes", nedTypesArray);
       arr.add(obj);
     }
     log.info("\t" + arr.toString());
     log.info("Finished Request");
     return arr.toString();
-
   }
 
   public String NIFType(final String text, final AGDISTIS agdistis) throws IOException {

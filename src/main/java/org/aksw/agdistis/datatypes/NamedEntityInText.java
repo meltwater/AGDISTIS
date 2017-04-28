@@ -1,6 +1,10 @@
 package org.aksw.agdistis.datatypes;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
+
+import org.apache.jena.ext.com.google.common.collect.Lists;
 
 public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneable, Serializable {
 
@@ -11,6 +15,7 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
   private String namedEntityUri;
   private String label;
   private String type;
+  private Collection<String> disambiguatedTypes;
 
   private String domain;
 
@@ -31,6 +36,8 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
       label = extractLabel(namedEntityUri);
     }
     this.type = type;
+    disambiguatedTypes = Lists.newLinkedList();
+    disambiguatedTypes.add(type);
   }
 
   public NamedEntityInText(final NamedEntityInText entity) {
@@ -158,6 +165,20 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
   @Override
   protected Object clone() throws CloneNotSupportedException {
     return new NamedEntityInText(this);
+  }
+
+  /**
+   * @return the disambiguatedTypes
+   */
+  public Collection<String> getDisambiguatedTypes() {
+    return disambiguatedTypes;
+  }
+
+  /**
+   * @param disambiguatedtype the disambiguatedTypes to set
+   */
+  public void setDisambiguatedTypes(final List<String> disambiguatedTypes) {
+    this.disambiguatedTypes = disambiguatedTypes;
   }
 
 }
