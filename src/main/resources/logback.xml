@@ -18,6 +18,7 @@
 				<version>[ignore]</version>
 			</fieldNames>
 			<customFields>{"module":"agdistis"}</customFields>
+			<customFields>{"service":"ned"}</customFields>
 		</encoder>
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
 			<level>TRACE</level>
