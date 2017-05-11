@@ -28,6 +28,47 @@ public class AGDISTISTest {
   private final Logger log = LoggerFactory.getLogger(AGDISTISTest.class);
 
   @Test
+  public void testCamelCaseOrgSuffix() throws InterruptedException, IOException {
+
+    final String text = "LabCorp has partnered with Walk-In Lab part of Walk-In LLC to provide blood test services across the country.";
+
+    final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
+
+    Occurrence occ = new Occurrence(0, "LabCorp".length());
+    final InputEntity labcorp = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
+        "organisation", occ.getStartOffset(), occ.getEndOffset());
+    entities.put(occ, labcorp);
+
+    occ = new Occurrence(27, "Walk-In Lab".length() + 27);
+    final InputEntity walkinlab = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
+        "organisation", occ.getStartOffset(), occ.getEndOffset());
+    entities.put(occ, walkinlab);
+
+    occ = new Occurrence(47, "Walk-In Lab".length() + 47);
+    final InputEntity walkinllc = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
+        "organisation", occ.getStartOffset(), occ.getEndOffset());
+    entities.put(occ, walkinllc);
+
+    final AGDISTIS agdistis = new AGDISTIS();
+    final Document d = DisambiguationService.textToDocument(text, entities);
+    agdistis.run(d, null);
+
+    final String labcorpURL = "http://dbpedia.org/resource/LabCorp";
+    final String walkinlabURL = "http://dbpedia.org/resource/fhai/504bccfb-e4f7-3c3b-a222-c394ad5c62a0";
+    final String walkinllcURL = "Walk-In LLC";
+    final HashMap<String, String> correct = new HashMap<String, String>();
+    correct.put(labcorp.getName(), labcorpURL);
+    correct.put(walkinlab.getName(), walkinlabURL);
+    correct.put(walkinllc.getName(), walkinllcURL);
+
+    for (final NamedEntityInText namedEntity : d.getNamedEntitiesInText()) {
+      final String disambiguatedURL = namedEntity.getNamedEntityUri();
+      System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
+      // Assert.assertEquals(correct.get(namedEntity.getLabel()), disambiguatedURL);
+    }
+  }
+
+  @Test
   public void testUmlaute() throws InterruptedException, IOException {
     final String taisho = "Emperor Taishō";
     final String taishoURL = "http://dbpedia.org/resource/Emperor_Taishō";
