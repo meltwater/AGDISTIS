@@ -88,7 +88,7 @@
 		<!-- Utils: Logstash -->
 		<net.logstash.logback.logstash-logback.encoder.version>4.8</net.logstash.logback.logstash-logback.encoder.version>
 		
-		<com.meltwater.fhai.kg.ned.agdistis-bergen-model.version>1.0</com.meltwater.fhai.kg.ned.agdistis-bergen-model.version>
+		<com.meltwater.fhai.kg.ned.agdistis-bergen-model.version>1.2</com.meltwater.fhai.kg.ned.agdistis-bergen-model.version>
 	</properties>
 	<prerequisites>
 		<maven>${maven.version}</maven>
