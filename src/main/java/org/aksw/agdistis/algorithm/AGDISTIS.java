@@ -88,15 +88,13 @@ public class AGDISTIS {
       orderedList.addAll(graph.getVertices());
       Collections.sort(orderedList);
       for (final NamedEntityInText entity : namedEntities) {
-        for (int i = 0; i < orderedList.size(); i++) {
-          final Node m = orderedList.get(i);
+        for (final Node m : orderedList) {
           // there can be one node (candidate) for two labels
           if (m.containsId(entity.getStartPos())) {
             entity.setNamedEntity(m.getCandidateURI());
             entity.setDisambiguatedTypes(cu.getDisambiguatedTypes(m.getCandidateURI(), index));
             break;
           }
-
         }
       }
       // To get all candidates along with their scores

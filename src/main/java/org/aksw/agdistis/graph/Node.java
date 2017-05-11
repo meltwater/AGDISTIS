@@ -70,9 +70,9 @@ public class Node implements Comparable<Node> {
 
     if (m.algorithm == Algorithm.HITS) {
       // System.out.println("AuthorityWeight");
-      if (m.getAuthorityWeight() == getAuthorityWeight()) {
+      if ((m.getAuthorityWeight()) == (getAuthorityWeight())) {
         return 0;
-      } else if (m.getAuthorityWeight() > getAuthorityWeight()) {
+      } else if ((m.getAuthorityWeight()) > (getAuthorityWeight())) {
         return 1;
       } else {
         return -1;

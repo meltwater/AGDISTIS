@@ -37,14 +37,18 @@ public class DomainWhiteLister {
       log.trace("Whitelisting cache hit.");
       return present;
     }
+    if (whiteList.contains(candidateURL) || whiteList.isEmpty()) {
+      whiteListCache.put(candidateURL, true);
+      return true;
+    }
     final List<Triple> tmp = index.search(candidateURL, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", null);
     if (tmp.isEmpty()) {
-      whiteListCache.put(candidateURL, true);
+      whiteListCache.put(candidateURL, false);
       return false;
     }
     for (final Triple triple : tmp) {
       if (!triple.getObject().contains("wordnet") && !triple.getObject().contains("wikicategory")) {
-        if (whiteList.contains(triple.getObject()) || whiteList.isEmpty()) {
+        if (whiteList.contains(triple.getObject())) {
           whiteListCache.put(candidateURL, true);
           return true;
         }

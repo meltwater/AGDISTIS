@@ -291,7 +291,7 @@
 	<distributionManagement>
 		<repository>
 			<uniqueVersion>false</uniqueVersion>
-			<id>fhai-releases</id>
+			<id>meltwater-fhai</id>
 			<name>Fairhai.AI Releases</name>
 			<url>https://maven.meltwater.net/nexus/content/repositories/meltwater-fhai-releases/</url>
 			<layout>default</layout>
