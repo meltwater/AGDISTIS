@@ -1,6 +1,0 @@
-http://dbpedia.org/ontology/PopulatedPlace
-http://dbpedia.org/ontology/Person
-http://dbpedia.org/ontology/Organisation
-http://xmlns.com/foaf/0.1/Person
-http://dbpedia.org/page/Product_(business)
-http://dbpedia.org/class/yago/YagoGeoEntity

@@ -39,7 +39,7 @@ public class CandidateUtil {
   private TripleIndexContext index2;
   private final StringDistance metric;
   private final CorporationAffixCleaner corporationAffixCleaner;
-  private final DomainWhiteLister domainWhiteLister;
+  private final DomainWhiteLister preDisambiguationDomainWhiteLister;
   private final boolean popularity;
   private final Algorithm algorithm;
   private final boolean acronym;
@@ -60,7 +60,8 @@ public class CandidateUtil {
       }
       metric = AGDISTISConfiguration.INSTANCE.getCandidatePruningMetric();
       corporationAffixCleaner = new CorporationAffixCleaner();
-      domainWhiteLister = new DomainWhiteLister(index);
+      preDisambiguationDomainWhiteLister = new DomainWhiteLister(index,
+          AGDISTISConfiguration.INSTANCE.getPreDisambiguationWhiteListPath());
       popularity = AGDISTISConfiguration.INSTANCE.getUsePopularity();
       acronym = AGDISTISConfiguration.INSTANCE.getUseAcronym();
       commonEntities = AGDISTISConfiguration.INSTANCE.getUseCommonEntities();
@@ -186,7 +187,7 @@ public class CandidateUtil {
                   addNodeToGraph(graph, nodes, entity, triple2, triple2.getSubject());
                   countFinalCandidates++;
                 } else {
-                  if (domainWhiteLister.fitsIntoDomain(triple2.getSubject())) {
+                  if (preDisambiguationDomainWhiteLister.fitsIntoDomain(triple2.getSubject())) {
                     log.trace("Entity {} with url {} was added to the graph.", entity, triple2.getSubject());
                     addNodeToGraph(graph, nodes, entity, triple2, triple2.getSubject());
                     countFinalCandidates++;
@@ -289,7 +290,7 @@ public class CandidateUtil {
               log.trace("Entity {} with url {} was added to the graph.", entity, candidateURL);
               countFinalCandidates++;
             } else {
-              if (domainWhiteLister.fitsIntoDomain(candidateURL)) {
+              if (preDisambiguationDomainWhiteLister.fitsIntoDomain(candidateURL)) {
                 toBeAdded.add(c);
                 added = true;
                 log.trace("Entity {} with url {} was added to the graph.", entity, candidateURL);
@@ -350,7 +351,7 @@ public class CandidateUtil {
                 added = true;
                 countFinalCandidates++;
               } else {
-                if (domainWhiteLister.fitsIntoDomain(candidateURL)) {
+                if (preDisambiguationDomainWhiteLister.fitsIntoDomain(candidateURL)) {
                   addNodeToGraph(graph, nodes, entity, c, candidateURL);
                   added = true;
                   countFinalCandidates++;

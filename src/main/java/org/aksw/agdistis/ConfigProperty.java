@@ -24,7 +24,8 @@ public enum ConfigProperty {
   CANDIDATE_PRUNING_METRIC,
   CANDIDATE_PRUNING_THRESHOLD,
   HEURISTIC_EXPANSION,
-  WHITE_LIST_PATH,
+  PRE_DISAMBIGUATION_WHITE_LIST_PATH,
+  POST_DISAMBIGUATION_WHITE_LIST_PATH,
   CORPORATION_AFFIXES_PATH,
   USE_POPULARITY,
   ALGORITHM,
@@ -44,7 +45,9 @@ public enum ConfigProperty {
       .put(NGRAM_DISTANCE, "ngramDistance").put(SEMANTIC_DEPTH, "maxDepth")
       .put(CANDIDATE_PRUNING_THRESHOLD, "candidatePruningThreshold")
       .put(CANDIDATE_PRUNING_METRIC, "candidatePruningMetric").put(USE_SURFACE_FORMS, "surfaceForms")
-      .put(HEURISTIC_EXPANSION, "heuristicExpansionOn").put(WHITE_LIST_PATH, "whiteList")
+      .put(HEURISTIC_EXPANSION, "heuristicExpansionOn")
+      .put(PRE_DISAMBIGUATION_WHITE_LIST_PATH, "preDisambiguationWhiteList")
+      .put(POST_DISAMBIGUATION_WHITE_LIST_PATH, "postDisambiguationWhiteList")
       .put(CORPORATION_AFFIXES_PATH, "corporationAffixes").put(USE_POPULARITY, "popularity").put(ALGORITHM, "algorithm")
       .put(USE_CONTEXT, "context").put(USE_ACRONYM, "acronym").put(USE_COMMON_ENTITIES, "commonEntities")
       .put(INDEX_TTL_PATH, "folderWithTTLFiles").put(INDEX_SURFACE_FORM_TSV_PATH, "surfaceFormTSV").build();

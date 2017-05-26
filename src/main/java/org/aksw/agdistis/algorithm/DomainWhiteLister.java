@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 
-import org.aksw.agdistis.AGDISTISConfiguration;
 import org.aksw.agdistis.util.Triple;
 import org.aksw.agdistis.util.TripleIndex;
 import org.slf4j.Logger;
@@ -23,10 +22,13 @@ public class DomainWhiteLister {
   HashSet<String> whiteList = new HashSet<String>();
   private final static Cache<String, Boolean> whiteListCache = CacheBuilder.newBuilder().maximumSize(50000).build();
 
-  public DomainWhiteLister(final TripleIndex index) throws IOException {
+  public DomainWhiteLister(final TripleIndex index, final Path whiteListPath) {
 
-    final Path path = AGDISTISConfiguration.INSTANCE.getWhiteListPath();
-    whiteList.addAll(IOUtils.readLines(DomainWhiteLister.class.getResourceAsStream(path.toString())));
+    try {
+      whiteList.addAll(IOUtils.readLines(DomainWhiteLister.class.getResourceAsStream(whiteListPath.toString())));
+    } catch (final IOException ioe) {
+      log.error("Unable to load whitelist content from {}. Proceed with an empty whitelist.", whiteListPath.toString());
+    }
     this.index = index;
   }
 

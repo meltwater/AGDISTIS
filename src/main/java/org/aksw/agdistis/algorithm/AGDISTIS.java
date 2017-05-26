@@ -31,6 +31,7 @@ public class AGDISTIS {
   // needed for the experiment about which properties increase accuracy
   private final double threshholdTrigram;
   private final int maxDepth;
+  private final DomainWhiteLister postDisambiguationDomainWhiteLister;
   private final boolean heuristicExpansionOn;
   private final boolean useSurfaceForms;
   private final Algorithm algorithm;
@@ -45,9 +46,11 @@ public class AGDISTIS {
     threshholdTrigram = AGDISTISConfiguration.INSTANCE.getCandidatePruningThreshold();
     maxDepth = AGDISTISConfiguration.INSTANCE.getSemanticDepth();
     useSurfaceForms = AGDISTISConfiguration.INSTANCE.getUseSurfaceForms();
-
     cu = new CandidateUtil();
     index = cu.getIndex();
+
+    postDisambiguationDomainWhiteLister = new DomainWhiteLister(index,
+        AGDISTISConfiguration.INSTANCE.getPostDisambiguationWhiteListPath());
   }
 
   public void run(final Document document, final Map<NamedEntityInText, List<CandidatesScore>> candidatesPerNE) {
@@ -90,7 +93,8 @@ public class AGDISTIS {
       for (final NamedEntityInText entity : namedEntities) {
         for (final Node m : orderedList) {
           // there can be one node (candidate) for two labels
-          if (m.containsId(entity.getStartPos())) {
+          if (m.containsId(entity.getStartPos())
+              && postDisambiguationDomainWhiteLister.fitsIntoDomain(m.getCandidateURI())) {
             entity.setNamedEntity(m.getCandidateURI());
             entity.setDisambiguatedTypes(cu.getDisambiguatedTypes(m.getCandidateURI(), index));
             break;

@@ -196,6 +196,7 @@ public class AGDISTISTest {
         + "</entity>, and her partner <entity>" + brad + "</entity> never played together in the same movie.";
 
     final AGDISTIS agdistis = new AGDISTIS();
+    AGDISTISConfiguration.INSTANCE.setUseContext(true);
     final Document d = DisambiguationService.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
@@ -299,7 +300,7 @@ public class AGDISTISTest {
 
   @Test
   public void testSingle() throws InterruptedException, IOException {
-    final String preAnnotatedText = "<entity>TomTom Extends Multi</entity> acquired <entity>MapQuest</entity> for 3 dollars.";
+    final String preAnnotatedText = "The <entity>Charlotte Hornets</entity> won the last match.";
 
     final AGDISTIS agdistis = new AGDISTIS();
     final Document d = DisambiguationService.textToDocument(preAnnotatedText);

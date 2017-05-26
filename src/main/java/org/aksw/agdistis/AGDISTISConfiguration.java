@@ -54,7 +54,8 @@ public class AGDISTISConfiguration {
     setSemanticDepth(2);
     setCandidatePruningThreshold(.87);
     setHeuristicExpansion(true);
-    setWhiteListPath(Paths.get("/config/whiteList.txt"));
+    setPreDisambiguationWhiteListPath(Paths.get("/config/pre-disambiguation-whitelist.txt"));
+    setPostDisambiguationWhiteListPath(Paths.get("/config/post-disambiguation-whitelist.txt"));
     setCorporationAffixesPath(Paths.get("/config/corporationAffixes.txt"));
     setUsePopularity(false);
     setAlgorithm(Algorithm.HITS);
@@ -108,8 +109,13 @@ public class AGDISTISConfiguration {
         setHeuristicExpansion(
             Boolean.parseBoolean(prop.getProperty(ConfigProperty.HEURISTIC_EXPANSION.getPropertyName())));
       }
-      if (prop.containsKey(ConfigProperty.WHITE_LIST_PATH.getPropertyName())) {
-        setWhiteListPath(Paths.get(prop.getProperty(ConfigProperty.WHITE_LIST_PATH.getPropertyName())));
+      if (prop.containsKey(ConfigProperty.PRE_DISAMBIGUATION_WHITE_LIST_PATH.getPropertyName())) {
+        setPreDisambiguationWhiteListPath(
+            Paths.get(prop.getProperty(ConfigProperty.PRE_DISAMBIGUATION_WHITE_LIST_PATH.getPropertyName())));
+      }
+      if (prop.containsKey(ConfigProperty.POST_DISAMBIGUATION_WHITE_LIST_PATH.getPropertyName())) {
+        setPostDisambiguationWhiteListPath(
+            Paths.get(prop.getProperty(ConfigProperty.POST_DISAMBIGUATION_WHITE_LIST_PATH.getPropertyName())));
       }
       if (prop.containsKey(ConfigProperty.CORPORATION_AFFIXES_PATH.getPropertyName())) {
         setCorporationAffixesPath(
@@ -227,8 +233,12 @@ public class AGDISTISConfiguration {
     return (boolean) CONFIGURATION.get(ConfigProperty.HEURISTIC_EXPANSION);
   }
 
-  public Path getWhiteListPath() {
-    return (Path) CONFIGURATION.get(ConfigProperty.WHITE_LIST_PATH);
+  public Path getPreDisambiguationWhiteListPath() {
+    return (Path) CONFIGURATION.get(ConfigProperty.PRE_DISAMBIGUATION_WHITE_LIST_PATH);
+  }
+
+  public Path getPostDisambiguationWhiteListPath() {
+    return (Path) CONFIGURATION.get(ConfigProperty.POST_DISAMBIGUATION_WHITE_LIST_PATH);
   }
 
   public Path getCorporationAffixesPath() {
@@ -332,9 +342,14 @@ public class AGDISTISConfiguration {
     CONFIGURATION.put(ConfigProperty.HEURISTIC_EXPANSION, heuristicExpansion);
   }
 
-  public void setWhiteListPath(final Path whiteListPath) {
-    Preconditions.checkNotNull(whiteListPath);
-    CONFIGURATION.put(ConfigProperty.WHITE_LIST_PATH, whiteListPath);
+  public void setPreDisambiguationWhiteListPath(final Path preDisambiguationwhiteListPath) {
+    Preconditions.checkNotNull(preDisambiguationwhiteListPath);
+    CONFIGURATION.put(ConfigProperty.PRE_DISAMBIGUATION_WHITE_LIST_PATH, preDisambiguationwhiteListPath);
+  }
+
+  public void setPostDisambiguationWhiteListPath(final Path postDisambiguationWhiteListPath) {
+    Preconditions.checkNotNull(postDisambiguationWhiteListPath);
+    CONFIGURATION.put(ConfigProperty.POST_DISAMBIGUATION_WHITE_LIST_PATH, postDisambiguationWhiteListPath);
   }
 
   public void setCorporationAffixesPath(final Path corporationAffixesPath) {
@@ -437,9 +452,14 @@ public class AGDISTISConfiguration {
     sb.append(getHeuristicExpansion());
     sb.append(IOUtils.LINE_SEPARATOR);
 
-    sb.append(ConfigProperty.WHITE_LIST_PATH.name());
+    sb.append(ConfigProperty.PRE_DISAMBIGUATION_WHITE_LIST_PATH.name());
     sb.append(": ");
-    sb.append(getWhiteListPath());
+    sb.append(getPreDisambiguationWhiteListPath());
+    sb.append(IOUtils.LINE_SEPARATOR);
+
+    sb.append(ConfigProperty.POST_DISAMBIGUATION_WHITE_LIST_PATH.name());
+    sb.append(": ");
+    sb.append(getPostDisambiguationWhiteListPath());
     sb.append(IOUtils.LINE_SEPARATOR);
 
     sb.append(ConfigProperty.CORPORATION_AFFIXES_PATH.name());
