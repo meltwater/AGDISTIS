@@ -28,7 +28,6 @@ public class AGDISTIS {
   private final String nodeType;
   private final CandidateUtil cu;
   private final TripleIndex index;
-  // needed for the experiment about which properties increase accuracy
   private final double threshholdTrigram;
   private final int maxDepth;
   private final DomainWhiteLister postDisambiguationDomainWhiteLister;
@@ -55,13 +54,14 @@ public class AGDISTIS {
 
   public void run(final Document document, final Map<NamedEntityInText, List<CandidatesScore>> candidatesPerNE) {
     try {
+
       final NamedEntitiesInText namedEntities = document.getNamedEntitiesInText();
       final DirectedSparseGraph<Node, String> graph = new DirectedSparseGraph<Node, String>();
 
       log.debug("Selecting candidates.");
       long start = System.currentTimeMillis();
       cu.insertCandidatesIntoText(graph, document, threshholdTrigram, heuristicExpansionOn, useSurfaceForms);
-      log.debug("Candidates computed in {} msecs", System.currentTimeMillis() - start);
+      final long candidateSelectionTime = System.currentTimeMillis() - start;
 
       log.debug("Performing graph-based disambiguation.");
       start = System.currentTimeMillis();
@@ -95,8 +95,11 @@ public class AGDISTIS {
           // there can be one node (candidate) for two labels
           if (m.containsId(entity.getStartPos())
               && postDisambiguationDomainWhiteLister.fitsIntoDomain(m.getCandidateURI())) {
-            entity.setNamedEntity(m.getCandidateURI());
+            final String candidateURI = m.getCandidateURI();
+            entity.setNamedEntity(candidateURI);
             entity.setDisambiguatedTypes(cu.getDisambiguatedTypes(m.getCandidateURI(), index));
+            entity.setAuthorityWeight(m.getAuthorityWeight());
+            entity.setHubWeight(m.getHubWeight());
             break;
           }
         }
@@ -122,7 +125,14 @@ public class AGDISTIS {
           candidatesPerNE.put(entity, listCandidates);
         }
       }
-      log.debug("Disambiguation completed in {} msecs.", System.currentTimeMillis() - start);
+      final long disambiguationTime = System.currentTimeMillis() - start;
+      document.setDisambiguationTime(disambiguationTime);
+      document.setCandidateSelectionTime(candidateSelectionTime);
+      document.setAGDISTISVersion(AGDISTISConfiguration.INSTANCE.getAGDISTISVersion());
+
+      log.debug("Candidates computed in {} msecs", candidateSelectionTime);
+      log.debug("Disambiguation completed in {} msecs.", disambiguationTime);
+
     } catch (final Exception e) {
       log.error("AGDISTIS cannot be run on this document.", e);
     }

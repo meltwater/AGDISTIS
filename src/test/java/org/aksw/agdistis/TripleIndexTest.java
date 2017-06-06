@@ -1,5 +1,6 @@
 package org.aksw.agdistis;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -53,6 +54,14 @@ public class TripleIndexTest {
     candidateURL = "http://dbpedia.org/resource/Barack_Obama";
     redirect = index.search(candidateURL, "http://dbpedia.org/ontology/wikiPageRedirects", null);
     assertTrue(redirect.size() == 0);
+  }
+
+  @Test
+  public void testSameAs() {
+    final String candidateURL = "http://dbpedia.org/resource/fhai/b8cc84ee07d271cfdc808995baeb6b8a";
+    final List<Triple> sameas = index.search(candidateURL, "http://www.w3.org/2002/07/owl#sameAs", null);
+    assertEquals(1, sameas.size());
+    assertEquals("http://dbpedia.org/resource/CDC_Group", sameas.get(0).getObject());
   }
 
   @Test

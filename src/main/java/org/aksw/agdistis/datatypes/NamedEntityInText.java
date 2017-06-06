@@ -16,6 +16,8 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
   private String label;
   private String type;
   private Collection<String> disambiguatedTypes;
+  private double authorityWeight;
+  private double hubWeight;
 
   private String domain;
 
@@ -37,7 +39,6 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
     }
     this.type = type;
     disambiguatedTypes = Lists.newLinkedList();
-    disambiguatedTypes.add(type);
   }
 
   public NamedEntityInText(final NamedEntityInText entity) {
@@ -179,6 +180,34 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
    */
   public void setDisambiguatedTypes(final List<String> disambiguatedTypes) {
     this.disambiguatedTypes = disambiguatedTypes;
+  }
+
+  /**
+   * @return the authorityWeight
+   */
+  public double getAuthorityWeight() {
+    return authorityWeight;
+  }
+
+  /**
+   * @param authorityWeight the authorityWeight to set
+   */
+  public void setAuthorityWeight(final double authorityWeight) {
+    this.authorityWeight = authorityWeight;
+  }
+
+  /**
+   * @return the hubWeight
+   */
+  public double getHubWeight() {
+    return hubWeight;
+  }
+
+  /**
+   * @param hubWeight the hubWeight to set
+   */
+  public void setHubWeight(final double hubWeight) {
+    this.hubWeight = hubWeight;
   }
 
 }

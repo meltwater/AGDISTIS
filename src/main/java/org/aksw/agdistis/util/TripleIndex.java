@@ -101,7 +101,7 @@ public class TripleIndex {
       // object));
       // bq.add(tq, BooleanClause.Occur.MUST);
       // }
-      if (object != null && !StringUtils.isBlank(object)) {
+      if ((object != null) && !StringUtils.isBlank(object)) {
         Query q = null;
         if (urlValidator.isValid(object)) {
 
@@ -117,16 +117,7 @@ public class TripleIndex {
           bq.add(q, BooleanClause.Occur.MUST);
 
         }
-        // for index from 2014 comment the "else if" below.
-        // else if (!object.contains(" ")) {
-        //
-        // // System.out.println("here regex");
-        // KeywordAnalyzer kanalyzer = new KeywordAnalyzer();
-        // q = new QueryParser(LUCENE44, FIELD_NAME_OBJECT_LITERAL,
-        // kanalyzer).parse(object);
-        //
-        // bq.add(q, BooleanClause.Occur.MUST);
-        // }
+
         else {
           final Analyzer analyzer = new LiteralAnalyzer(LUCENE44);
           final QueryParser parser = new QueryParser(LUCENE44, FIELD_NAME_OBJECT_LITERAL, analyzer);
@@ -135,7 +126,6 @@ public class TripleIndex {
               .escape(object = StringUtils.replaceEach(object, _LUCENE_KEYWORDS, _LUCENE_KEYWORDS_REPLACEMENTS)));
           bq.add(q, BooleanClause.Occur.MUST);
         }
-        // bq.add(q, BooleanClause.Occur.MUST);
       }
 
       // use the cache
@@ -156,7 +146,7 @@ public class TripleIndex {
   }
 
   private List<Triple> getFromIndex(final int maxNumberOfResults, final BooleanQuery bq) throws IOException {
-    log.debug("\t start asking index...");
+    log.trace("start asking index...");
     final TopScoreDocCollector collector = TopScoreDocCollector.create(maxNumberOfResults, true);
     // Similarity BM25Similarity = new BM25Similarity();
     // isearcher.setSimilarity(BM25Similarity);
@@ -176,7 +166,7 @@ public class TripleIndex {
       final Triple triple = new Triple(s, p, o);
       triples.add(triple);
     }
-    log.debug("\t finished asking index...");
+    log.trace("finished asking index...");
     return triples;
   }
 

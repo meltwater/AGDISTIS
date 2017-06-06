@@ -33,7 +33,10 @@ import edu.uci.ics.jung.graph.DirectedSparseGraph;
 
 public class CandidateUtil {
 
-  private static Logger log = LoggerFactory.getLogger(CandidateUtil.class);
+  private static Logger LOGGER = LoggerFactory.getLogger(CandidateUtil.class);
+  private static final String THING_TYPE = "http://www.w3.org/2002/07/owl#Thing";
+  private static final String DBPEDIA_TYPE_PREFIX = "http://dbpedia.org/ontology/";
+
   private final String nodeType;
   private final TripleIndex index;
   private TripleIndexContext index2;
@@ -44,10 +47,8 @@ public class CandidateUtil {
   private final Algorithm algorithm;
   private final boolean acronym;
   private final boolean commonEntities;
-  private final static Cache<String, Boolean> disambiguationCache = CacheBuilder.newBuilder().maximumSize(50000)
-      .build();
-  private final static Cache<String, List<Triple>> candidateCache = CacheBuilder.newBuilder().maximumSize(50000)
-      .build();
+  private final Cache<String, Boolean> disambiguationCache = CacheBuilder.newBuilder().maximumSize(50000).build();
+  private final Cache<String, List<Triple>> candidateCache = CacheBuilder.newBuilder().maximumSize(50000).build();
   private final static Stemming stemmer = new Stemming();
 
   public CandidateUtil() {
@@ -87,10 +88,10 @@ public class CandidateUtil {
       sb.append(" ");
     }
     final String entities = StringUtils.normalizeSpace(sb.toString());
-    log.trace("entities" + entities);
+    LOGGER.trace("entities" + entities);
     final HashSet<String> heuristicExpansion = new HashSet<String>();
     for (final NamedEntityInText entity : namedEntities) {
-      log.debug("Disambiguating label: " + entity.getLabel());
+      LOGGER.debug("Disambiguating label: " + entity.getLabel());
       final long start = System.currentTimeMillis();
       // Heuristic expansion is a rough approximation of a coreference resolution.
       String expandedlabel = entity.getLabel();
@@ -98,7 +99,7 @@ public class CandidateUtil {
         expandedlabel = heuristicExpansion(heuristicExpansion, entity.getLabel());
       }
       checkLabelCandidates(graph, threshholdTrigram, nodes, entity, expandedlabel, useSurfaceForms, entities);
-      log.trace("Candidates for {} located in {} msecs.", entity.getLabel(), (System.currentTimeMillis() - start));
+      LOGGER.trace("Candidates for {} located in {} msecs.", entity.getLabel(), (System.currentTimeMillis() - start));
     }
   }
 
@@ -111,12 +112,12 @@ public class CandidateUtil {
         if ((tmp.length() > key.length()) && (tmp != label)) {
           tmp = key;
           expansion = true;
-          log.trace("Heuristic expansion: {} --> {}", label, key);
+          LOGGER.trace("Heuristic expansion: {} --> {}", label, key);
         }
         if ((tmp.length() < key.length()) && (tmp == label)) {
           tmp = key;
           expansion = true;
-          log.trace("Heuristic expansion: {} --> {}", label, key);
+          LOGGER.trace("Heuristic expansion: {} --> {}", label, key);
         }
       }
     }
@@ -130,7 +131,7 @@ public class CandidateUtil {
   public void addNodeToGraph(final DirectedSparseGraph<Node, String> graph, final HashMap<String, Node> nodes,
       final NamedEntityInText entity, final Triple c, final String candidateURL) throws IOException {
     final Node currentNode = new Node(candidateURL, 0, 0, algorithm);
-    log.debug("CandidateURL: " + candidateURL);
+    LOGGER.debug("CandidateURL: " + candidateURL);
     // candidates are connected to a specific label in the text via their
     // start position
     if (!graph.addVertex(currentNode)) {
@@ -138,7 +139,7 @@ public class CandidateUtil {
       if (nodes.get(candidateURL) != null) {
         nodes.get(candidateURL).addId(st);
       } else {
-        log.error("This vertex couldn't be added because of an bug in Jung: " + candidateURL);
+        LOGGER.error("This vertex couldn't be added because of an bug in Jung: " + candidateURL);
       }
     } else {
       currentNode.addId(entity.getStartPos());
@@ -165,7 +166,7 @@ public class CandidateUtil {
       final PreprocessingNLP nlp = new PreprocessingNLP();
       // Label treatment
       label = corporationAffixCleaner.cleanLabelsfromCorporationIdentifier(label);
-      log.debug("Clean label: {}", label);
+      LOGGER.debug("Clean label: {}", label);
       label = nlp.preprocess(label);
       // label treatment finished ->
       // searchByAcronym
@@ -183,12 +184,12 @@ public class CandidateUtil {
                 // follow redirect
                 triple2.setSubject(redirect(triple2.getSubject()));
                 if (commonEntities == true) {
-                  log.trace("Entity {} with url {} was added to the graph.", entity, triple2.getSubject());
+                  LOGGER.trace("Entity {} with url {} was added to the graph.", entity, triple2.getSubject());
                   addNodeToGraph(graph, nodes, entity, triple2, triple2.getSubject());
                   countFinalCandidates++;
                 } else {
                   if (preDisambiguationDomainWhiteLister.fitsIntoDomain(triple2.getSubject())) {
-                    log.trace("Entity {} with url {} was added to the graph.", entity, triple2.getSubject());
+                    LOGGER.trace("Entity {} with url {} was added to the graph.", entity, triple2.getSubject());
                     addNodeToGraph(graph, nodes, entity, triple2, triple2.getSubject());
                     countFinalCandidates++;
                   }
@@ -197,7 +198,7 @@ public class CandidateUtil {
             }
             acronymCandidatesTemp2.clear();
           }
-          log.debug("Found {} candidates for acronym {}. [surface form={}]", countFinalCandidates, label,
+          LOGGER.debug("Found {} candidates for acronym {}. [surface form={}]", countFinalCandidates, label,
               searchInSurfaceForms);
         }
       }
@@ -206,9 +207,9 @@ public class CandidateUtil {
       if (countFinalCandidates == 0) {
         candidates = searchCandidatesByLabel(label, searchInSurfaceForms, "", popularity);
         if (searchInSurfaceForms) {
-          log.debug("Found {} surface form candidates for label {}.", candidates.size(), label);
+          LOGGER.debug("Found {} surface form candidates for label {}.", candidates.size(), label);
         } else {
-          log.debug("Found {} candidates for label {}.", candidates.size(), label);
+          LOGGER.debug("Found {} candidates for label {}.", candidates.size(), label);
         }
 
         if (candidates.size() == 0) {
@@ -216,12 +217,12 @@ public class CandidateUtil {
             // removing plural s
             label = label.substring(0, label.lastIndexOf("'s"));
             candidates = searchCandidatesByLabel(label, searchInSurfaceForms, "", popularity);
-            log.debug("No candidates founds for singularized label.");
+            LOGGER.debug("No candidates founds for singularized label.");
           } else if (label.endsWith("s")) {
             // removing genitive s
             label = label.substring(0, label.lastIndexOf("s"));
             candidates = searchCandidatesByLabel(label, searchInSurfaceForms, "", popularity);
-            log.debug("No candidates founds after removing genitive.");
+            LOGGER.debug("No candidates founds after removing genitive.");
           }
         }
 
@@ -233,13 +234,14 @@ public class CandidateUtil {
           if (!candidates.isEmpty()) {
 
           }
-          log.debug("Found {} candidates by splitting {} into {}.", candidates.size(), label, camelSplit);
+          LOGGER.debug("Found {} candidates by splitting {} into {}.", candidates.size(), label, camelSplit);
         }
 
         if (candidates.isEmpty() && !label.equals(expandedLabel)) {
           candidates = searchCandidatesByLabel(expandedLabel, searchInSurfaceForms, "", popularity);
         }
-        log.debug("Found {} candidates for expanded label  {} of label {}.", candidates.size(), expandedLabel, label);
+        LOGGER.debug("Found {} candidates for expanded label  {} of label {}.", candidates.size(), expandedLabel,
+            label);
 
         // If the set of candidates is still empty, here we apply stemming
         // technique
@@ -249,14 +251,14 @@ public class CandidateUtil {
           if (StringUtils.isNotBlank(temp)) {
             candidates = searchCandidatesByLabel(temp, searchInSurfaceForms, "", popularity);
           }
-          log.debug("Found {} candidates for stem  {} of label {}.", candidates.size(), temp, label);
+          LOGGER.debug("Found {} candidates for stem  {} of label {}.", candidates.size(), temp, label);
         }
 
         // Prune candidates using string similarity.
         toBeAdded = Lists.newLinkedList();
         boolean added = false;
         for (final Triple c : candidates) {
-          log.debug("Candidate triple to check: " + c);
+          LOGGER.debug("Candidate triple to check: " + c);
           String candidateURL = c.getSubject();
           String surfaceForm = c.getObject();
           surfaceForm = nlp.preprocess(surfaceForm);
@@ -287,13 +289,13 @@ public class CandidateUtil {
               // Domain white list does not apply. All entities are accepted.
               toBeAdded.add(c);
               added = true;
-              log.trace("Entity {} with url {} was added to the graph.", entity, candidateURL);
+              LOGGER.trace("Entity {} with url {} was added to the graph.", entity, candidateURL);
               countFinalCandidates++;
             } else {
               if (preDisambiguationDomainWhiteLister.fitsIntoDomain(candidateURL)) {
                 toBeAdded.add(c);
                 added = true;
-                log.trace("Entity {} with url {} was added to the graph.", entity, candidateURL);
+                LOGGER.trace("Entity {} with url {} was added to the graph.", entity, candidateURL);
                 countFinalCandidates++;
               }
             }
@@ -301,13 +303,13 @@ public class CandidateUtil {
         }
         // Looking by context starts here.
         if (!added && !searchInSurfaceForms && AGDISTISConfiguration.INSTANCE.getUseContext()) {
-          log.debug("searchByContext");
+          LOGGER.debug("searchByContext");
           candidatesContext = searchCandidatesByContext(entities, label); // looking
                                                                           // for
                                                                           // all
                                                                           // entities
                                                                           // together
-          log.debug("\t\tnumber of candidates by context: " + candidatesContext.size());
+          LOGGER.debug("\t\tnumber of candidates by context: " + candidatesContext.size());
 
           // taking all possibles SF for each resource found.
           if (candidatesContext != null) {
@@ -320,7 +322,7 @@ public class CandidateUtil {
           // Here, we apply two filters for increasing the quality of
           // possible candidates
           for (final Triple c : candidatesContextbyLabel) {
-            log.debug("Candidate triple to check: " + c);
+            LOGGER.debug("Candidate triple to check: " + c);
             String candidateURL = c.getSubject();
             String cleanCandidateURL = candidateURL.replace(nodeType, "");
             cleanCandidateURL = nlp.preprocess(cleanCandidateURL);
@@ -366,13 +368,13 @@ public class CandidateUtil {
 
         // Looking for the given label among the set of surface forms.
         if (!added && !searchInSurfaceForms) {
-          log.debug("Search using SF from disambiguation, redirects and from anchors web pages");
+          LOGGER.debug("Search using SF from disambiguation, redirects and from anchors web pages");
           checkLabelCandidates(graph, threshholdTrigram, nodes, entity, expandedLabel, true, entities);
         }
 
       }
     } else {
-      log.trace("Candidate cache hit!");
+      LOGGER.trace("Candidate cache hit!");
     }
     // Add surviving candidates to the graph
     for (final Triple t : toBeAdded) {
@@ -529,7 +531,10 @@ public class CandidateUtil {
         null);
 
     for (final Triple triple : triples) {
-      types.add(triple.getObject());
+      final String typeURI = triple.getObject();
+      if (!typeURI.equals(THING_TYPE) && typeURI.startsWith(DBPEDIA_TYPE_PREFIX)) {
+        types.add(typeURI);
+      }
     }
     return types;
   }
@@ -559,7 +564,7 @@ public class CandidateUtil {
     if (redirect.size() == 1) {
       return redirect.get(0).getObject();
     } else if (redirect.size() > 1) {
-      log.warn("Several redirects detected for :" + candidateURL);
+      LOGGER.warn("Several redirects detected for :" + candidateURL);
       return candidateURL;
     } else {
       return candidateURL;
