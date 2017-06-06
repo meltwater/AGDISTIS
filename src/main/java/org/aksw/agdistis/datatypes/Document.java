@@ -4,69 +4,112 @@ import java.io.Serializable;
 
 public class Document implements Comparable<Document>, Serializable {
 
-	private static final long serialVersionUID = -3213426637730517409L;
+  private static final long serialVersionUID = -3213426637730517409L;
 
-	protected int documentId;
+  protected int documentId;
+  private String text;
+  private NamedEntitiesInText nes;
+  private long disambiguationTime;
+  private long candidateSelectionTime;
+  private String agdistisVersion;
 
-	private DocumentText text;
+  public Document() {
+  }
 
-	private NamedEntitiesInText nes;
+  public Document(final int documentId) {
+    this.documentId = documentId;
+  }
 
-	public Document() {
-	}
+  public int getDocumentId() {
+    return documentId;
+  }
 
-	public Document(int documentId) {
-		this.documentId = documentId;
-	}
+  public void setDocumentId(final int documentId) {
+    this.documentId = documentId;
+  }
 
-	public int getDocumentId() {
-		return documentId;
-	}
+  @Override
+  public boolean equals(final Object obj) {
+    if (obj instanceof Document) {
+      return documentId == ((Document) obj).getDocumentId();
+    } else {
+      return super.equals(obj);
+    }
+  }
 
-	public void setDocumentId(int documentId) {
-		this.documentId = documentId;
-	}
+  @Override
+  public int compareTo(final Document document) {
+    if (documentId == document.getDocumentId()) {
+      return 0;
+    }
+    return documentId < document.getDocumentId() ? -1 : 1;
+  }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof Document) {
-			return this.documentId == ((Document) obj).getDocumentId();
-		} else {
-			return super.equals(obj);
-		}
-	}
+  @Override
+  public String toString() {
+    final StringBuilder result = new StringBuilder();
+    result.append("Document id=" + documentId);
+    result.append("\n[ ");
+    result.append("]\n");
+    return result.toString();
+  }
 
-	@Override
-	public int compareTo(Document document) {
-		if (this.documentId == document.getDocumentId()) {
-			return 0;
-		}
-		return this.documentId < document.getDocumentId() ? -1 : 1;
-	}
+  public void addText(final String text) {
+    this.text = text;
+  }
 
-	@Override
-	public String toString() {
-		StringBuilder result = new StringBuilder();
-		result.append("Document id=" + documentId);
-		result.append("\n[ ");
-		result.append("]\n");
-		return result.toString();
-	}
+  public NamedEntitiesInText getNamedEntitiesInText() {
+    return nes;
+  }
 
-	public void addText(DocumentText text) {
-		this.text = text;
-	}
+  public String getText() {
+    return text;
+  }
 
-	public NamedEntitiesInText getNamedEntitiesInText() {
-		return this.nes;
-	}
+  public void addNamedEntitiesInText(final NamedEntitiesInText nes) {
+    this.nes = nes;
+  }
 
-	public DocumentText DocumentText() {
-		return this.text;
-	}
+  /**
+   * @return the disambiguationTime
+   */
+  public long getDisambiguationTime() {
+    return disambiguationTime;
+  }
 
-	public void addNamedEntitiesInText(NamedEntitiesInText nes) {
-		this.nes = nes;
-	}
+  /**
+   * @param disambiguationTime the disambiguationTime to set
+   */
+  public void setDisambiguationTime(final long disambiguationTime) {
+    this.disambiguationTime = disambiguationTime;
+  }
+
+  /**
+   * @return the candidateSelectionTime
+   */
+  public long getCandidateSelectionTime() {
+    return candidateSelectionTime;
+  }
+
+  /**
+   * @param candidateSelectionTime the candidateSelectionTime to set
+   */
+  public void setCandidateSelectionTime(final long candidateSelectionTime) {
+    this.candidateSelectionTime = candidateSelectionTime;
+  }
+
+  /**
+   * @return the agdistisVersion
+   */
+  public String getAgdistisVersion() {
+    return agdistisVersion;
+  }
+
+  /**
+   * @param agdistisVersion the agdistisVersion to set
+   */
+  public void setAGDISTISVersion(String agdistisVersion) {
+    this.agdistisVersion = agdistisVersion;
+  }
 
 }

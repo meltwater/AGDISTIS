@@ -10,6 +10,7 @@ import org.aksw.agdistis.algorithm.AGDISTIS;
 import org.aksw.agdistis.datatypes.Document;
 import org.aksw.agdistis.datatypes.NamedEntitiesInText;
 import org.aksw.agdistis.datatypes.NamedEntityInText;
+import org.aksw.agdistis.util.Utils;
 import org.aksw.agdistis.webapp.DisambiguationService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,12 +21,15 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.meltwater.fhai.kg.ned.agdistis.model.InputEntity;
 import com.meltwater.fhai.kg.ned.agdistis.model.Occurrence;
 
 public class AGDISTISTest {
 
-  private final Logger log = LoggerFactory.getLogger(AGDISTISTest.class);
+  private static final Logger log = LoggerFactory.getLogger(AGDISTISTest.class);
+  private static final ObjectMapper mapper = new ObjectMapper();
 
   @Test
   public void testCamelCaseOrgSuffix() throws InterruptedException, IOException {
@@ -44,13 +48,13 @@ public class AGDISTISTest {
         "organisation", occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, walkinlab);
 
-    occ = new Occurrence(47, "Walk-In Lab".length() + 47);
+    occ = new Occurrence(47, "Walk-In LLC".length() + 47);
     final InputEntity walkinllc = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
         "organisation", occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, walkinllc);
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = DisambiguationService.textToDocument(text, entities);
+    final Document d = Utils.textToDocument(text, entities);
     agdistis.run(d, null);
 
     final String labcorpURL = "http://dbpedia.org/resource/LabCorp";
@@ -64,7 +68,7 @@ public class AGDISTISTest {
     for (final NamedEntityInText namedEntity : d.getNamedEntitiesInText()) {
       final String disambiguatedURL = namedEntity.getNamedEntityUri();
       System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
-      // Assert.assertEquals(correct.get(namedEntity.getLabel()), disambiguatedURL);
+      Assert.assertEquals(correct.get(namedEntity.getLabel()), disambiguatedURL);
     }
   }
 
@@ -82,7 +86,7 @@ public class AGDISTISTest {
         + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -117,7 +121,7 @@ public class AGDISTISTest {
         + city + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -156,7 +160,7 @@ public class AGDISTISTest {
 
     final String plainText = obama.getName() + " visits " + merkel.getName() + " in " + berlin.getName() + ".";
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = DisambiguationService.textToDocument(plainText, entities);
+    final Document d = Utils.textToDocument(plainText, entities);
     agdistis.run(d, null);
 
     final HashMap<String, String> correct = new HashMap<String, String>();
@@ -197,7 +201,7 @@ public class AGDISTISTest {
 
     final AGDISTIS agdistis = new AGDISTIS();
     AGDISTISConfiguration.INSTANCE.setUseContext(true);
-    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -230,7 +234,7 @@ public class AGDISTISTest {
     final String entity = "ConforMIS";
     final String entityURL = "http://dbpedia.org/resource/fhai/45fdb6ae-966a-3024-885e-14b5aa8ecac0";
     final String entity2 = "GigSalad";
-    final String entity2URL = "http://dbpedia.org/resource/fhai/09edd628-520e-38fd-b720-d9e6741c758b";
+    final String entity2URL = "http://dbpedia.org/resource/fhai/bafd9f0b68b1aee0f87d57e99cd24c11";
     final String entity3 = "eOasia";
     final String entity3URL = "http://dbpedia.org/resource/fhai/fbd807a2-9678-3df8-b57c-e0063d5bda2f";
     final String entity4 = "DermaDoctor";
@@ -248,7 +252,7 @@ public class AGDISTISTest {
         + "</entity> partners and the other <entity>" + entity4 + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -282,7 +286,7 @@ public class AGDISTISTest {
         + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -299,26 +303,6 @@ public class AGDISTISTest {
   }
 
   @Test
-  public void testSingle() throws InterruptedException, IOException {
-    final String preAnnotatedText = "The <entity>Charlotte Hornets</entity> won the last match.";
-
-    final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
-    agdistis.run(d, null);
-
-    final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
-    final HashMap<NamedEntityInText, String> results = new HashMap<NamedEntityInText, String>();
-    for (final NamedEntityInText namedEntity : namedEntities) {
-      final String disambiguatedURL = namedEntity.getNamedEntityUri();
-      results.put(namedEntity, disambiguatedURL);
-    }
-    for (final NamedEntityInText namedEntity : namedEntities) {
-      final String disambiguatedURL = namedEntity.getNamedEntityUri();
-      System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
-    }
-  }
-
-  @Test
   public void testFromFile() throws InterruptedException, IOException {
 
     final StringWriter writer = new StringWriter();
@@ -328,7 +312,7 @@ public class AGDISTISTest {
     long start = System.currentTimeMillis();
     final AGDISTIS agdistis = new AGDISTIS();
     log.info("AGDISTIS loaded in: {} msecs.", (System.currentTimeMillis() - start));
-    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument(preAnnotatedText);
     start = System.currentTimeMillis();
     agdistis.run(d, null);
     log.info("Done in: {} msecs.", (System.currentTimeMillis() - start));
@@ -360,7 +344,7 @@ public class AGDISTISTest {
         + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = DisambiguationService.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument(preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -376,4 +360,52 @@ public class AGDISTISTest {
     }
   }
 
+  @Test
+  public void testSingle() throws InterruptedException, IOException {
+    final String preAnnotatedText = "The <entity>Charlotte Hornets</entity> won the last match.";
+
+    final AGDISTIS agdistis = new AGDISTIS();
+    final Document d = Utils.textToDocument(preAnnotatedText);
+    agdistis.run(d, null);
+
+    final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
+    final HashMap<NamedEntityInText, String> results = new HashMap<NamedEntityInText, String>();
+    for (final NamedEntityInText namedEntity : namedEntities) {
+      final String disambiguatedURL = namedEntity.getNamedEntityUri();
+      results.put(namedEntity, disambiguatedURL);
+    }
+    for (final NamedEntityInText namedEntity : namedEntities) {
+      final String disambiguatedURL = namedEntity.getNamedEntityUri();
+      System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
+    }
+  }
+
+  @Test
+  public void testJsonOutput() throws InterruptedException, IOException {
+
+    final String text = "LabCorp has partnered with Walk-In Lab part of Walk-In LLC to provide blood test services across the country.";
+
+    final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
+
+    Occurrence occ = new Occurrence(0, "LabCorp".length());
+    final InputEntity labcorp = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
+        "organisation", occ.getStartOffset(), occ.getEndOffset());
+    entities.put(occ, labcorp);
+
+    occ = new Occurrence(27, "Walk-In Lab".length() + 27);
+    final InputEntity walkinlab = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
+        "organisation", occ.getStartOffset(), occ.getEndOffset());
+    entities.put(occ, walkinlab);
+
+    occ = new Occurrence(47, "Walk-In LLC".length() + 47);
+    final InputEntity walkinllc = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
+        "organisation", occ.getStartOffset(), occ.getEndOffset());
+    entities.put(occ, walkinllc);
+
+    final DisambiguationService service = new DisambiguationService();
+    final String agdistisOutput = service.standardAG(text, entities);
+    final ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
+
+    log.info(IOUtils.LINE_SEPARATOR + writer.writeValueAsString(mapper.readTree(agdistisOutput)));
+  }
 }

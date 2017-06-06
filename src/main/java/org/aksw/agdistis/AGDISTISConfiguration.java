@@ -1,7 +1,6 @@
 package org.aksw.agdistis;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
@@ -30,7 +29,8 @@ public class AGDISTISConfiguration {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AGDISTISConfiguration.class);
   private static final Path _PATH_WORKING_DIR = Paths.get(System.getProperty("user.dir"));
-  private static final Path _PATH_DEFAULT_CONFIG_FILE = Paths.get("/config/agdistis.properties");
+  private static final String _AGDISTIS_PROPERTY_FILE = "agdistis.properties";
+  private static final Path _PATH_DEFAULT_CONFIG_FILE = Paths.get("/config", _AGDISTIS_PROPERTY_FILE);
 
   private static Map<ConfigProperty, Object> CONFIGURATION;
 
@@ -69,9 +69,15 @@ public class AGDISTISConfiguration {
     // Attempt to load the configuration file. Values in the file-based configuration override the default
     // configuration.
     try {
+
       final Properties prop = new Properties();
-      final InputStream input = AGDISTISConfiguration.class.getResourceAsStream(_PATH_DEFAULT_CONFIG_FILE.toString());
-      prop.load(input);
+      // Load the meta-properties.
+      prop.load(AGDISTISConfiguration.class.getResourceAsStream(_AGDISTIS_PROPERTY_FILE));
+      // Load the actual properties.
+      prop.load(AGDISTISConfiguration.class.getResourceAsStream(_PATH_DEFAULT_CONFIG_FILE.toString()));
+
+      // The AGDISTIS version must be there
+      setAGDISTISVersion(prop.getProperty(ConfigProperty.AGDISTIS_VERSION.getPropertyName()));
 
       // override default properties.
       if (prop.containsKey(ConfigProperty.MAIN_INDEX_PATH.getPropertyName())) {
@@ -88,9 +94,6 @@ public class AGDISTISConfiguration {
       }
       if (prop.containsKey(ConfigProperty.BASE_URI.getPropertyName())) {
         setBaseURI(URI.create(prop.getProperty(ConfigProperty.BASE_URI.getPropertyName())));
-      }
-      if (prop.containsKey(ConfigProperty.DBPEDIA_ENDPOINT.getPropertyName())) {
-        setDBPediaEndpoint(URI.create(prop.getProperty(ConfigProperty.DBPEDIA_ENDPOINT.getPropertyName())));
       }
       if (prop.containsKey(ConfigProperty.NGRAM_DISTANCE.getPropertyName())) {
         setNGramDistance(Integer.parseInt(prop.getProperty(ConfigProperty.NGRAM_DISTANCE.getPropertyName())));
@@ -277,6 +280,10 @@ public class AGDISTISConfiguration {
     return (Path) CONFIGURATION.get(ConfigProperty.INDEX_SURFACE_FORM_TSV_PATH);
   }
 
+  public String getAGDISTISVersion() {
+    return (String) CONFIGURATION.get(ConfigProperty.AGDISTIS_VERSION);
+  }
+
   /*
    * Setters. These values override the default and file-based configuration values.
    */
@@ -390,6 +397,11 @@ public class AGDISTISConfiguration {
   public void setIndexSurfaceFormTSVPath(final Path surfaceFormTSVPath) {
     Preconditions.checkNotNull(surfaceFormTSVPath);
     CONFIGURATION.put(ConfigProperty.INDEX_SURFACE_FORM_TSV_PATH, surfaceFormTSVPath);
+  }
+
+  private void setAGDISTISVersion(final String agdistisVersion) {
+    Preconditions.checkNotNull(agdistisVersion);
+    CONFIGURATION.put(ConfigProperty.AGDISTIS_VERSION, agdistisVersion);
   }
 
   public String toString() {

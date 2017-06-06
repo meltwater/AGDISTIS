@@ -34,7 +34,8 @@ public enum ConfigProperty {
   USE_ACRONYM,
   USE_COMMON_ENTITIES,
   INDEX_TTL_PATH,
-  INDEX_SURFACE_FORM_TSV_PATH;
+  INDEX_SURFACE_FORM_TSV_PATH,
+  AGDISTIS_VERSION;
   //@formatter:on
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigProperty.class);
@@ -50,7 +51,8 @@ public enum ConfigProperty {
       .put(POST_DISAMBIGUATION_WHITE_LIST_PATH, "postDisambiguationWhiteList")
       .put(CORPORATION_AFFIXES_PATH, "corporationAffixes").put(USE_POPULARITY, "popularity").put(ALGORITHM, "algorithm")
       .put(USE_CONTEXT, "context").put(USE_ACRONYM, "acronym").put(USE_COMMON_ENTITIES, "commonEntities")
-      .put(INDEX_TTL_PATH, "folderWithTTLFiles").put(INDEX_SURFACE_FORM_TSV_PATH, "surfaceFormTSV").build();
+      .put(INDEX_TTL_PATH, "folderWithTTLFiles").put(INDEX_SURFACE_FORM_TSV_PATH, "surfaceFormTSV")
+      .put(AGDISTIS_VERSION, "agdistisVersion").build();
 
   public String getPropertyName() throws AGDISTISConfigurationException {
     if (keyMap.containsKey(this)) {
