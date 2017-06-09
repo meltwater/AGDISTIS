@@ -215,12 +215,12 @@ public class CandidateUtil {
         if (candidates.size() == 0) {
           if (label.endsWith("'s")) {
             // removing plural s
-            label = label.substring(0, label.lastIndexOf("'s"));
+            label = label.substring(0, label.lastIndexOf("s"));
             candidates = searchCandidatesByLabel(label, searchInSurfaceForms, "", popularity);
             LOGGER.debug("No candidates founds for singularized label.");
           } else if (label.endsWith("s")) {
             // removing genitive s
-            label = label.substring(0, label.lastIndexOf("s"));
+            label = label.substring(0, label.lastIndexOf("'s"));
             candidates = searchCandidatesByLabel(label, searchInSurfaceForms, "", popularity);
             LOGGER.debug("No candidates founds after removing genitive.");
           }

@@ -2,9 +2,9 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	
-	<groupId>org.aksw</groupId>
-	<artifactId>AGDISTIS</artifactId>
-	<version>0.13.0-meltwater</version>
+	<groupId>com.meltwater.fhai.kg.ned</groupId>
+	<artifactId>agdistis</artifactId>
+	<version>0.13.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	
 	<name>AGDISTIS</name>
@@ -100,7 +100,7 @@
 		<!-- Utils: Logstash -->
 		<net.logstash.logback.logstash-logback.encoder.version>4.8</net.logstash.logback.logstash-logback.encoder.version>
 		
-		<com.meltwater.fhai.kg.ned.agdistis-bergen-model.version>1.3</com.meltwater.fhai.kg.ned.agdistis-bergen-model.version>
+		<com.meltwater.fhai.kg.ned.agdistis-bergen-model.version>1.3-SNAPSHOT</com.meltwater.fhai.kg.ned.agdistis-bergen-model.version>
 	</properties>
 	<prerequisites>
 		<maven>${maven.version}</maven>
