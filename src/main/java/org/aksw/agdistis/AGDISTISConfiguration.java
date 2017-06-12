@@ -59,6 +59,7 @@ public class AGDISTISConfiguration {
     setCorporationAffixesPath(Paths.get("/config/corporationAffixes.txt"));
     setUsePopularity(false);
     setAlgorithm(Algorithm.HITS);
+    setResolveOverlaps(true);
     setUseContext(false);
     setUseAcronym(true);
     setUseSurfaceForms(false);
@@ -75,6 +76,9 @@ public class AGDISTISConfiguration {
       prop.load(AGDISTISConfiguration.class.getResourceAsStream(_AGDISTIS_PROPERTY_FILE));
       // Load the actual properties.
       prop.load(AGDISTISConfiguration.class.getResourceAsStream(_PATH_DEFAULT_CONFIG_FILE.toString()));
+
+      // Override properties with system properties provided via command line (if present).
+      prop.putAll(System.getProperties());
 
       // The AGDISTIS version must be there
       setAGDISTISVersion(prop.getProperty(ConfigProperty.AGDISTIS_VERSION.getPropertyName()));
@@ -120,6 +124,9 @@ public class AGDISTISConfiguration {
         setPostDisambiguationWhiteListPath(
             Paths.get(prop.getProperty(ConfigProperty.POST_DISAMBIGUATION_WHITE_LIST_PATH.getPropertyName())));
       }
+      if (prop.containsKey(ConfigProperty.RESOLVE_OVERLAPS.getPropertyName())) {
+        setResolveOverlaps(Boolean.parseBoolean(prop.getProperty(ConfigProperty.RESOLVE_OVERLAPS.getPropertyName())));
+      }
       if (prop.containsKey(ConfigProperty.CORPORATION_AFFIXES_PATH.getPropertyName())) {
         setCorporationAffixesPath(
             Paths.get(prop.getProperty(ConfigProperty.CORPORATION_AFFIXES_PATH.getPropertyName())));
@@ -147,8 +154,9 @@ public class AGDISTISConfiguration {
         setIndexSurfaceFormTSVPath(
             Paths.get(prop.getProperty(ConfigProperty.INDEX_SURFACE_FORM_TSV_PATH.getPropertyName())));
       }
+
     } catch (final IOException ioe) {
-      LOGGER.warn("Unable to load the default configuration from {}. Proceed with default values",
+      LOGGER.warn("Unable to load the default configuration from {}. Proceed with default values.",
           _PATH_DEFAULT_CONFIG_FILE);
     }
   }
@@ -156,10 +164,9 @@ public class AGDISTISConfiguration {
   private StringDistance loadStringDistance(final String metric) throws AGDISTISConfigurationException {
 
     try {
-
       StringDistance strDistInstance;
       @SuppressWarnings("unchecked")
-      final Class<StringDistance> metricClass = (Class<StringDistance>) Class.forName(metric);
+      final Class<? extends StringDistance> metricClass = (Class<? extends StringDistance>) Class.forName(metric);
       if (metricClass.equals(NGramDistance.class)) {
         final Constructor<?> cons = metricClass.getConstructor(int.class);
         strDistInstance = (StringDistance) cons.newInstance(CONFIGURATION.get(ConfigProperty.NGRAM_DISTANCE));
@@ -272,6 +279,10 @@ public class AGDISTISConfiguration {
     return (boolean) CONFIGURATION.get(ConfigProperty.USE_COMMON_ENTITIES);
   }
 
+  public boolean getResolveOverlaps() {
+    return (boolean) CONFIGURATION.get(ConfigProperty.RESOLVE_OVERLAPS);
+  }
+
   public Path getIndexTTLPath() {
     return (Path) CONFIGURATION.get(ConfigProperty.INDEX_TTL_PATH);
   }
@@ -375,6 +386,10 @@ public class AGDISTISConfiguration {
 
   public void setUseContext(final boolean useContext) {
     CONFIGURATION.put(ConfigProperty.USE_CONTEXT, useContext);
+  }
+
+  public void setResolveOverlaps(final boolean resolveOverlaps) {
+    CONFIGURATION.put(ConfigProperty.RESOLVE_OVERLAPS, resolveOverlaps);
   }
 
   public void setUseSurfaceForms(final boolean surfaceForms) {
@@ -482,6 +497,11 @@ public class AGDISTISConfiguration {
     sb.append(ConfigProperty.USE_POPULARITY.name());
     sb.append(": ");
     sb.append(getUsePopularity());
+    sb.append(IOUtils.LINE_SEPARATOR);
+
+    sb.append(ConfigProperty.RESOLVE_OVERLAPS.name());
+    sb.append(": ");
+    sb.append(getResolveOverlaps());
     sb.append(IOUtils.LINE_SEPARATOR);
 
     sb.append(ConfigProperty.USE_SURFACE_FORMS.name());

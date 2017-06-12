@@ -28,6 +28,7 @@ public enum ConfigProperty {
   POST_DISAMBIGUATION_WHITE_LIST_PATH,
   CORPORATION_AFFIXES_PATH,
   USE_POPULARITY,
+  RESOLVE_OVERLAPS,
   ALGORITHM,
   USE_CONTEXT,
   USE_SURFACE_FORMS,
@@ -52,7 +53,7 @@ public enum ConfigProperty {
       .put(CORPORATION_AFFIXES_PATH, "corporationAffixes").put(USE_POPULARITY, "popularity").put(ALGORITHM, "algorithm")
       .put(USE_CONTEXT, "context").put(USE_ACRONYM, "acronym").put(USE_COMMON_ENTITIES, "commonEntities")
       .put(INDEX_TTL_PATH, "folderWithTTLFiles").put(INDEX_SURFACE_FORM_TSV_PATH, "surfaceFormTSV")
-      .put(AGDISTIS_VERSION, "agdistisVersion").build();
+      .put(AGDISTIS_VERSION, "agdistisVersion").put(RESOLVE_OVERLAPS, "resolveOverlaps").build();
 
   public String getPropertyName() throws AGDISTISConfigurationException {
     if (keyMap.containsKey(this)) {

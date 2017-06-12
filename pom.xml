@@ -301,12 +301,22 @@
 	</dependencies>
 
 	<distributionManagement>
+   
 		<repository>
 			<uniqueVersion>false</uniqueVersion>
-			<id>meltwater-fhai</id>
+			<id>meltwater-fhai-releases</id>
 			<name>Fairhai.AI Releases</name>
 			<url>https://maven.meltwater.net/nexus/content/repositories/meltwater-fhai-releases/</url>
 			<layout>default</layout>
 		</repository>
+		
+		<snapshotRepository>
+			<uniqueVersion>true</uniqueVersion>
+			<id>meltwater-fhai-snapshots</id>
+			<name>Fairhai.AI Snapshots</name>
+			<url>https://maven.meltwater.net/nexus/content/repositories/meltwater-fhai-snapshots/</url>
+			<layout>default</layout>
+		</snapshotRepository>
+	
 	</distributionManagement>
 </project>

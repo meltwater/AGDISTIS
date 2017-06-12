@@ -1,19 +1,26 @@
 package org.aksw.agdistis.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.aksw.agdistis.AGDISTISConfiguration;
 import org.aksw.agdistis.datatypes.Document;
 import org.aksw.agdistis.datatypes.NamedEntitiesInText;
 import org.aksw.agdistis.datatypes.NamedEntityInText;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltwater.fhai.kg.ned.agdistis.model.InputEntity;
 import com.meltwater.fhai.kg.ned.agdistis.model.Occurrence;
+
+import htsjdk.samtools.util.IntervalTree;
+import htsjdk.samtools.util.IntervalTree.Node;
 
 public class Utils {
 
@@ -71,11 +78,53 @@ public class Utils {
   }
 
   private static Document documentFrom(final String text, final List<NamedEntityInText> entities) {
-    final NamedEntitiesInText nes = new NamedEntitiesInText(entities);
+
+    // check if the entities have to be resolved.
+    final NamedEntitiesInText nes = AGDISTISConfiguration.INSTANCE.getResolveOverlaps()
+        ? new NamedEntitiesInText(resolveOverlaps(entities)) : new NamedEntitiesInText(entities);
 
     final Document document = new Document();
     document.addText(text);
     document.addNamedEntitiesInText(nes);
     return document;
+  }
+
+  private static List<NamedEntityInText> resolveOverlaps(final List<NamedEntityInText> namedEntitiesInText) {
+    final IntervalTree<NamedEntityInText> tree = new IntervalTree<NamedEntityInText>();
+
+    for (final NamedEntityInText namedEntity : namedEntitiesInText) {
+
+      // Resolve overlapping spans, keep only the largest one.
+      final Iterator<Node<NamedEntityInText>> overlapIt = tree.overlappers(namedEntity.getStartPos(),
+          namedEntity.getEndPos());
+
+      if (!overlapIt.hasNext()) {
+        tree.put(namedEntity.getStartPos(), namedEntity.getEndPos(), namedEntity);
+      } else {
+
+        boolean toBeAdded = true;
+        final Collection<Node<NamedEntityInText>> toBeRemoved = Lists.newLinkedList();
+        while (overlapIt.hasNext() && toBeAdded) {
+          final Node<NamedEntityInText> overlappingEntity = overlapIt.next();
+          if ((overlappingEntity.getEnd() - overlappingEntity.getStart()) <= (namedEntity.getEndPos()
+              - namedEntity.getStartPos())) {
+            // remove the smallest span
+            toBeRemoved.add(overlappingEntity);
+          } else {
+            toBeAdded = false;
+          }
+        }
+        if (toBeAdded) {
+          for (final Node<NamedEntityInText> n : toBeRemoved) {
+            tree.remove(n.getStart(), n.getEnd());
+          }
+          tree.put(namedEntity.getStartPos(), namedEntity.getEndPos(), namedEntity);
+        }
+      }
+    }
+
+    namedEntitiesInText.clear();
+    tree.forEach((n) -> namedEntitiesInText.add(n.getValue()));
+    return namedEntitiesInText;
   }
 }
