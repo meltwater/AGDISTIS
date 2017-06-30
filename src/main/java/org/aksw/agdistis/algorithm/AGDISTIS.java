@@ -20,10 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
+import net.logstash.logback.marker.Markers;
 
 public class AGDISTIS {
 
-  private final Logger log = LoggerFactory.getLogger(AGDISTIS.class);
+  private final Logger LOGGER = LoggerFactory.getLogger(AGDISTIS.class);
   private final String edgeType;
   private final String nodeType;
   private final CandidateUtil cu;
@@ -59,27 +60,27 @@ public class AGDISTIS {
       final NamedEntitiesInText namedEntities = document.getNamedEntitiesInText();
       final DirectedSparseGraph<Node, String> graph = new DirectedSparseGraph<Node, String>();
 
-      log.debug("Selecting candidates.");
+      LOGGER.debug("Selecting candidates.");
       long start = System.currentTimeMillis();
       cu.insertCandidatesIntoText(graph, document, threshholdTrigram, heuristicExpansionOn, useSurfaceForms);
       final long candidateSelectionTime = System.currentTimeMillis() - start;
 
-      log.debug("Performing graph-based disambiguation.");
+      LOGGER.debug("Performing graph-based disambiguation.");
       start = System.currentTimeMillis();
       // 1) let spread activation/ breadth first search run
-      log.trace("Graph size before BFS: " + graph.getVertexCount());
+      LOGGER.trace("Graph size before BFS: " + graph.getVertexCount());
       final BreadthFirstSearch bfs = new BreadthFirstSearch(index, algorithm);
       bfs.run(maxDepth, graph, edgeType, nodeType);
-      log.trace("Graph size after BFS: " + graph.getVertexCount());
+      LOGGER.trace("Graph size after BFS: " + graph.getVertexCount());
 
       if (algorithm == Algorithm.HITS) {
         // 2.1) let HITS run
-        log.debug("Run HITS");
+        LOGGER.debug("Run HITS");
         final HITS h = new HITS();
         h.runHits(graph, 20);
       } else if (algorithm == Algorithm.PAGERANK) {
         // 2.2) let Pagerank run
-        log.debug("Run PAGERANK");
+        LOGGER.debug("Run PAGERANK");
         final PageRank pr = new PageRank();
         pr.runPr(graph, 50, 0.1);
       }
@@ -87,7 +88,7 @@ public class AGDISTIS {
       // 3) store the candidate with the highest hub, highest authority
       // ratio
       // manipulate which value to use directly in node.compareTo
-      log.trace("Sort results");
+      LOGGER.trace("Sort results");
       final ArrayList<Node> orderedList = new ArrayList<Node>();
       orderedList.addAll(graph.getVertices());
       Collections.sort(orderedList);
@@ -131,11 +132,11 @@ public class AGDISTIS {
       document.setCandidateSelectionTime(candidateSelectionTime);
       document.setAGDISTISVersion(AGDISTISConfiguration.INSTANCE.getAGDISTISVersion());
 
-      log.debug("Candidates computed in {} msecs", candidateSelectionTime);
-      log.debug("Disambiguation completed in {} msecs.", disambiguationTime);
+      LOGGER.debug("Candidates computed in {} msecs", candidateSelectionTime);
+      LOGGER.debug("Disambiguation completed in {} msecs.", disambiguationTime);
 
     } catch (final Exception e) {
-      log.error("AGDISTIS cannot be run on this document.", e);
+      LOGGER.error(Markers.append("docId", document.getDocumentId()), "AGDISTIS cannot be run on this document.", e);
     }
   }
 

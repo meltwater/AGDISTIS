@@ -6,7 +6,7 @@ public class Document implements Comparable<Document>, Serializable {
 
   private static final long serialVersionUID = -3213426637730517409L;
 
-  protected int documentId;
+  protected String documentId;
   private String text;
   private NamedEntitiesInText nes;
   private long disambiguationTime;
@@ -16,15 +16,15 @@ public class Document implements Comparable<Document>, Serializable {
   public Document() {
   }
 
-  public Document(final int documentId) {
+  public Document(final String documentId) {
     this.documentId = documentId;
   }
 
-  public int getDocumentId() {
+  public String getDocumentId() {
     return documentId;
   }
 
-  public void setDocumentId(final int documentId) {
+  public void setDocumentId(final String documentId) {
     this.documentId = documentId;
   }
 
@@ -42,7 +42,7 @@ public class Document implements Comparable<Document>, Serializable {
     if (documentId == document.getDocumentId()) {
       return 0;
     }
-    return documentId < document.getDocumentId() ? -1 : 1;
+    return documentId.compareTo(document.getDocumentId());
   }
 
   @Override
@@ -108,7 +108,7 @@ public class Document implements Comparable<Document>, Serializable {
   /**
    * @param agdistisVersion the agdistisVersion to set
    */
-  public void setAGDISTISVersion(String agdistisVersion) {
+  public void setAGDISTISVersion(final String agdistisVersion) {
     this.agdistisVersion = agdistisVersion;
   }
 

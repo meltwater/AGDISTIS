@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.aksw.agdistis.algorithm.AGDISTIS;
 import org.aksw.agdistis.datatypes.Document;
@@ -37,7 +38,7 @@ import com.meltwater.fhai.kg.ned.agdistis.model.Occurrence;
 
 public class DisambiguationService extends ServerResource {
 
-  private static Logger log = LoggerFactory.getLogger(DisambiguationService.class);
+  private static Logger LOGGER = LoggerFactory.getLogger(DisambiguationService.class);
   private final TurtleNIFDocumentParser parser = new TurtleNIFDocumentParser();
   private final TurtleNIFDocumentCreator creator = new TurtleNIFDocumentCreator();
   private final NIFParser nifParser = new NIFParser();
@@ -46,10 +47,11 @@ public class DisambiguationService extends ServerResource {
   @Post
   public String postText(final Representation entity) throws IOException, Exception {
 
-    log.info("Start working on Request for AGDISTIS");
+    LOGGER.info("Start working on Request for AGDISTIS");
     String result = "";
     String text = "";
     String type = "";
+    final String documentId = UUID.randomUUID().toString();
     final InputStream input = entity.getStream();
     // here the inputStream is duplicated due to it can be read only once.
     // Therefore, we do it for checking if the input is from gerbil or not.
@@ -62,8 +64,8 @@ public class DisambiguationService extends ServerResource {
     final Form form = new Form(string);
     text = form.getFirstValue("text");
     type = form.getFirstValue("type");
-    log.info("text: " + text);
-    log.info("type: " + type);
+    LOGGER.info("text: " + text);
+    LOGGER.info("type: " + type);
 
     if (text == null) {
       result = NIFGerbil(input2, agdistis); // This part is created to
@@ -84,29 +86,29 @@ public class DisambiguationService extends ServerResource {
     }
 
     if (type.equals("agdistis")) {
-      return standardAG(text); // This type is the standard
-                               // and in case the user
-                               // doesn't send the type
-                               // parameter, it is
-                               // considered as the main
-                               // one(e.g
-                               // AGDISTIS?type=agdistis&text=<entity>Barack
-                               // Obama</entity>).
+      return standardAG(documentId, text); // This type is the standard
+      // and in case the user
+      // doesn't send the type
+      // parameter, it is
+      // considered as the main
+      // one(e.g
+      // AGDISTIS?type=agdistis&text=<entity>Barack
+      // Obama</entity>).
 
     } else if (type.equals("nif")) {
-      return NIFType(text); // This type is for AGDISTIS
-                            // works beyond the GERBIL, this
-                            // part is in case of user wants
-                            // to check just a certain NIF
-                            // file(e.g
-                            // AGDISTIS?type=nif&text=@prefix....)
+      return NIFType(documentId, text); // This type is for AGDISTIS
+      // works beyond the GERBIL, this
+      // part is in case of user wants
+      // to check just a certain NIF
+      // file(e.g
+      // AGDISTIS?type=nif&text=@prefix....)
 
     } else if (type.equals("candidates")) {
-      return candidateType(text); // Here is to let us know
-                                  // about all candidates
-                                  // for each mention and
-                                  // its respective
-                                  // HITS/PageRank score.
+      return candidateType(documentId, text); // Here is to let us know
+      // about all candidates
+      // for each mention and
+      // its respective
+      // HITS/PageRank score.
     } else {
       return "ERROR";
     }
@@ -119,9 +121,9 @@ public class DisambiguationService extends ServerResource {
     final List<MeaningSpan> annotations = new ArrayList<>();
     try {
       document = parser.getDocumentFromNIFStream(input);
-      log.info("NIF file coming from GERBIL");
+      LOGGER.info("NIF file coming from GERBIL");
       textWithMentions = nifParser.createTextWithMentions(document.getText(), document.getMarkings(Span.class));
-      final Document d = Utils.textToDocument(textWithMentions);
+      final Document d = Utils.textToDocument(document.getDocumentURI(), textWithMentions);
       agdistis.run(d, null);
       for (final NamedEntityInText namedEntity : d.getNamedEntitiesInText()) {
         final String disambiguatedURL = namedEntity.getNamedEntityUri();
@@ -135,25 +137,26 @@ public class DisambiguationService extends ServerResource {
         }
       }
       document.setMarkings(new ArrayList<Marking>(annotations));
-      log.debug("Result: " + document.toString());
+      LOGGER.debug("Result: " + document.toString());
       nifDocument = creator.getDocumentAsNIFString(document);
-      log.debug(nifDocument);
+      LOGGER.debug(nifDocument);
 
     } catch (final Exception e) {
-      log.error("Exception while reading request.", e);
+      LOGGER.error("Exception while reading request.", e);
       return "";
     }
 
     return nifDocument;
   }
 
-  public String standardAG(final String text, final Map<Occurrence, InputEntity> offsetEntityMap) {
-    final Document d = Utils.textToDocument(text, offsetEntityMap);
+  public String standardAG(final String documentId, final String text,
+      final Map<Occurrence, InputEntity> offsetEntityMap) {
+    final Document d = Utils.textToDocument(documentId, text, offsetEntityMap);
     return runAG(d);
   }
 
-  public String standardAG(final String text) {
-    final Document d = Utils.textToDocument(text);
+  public String standardAG(final String documentId, final String text) {
+    final Document d = Utils.textToDocument(documentId, text);
     return runAG(d);
   }
 
@@ -176,12 +179,12 @@ public class DisambiguationService extends ServerResource {
       obj.put("disambiguatedTypes", nedTypesArray);
       arr.add(obj);
     }
-    log.info("\t" + arr.toString());
-    log.info("Finished Request");
+    LOGGER.info("\t" + arr.toString());
+    LOGGER.info("Finished Request");
     return arr.toString();
   }
 
-  public String NIFType(final String text) throws IOException {
+  public String NIFType(final String documentId, final String text) throws IOException {
     org.aksw.gerbil.transfer.nif.Document document = null;
     String nifDocument = "";
     final NIFParser nifParser = new NIFParser();
@@ -190,9 +193,9 @@ public class DisambiguationService extends ServerResource {
 
     try {
       document = parser.getDocumentFromNIFString(text);
-      log.debug("Request: " + document.toString());
+      LOGGER.debug("Request: " + document.toString());
       textWithMentions = nifParser.createTextWithMentions(document.getText(), document.getMarkings(Span.class));
-      final Document d = Utils.textToDocument(textWithMentions);
+      final Document d = Utils.textToDocument(documentId, textWithMentions);
       agdistis.run(d, null);
       for (final NamedEntityInText namedEntity : d.getNamedEntitiesInText()) {
         final String disambiguatedURL = namedEntity.getNamedEntityUri();
@@ -205,18 +208,18 @@ public class DisambiguationService extends ServerResource {
         }
       }
       document.setMarkings(new ArrayList<Marking>(annotations));
-      log.debug("Result: " + document.toString());
+      LOGGER.debug("Result: " + document.toString());
       nifDocument = creator.getDocumentAsNIFString(document);
     } catch (final Exception e) {
-      log.error("Exception while reading request.", e);
+      LOGGER.error("Exception while reading request.", e);
       return "";
     }
     return nifDocument;
   }
 
-  public String candidateType(final String text) {
+  public String candidateType(final String documentId, final String text) {
     final JSONArray arr = new org.json.simple.JSONArray();
-    final Document d = Utils.textToDocument(text);
+    final Document d = Utils.textToDocument(documentId, text);
     final Map<NamedEntityInText, List<CandidatesScore>> candidatesPerNE = new HashMap<>();
     agdistis.run(d, candidatesPerNE);
     for (final NamedEntityInText namedEntity : candidatesPerNE.keySet()) {
@@ -227,8 +230,8 @@ public class DisambiguationService extends ServerResource {
       arr.add(obj);
     }
 
-    log.info("\t" + arr.toString());
-    log.info("Finished Request");
+    LOGGER.info("\t" + arr.toString());
+    LOGGER.info("Finished Request");
     return arr.toString();
   }
 }

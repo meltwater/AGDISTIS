@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.aksw.agdistis.AGDISTISConfiguration;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
@@ -54,7 +55,7 @@ public class TripleIndexCreator {
       return;
     }
     try {
-      log.info("For using DBpedia we suggest you downlaod the following file: " + "labels_<LANG>.ttl, "
+      log.info("For using DBpedia we suggest you download the following file: " + "labels_<LANG>.ttl, "
           + "redirects_transitive_<LANG>.ttl, " + "instance_types_<LANG>.ttl, " + "mappingbased_properties_<LANG>.ttl, "
           + "specific_mappingbased_properties_<LANG>.ttl," + "disambiguations_<LANG>.ttl." + ""
           + "Please download them into one folder and configure it in the agdistis.properties File."
@@ -67,7 +68,7 @@ public class TripleIndexCreator {
       log.info("Getting triple data from: " + folder);
       final List<File> listOfFiles = new ArrayList<File>();
       for (final File file : new File(folder).listFiles()) {
-        if (file.getName().endsWith("ttl")) {
+        if (FilenameUtils.getExtension(file.getAbsolutePath()).equals("ttl")) {
           listOfFiles.add(file);
         }
       }

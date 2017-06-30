@@ -34,7 +34,8 @@ public class Utils {
     return ret;
   }
 
-  public static Document textToDocument(final String plainText, final Map<Occurrence, InputEntity> entities) {
+  public static Document textToDocument(final String documentId, final String plainText,
+      final Map<Occurrence, InputEntity> entities) {
     final ArrayList<NamedEntityInText> list = new ArrayList<NamedEntityInText>();
     LOGGER.debug("Input text: " + plainText);
     LOGGER.debug("Input named entities: " + entities);
@@ -44,10 +45,10 @@ public class Utils {
       list.add(new NamedEntityInText(start, occurrence.getEndOffset() - start, entity.getName(), entity.getType()));
     }
 
-    return documentFrom(plainText, list);
+    return documentFrom(documentId, plainText, list);
   }
 
-  public static Document textToDocument(final String preAnnotatedText) {
+  public static Document textToDocument(final String documentId, final String preAnnotatedText) {
 
     final ArrayList<NamedEntityInText> list = new ArrayList<NamedEntityInText>();
     LOGGER.debug("Input annotated text: " + preAnnotatedText);
@@ -73,11 +74,12 @@ public class Utils {
           IOUtils.LINE_SEPARATOR, ExceptionUtils.getStackTrace(iobe));
     }
 
-    return documentFrom(preAnnotatedText.replaceAll("<entity>", "").replaceAll("</entity>", ""), list);
+    return documentFrom(documentId, preAnnotatedText.replaceAll("<entity>", "").replaceAll("</entity>", ""), list);
 
   }
 
-  private static Document documentFrom(final String text, final List<NamedEntityInText> entities) {
+  private static Document documentFrom(final String documentId, final String text,
+      final List<NamedEntityInText> entities) {
 
     // check if the entities have to be resolved.
     final NamedEntitiesInText nes = AGDISTISConfiguration.INSTANCE.getResolveOverlaps()
@@ -86,6 +88,7 @@ public class Utils {
     final Document document = new Document();
     document.addText(text);
     document.addNamedEntitiesInText(nes);
+    document.setDocumentId(documentId);
     return document;
   }
 

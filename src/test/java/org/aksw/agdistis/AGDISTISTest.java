@@ -58,7 +58,7 @@ public class AGDISTISTest {
     entities.put(occ, walkinllc);
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = Utils.textToDocument(text, entities);
+    final Document d = Utils.textToDocument("testId", text, entities);
     agdistis.run(d, null);
 
     final String labcorpURL = "http://dbpedia.org/resource/LabCorp";
@@ -116,11 +116,11 @@ public class AGDISTISTest {
     entities.put(occ, AfterWalkin);
     badRanges.add(Range.between(occ.getStartOffset(), occ.getEndOffset()));
 
-    Document d = Utils.textToDocument(text, entities);
+    Document d = Utils.textToDocument("testId", text, entities);
     Assert.assertEquals(6, d.getNamedEntitiesInText().getNamedEntities().size());
 
     AGDISTISConfiguration.INSTANCE.setResolveOverlaps(true);
-    d = Utils.textToDocument(text, entities);
+    d = Utils.textToDocument("testId", text, entities);
     Assert.assertEquals(3, d.getNamedEntitiesInText().getNamedEntities().size());
     for (final NamedEntityInText namedEntity : d.getNamedEntitiesInText()) {
       assertFalse(badRanges.contains(Range.between(namedEntity.getStartPos(), namedEntity.getEndPos())));
@@ -141,7 +141,7 @@ public class AGDISTISTest {
         + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = Utils.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument("testId", preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -176,7 +176,7 @@ public class AGDISTISTest {
         + city + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = Utils.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument("testId", preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -215,7 +215,7 @@ public class AGDISTISTest {
 
     final String plainText = obama.getName() + " visits " + merkel.getName() + " in " + berlin.getName() + ".";
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = Utils.textToDocument(plainText, entities);
+    final Document d = Utils.textToDocument("testId", plainText, entities);
     agdistis.run(d, null);
 
     final HashMap<String, String> correct = new HashMap<String, String>();
@@ -256,7 +256,7 @@ public class AGDISTISTest {
 
     final AGDISTIS agdistis = new AGDISTIS();
     AGDISTISConfiguration.INSTANCE.setUseContext(true);
-    final Document d = Utils.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument("testId", preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -307,7 +307,7 @@ public class AGDISTISTest {
         + "</entity> partners and the other <entity>" + entity4 + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = Utils.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument("testId", preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -341,7 +341,7 @@ public class AGDISTISTest {
         + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = Utils.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument("testId", preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -367,7 +367,7 @@ public class AGDISTISTest {
     long start = System.currentTimeMillis();
     final AGDISTIS agdistis = new AGDISTIS();
     log.info("AGDISTIS loaded in: {} msecs.", (System.currentTimeMillis() - start));
-    final Document d = Utils.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument("testId", preAnnotatedText);
     start = System.currentTimeMillis();
     agdistis.run(d, null);
     log.info("Done in: {} msecs.", (System.currentTimeMillis() - start));
@@ -399,7 +399,7 @@ public class AGDISTISTest {
         + "</entity>.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = Utils.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument("testId", preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -420,7 +420,7 @@ public class AGDISTISTest {
     final String preAnnotatedText = "The <entity>Charlotte Hornets</entity> won the last match.";
 
     final AGDISTIS agdistis = new AGDISTIS();
-    final Document d = Utils.textToDocument(preAnnotatedText);
+    final Document d = Utils.textToDocument("testId", preAnnotatedText);
     agdistis.run(d, null);
 
     final NamedEntitiesInText namedEntities = d.getNamedEntitiesInText();
@@ -458,7 +458,7 @@ public class AGDISTISTest {
     entities.put(occ, walkinllc);
 
     final DisambiguationService service = new DisambiguationService();
-    final String agdistisOutput = service.standardAG(text, entities);
+    final String agdistisOutput = service.standardAG("testId", text, entities);
     final ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
 
     log.info(IOUtils.LINE_SEPARATOR + writer.writeValueAsString(mapper.readTree(agdistisOutput)));
