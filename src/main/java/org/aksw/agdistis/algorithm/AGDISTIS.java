@@ -16,6 +16,7 @@ import org.aksw.agdistis.graph.Node;
 import org.aksw.agdistis.graph.PageRank;
 import org.aksw.agdistis.model.CandidatesScore;
 import org.aksw.agdistis.util.TripleIndex;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,7 +136,8 @@ public class AGDISTIS {
       LOGGER.debug("Disambiguation completed in {} msecs.", disambiguationTime);
 
     } catch (final Exception e) {
-      LOGGER.error(Markers.append("docId", document.getDocumentId()), "AGDISTIS cannot be run on this document.", e);
+      LOGGER.error(Markers.append("docId", document.getDocumentId()), "AGDISTIS cannot be run on this document.",
+          ExceptionUtils.getStackTrace(e));
     }
   }
 

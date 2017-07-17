@@ -70,7 +70,7 @@ public class TripleIndex {
     isearcher = new IndexSearcher(ireader);
     urlValidator = new UrlValidator();
 
-    cache = CacheBuilder.newBuilder().maximumSize(50000).build();
+    cache = CacheBuilder.newBuilder().weakKeys().softValues().maximumSize(50000).build();
   }
 
   public List<Triple> search(final String subject, final String predicate, final String object) {
