@@ -56,7 +56,6 @@ public class AGDISTIS {
   public void run(final Document document, final Map<NamedEntityInText, List<CandidatesScore>> candidatesPerNE) {
     try {
 
-      // Check whether overlapping NER spans should be resolved.
       final NamedEntitiesInText namedEntities = document.getNamedEntitiesInText();
       final DirectedSparseGraph<Node, String> graph = new DirectedSparseGraph<Node, String>();
 

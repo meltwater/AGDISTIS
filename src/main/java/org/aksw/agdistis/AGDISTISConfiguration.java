@@ -72,6 +72,7 @@ public class AGDISTISConfiguration {
     try {
 
       final Properties prop = new Properties();
+
       // Load the meta-properties.
       prop.load(AGDISTISConfiguration.class.getResourceAsStream(_AGDISTIS_PROPERTY_FILE));
       // Load the actual properties.
@@ -80,8 +81,9 @@ public class AGDISTISConfiguration {
       // Override properties with system properties provided via command line (if present).
       prop.putAll(System.getProperties());
 
-      // The AGDISTIS version must be there
+      // The AGDISTIS and schema versions must be there
       setAGDISTISVersion(prop.getProperty(ConfigProperty.AGDISTIS_VERSION.getPropertyName()));
+      setSchemaVersion(prop.getProperty(ConfigProperty.SCHEMA_VERSION.getPropertyName()));
 
       // override default properties.
       if (prop.containsKey(ConfigProperty.MAIN_INDEX_PATH.getPropertyName())) {
@@ -295,6 +297,10 @@ public class AGDISTISConfiguration {
     return (String) CONFIGURATION.get(ConfigProperty.AGDISTIS_VERSION);
   }
 
+  public String getSchemaVersion() {
+    return (String) CONFIGURATION.get(ConfigProperty.SCHEMA_VERSION);
+  }
+
   /*
    * Setters. These values override the default and file-based configuration values.
    */
@@ -417,6 +423,11 @@ public class AGDISTISConfiguration {
   private void setAGDISTISVersion(final String agdistisVersion) {
     Preconditions.checkNotNull(agdistisVersion);
     CONFIGURATION.put(ConfigProperty.AGDISTIS_VERSION, agdistisVersion);
+  }
+
+  private void setSchemaVersion(final String schemaVersion) {
+    Preconditions.checkNotNull(schemaVersion);
+    CONFIGURATION.put(ConfigProperty.SCHEMA_VERSION, schemaVersion);
   }
 
   public String toString() {

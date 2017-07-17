@@ -21,7 +21,7 @@
 			<customFields>{"service":"ned"}</customFields>
 		</encoder>
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-			<level>INFO</level>
+			<level>WARN</level>
 		</filter>
 	</appender>
 
@@ -29,7 +29,7 @@
 		<appender-ref ref="STDOUT" />
 	</appender>
 
-	<logger name="org.aksw.agdistis" level="INFO"
+	<logger name="org.aksw.agdistis" level="WARN"
 		additivity="true" />
 	<logger name="edu.stanford.nlp" level="OFF" additivity="false"/>
 	<logger name="org.restlet" level="OFF" additivity="false"/>

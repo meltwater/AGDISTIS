@@ -93,6 +93,7 @@ public class CandidateUtil {
     for (final NamedEntityInText entity : namedEntities) {
       LOGGER.debug("Disambiguating label: " + entity.getLabel());
       final long start = System.currentTimeMillis();
+
       // Heuristic expansion is a rough approximation of a coreference resolution.
       String expandedlabel = entity.getLabel();
       if (heuristicExpansionOn) {

@@ -42,7 +42,8 @@ public class Utils {
     for (final Occurrence occurrence : entities.keySet()) {
       final int start = occurrence.getStartOffset();
       final InputEntity entity = entities.get(occurrence);
-      list.add(new NamedEntityInText(start, occurrence.getEndOffset() - start, entity.getName(), entity.getType()));
+      list.add(new NamedEntityInText(start, occurrence.getEndOffset() - start, entity.getName(), entity.getType(),
+          entity.getName()));
     }
 
     return documentFrom(documentId, plainText, list);
@@ -64,7 +65,7 @@ public class Utils {
 
         final String entityLabel = preAnnotatedText.substring(startpos, endpos);
 
-        list.add(new NamedEntityInText(newStartPos, entityLabel.length(), entityLabel, ""));
+        list.add(new NamedEntityInText(newStartPos, entityLabel.length(), entityLabel, "", entityLabel));
         sb.append(entityLabel);
         endpos += 9;
         startpos = preAnnotatedText.indexOf("<entity>", startpos);
@@ -99,10 +100,10 @@ public class Utils {
 
       // Resolve overlapping spans, keep only the largest one.
       final Iterator<Node<NamedEntityInText>> overlapIt = tree.overlappers(namedEntity.getStartPos(),
-          namedEntity.getEndPos());
+          namedEntity.getEndPos() - 1);
 
       if (!overlapIt.hasNext()) {
-        tree.put(namedEntity.getStartPos(), namedEntity.getEndPos(), namedEntity);
+        tree.put(namedEntity.getStartPos(), namedEntity.getEndPos() - 1, namedEntity);
       } else {
 
         boolean toBeAdded = true;
@@ -121,7 +122,7 @@ public class Utils {
           for (final Node<NamedEntityInText> n : toBeRemoved) {
             tree.remove(n.getStart(), n.getEnd());
           }
-          tree.put(namedEntity.getStartPos(), namedEntity.getEndPos(), namedEntity);
+          tree.put(namedEntity.getStartPos(), namedEntity.getEndPos() - 1, namedEntity);
         }
       }
     }

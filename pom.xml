@@ -100,7 +100,6 @@
 		<!-- Utils: Logstash -->
 		<net.logstash.logback.logstash-logback.encoder.version>4.8</net.logstash.logback.logstash-logback.encoder.version>
 		
-		<com.meltwater.fhai.kg.ned.agdistis-bergen-model.version>1.3-SNAPSHOT</com.meltwater.fhai.kg.ned.agdistis-bergen-model.version>
 	</properties>
 	<prerequisites>
 		<maven>${maven.version}</maven>
@@ -129,12 +128,6 @@
 		</repository>
 	</repositories>
 	<dependencies>
-		
-		<dependency>
-		  <groupId>com.meltwater.fhai.kg.ned</groupId>
-          <artifactId>agdistis-bergen-model</artifactId>
-          <version>${com.meltwater.fhai.kg.ned.agdistis-bergen-model.version}</version>
-        </dependency>
 
 		<!-- ~~~~~~~~~~~~~~~~~~~ Testing ~~~~~~~~~~~~~~~~~~~~~~ -->
 		<!-- Junit -->

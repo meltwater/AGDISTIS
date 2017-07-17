@@ -14,6 +14,7 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
   private int length;
   private String namedEntityUri;
   private String label;
+  private String surfaceForm;
   private String type;
   private Collection<String> disambiguatedTypes;
   private double authorityWeight;
@@ -30,7 +31,16 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
 
   }
 
-  public NamedEntityInText(final int startPos, final int length, final String namedEntityUri, final String type) {
+  public String getSurfaceForm() {
+    return surfaceForm;
+  }
+
+  public void setSurfaceForm(final String surfaceForm) {
+    this.surfaceForm = surfaceForm;
+  }
+
+  public NamedEntityInText(final int startPos, final int length, final String namedEntityUri, final String type,
+      final String surfaceForm) {
     this.startPos = startPos;
     this.length = length;
     this.namedEntityUri = namedEntityUri;
@@ -39,6 +49,7 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
     }
     this.type = type;
     disambiguatedTypes = Lists.newLinkedList();
+    this.surfaceForm = surfaceForm;
   }
 
   public NamedEntityInText(final NamedEntityInText entity) {
@@ -47,6 +58,7 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
     namedEntityUri = entity.namedEntityUri;
     label = entity.label;
     type = entity.type;
+    surfaceForm = entity.surfaceForm;
   }
 
   public NamedEntityInText(final NamedEntityInText entity, final int startPos, final int length) {
@@ -55,6 +67,7 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
     namedEntityUri = entity.namedEntityUri;
     label = entity.label;
     type = entity.type;
+    surfaceForm = entity.surfaceForm;
   }
 
   public int getStartPos() {
@@ -113,6 +126,8 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
     result.append(length);
     result.append(", ");
     result.append(type);
+    result.append(", ");
+    result.append(surfaceForm);
     result.append(")");
     return result.toString();
   }
@@ -160,7 +175,7 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
 
   @Override
   public int hashCode() {
-    return label.hashCode() ^ startPos ^ length;
+    return label.hashCode() ^ startPos ^ length ^ surfaceForm.hashCode();
   }
 
   @Override
