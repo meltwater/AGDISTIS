@@ -94,8 +94,9 @@
 		<org.restlet.version>2.3.0</org.restlet.version>
 		
 		<com.google.guava.version>20.0</com.google.guava.version>
+		
 		<!-- Utils: Logback -->
-		<ch.qos.logback.version>1.2.1</ch.qos.logback.version>
+		<ch.qos.logback.version>1.2.3</ch.qos.logback.version>
 
 		<!-- Utils: Logstash -->
 		<net.logstash.logback.logstash-logback.encoder.version>4.8</net.logstash.logback.logstash-logback.encoder.version>
