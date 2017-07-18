@@ -20,8 +20,7 @@ public class DomainWhiteLister {
 
   private final TripleIndex index;
   HashSet<String> whiteList = new HashSet<String>();
-  private final Cache<String, Boolean> whiteListCache = CacheBuilder.newBuilder().weakKeys().softValues()
-      .maximumSize(50000).build();
+  private final Cache<String, Boolean> whiteListCache = CacheBuilder.newBuilder().maximumSize(50000).build();
 
   public DomainWhiteLister(final TripleIndex index, final Path whiteListPath) {
 

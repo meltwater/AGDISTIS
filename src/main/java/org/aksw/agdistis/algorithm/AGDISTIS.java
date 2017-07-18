@@ -38,7 +38,6 @@ public class AGDISTIS {
   private final Algorithm algorithm;
 
   public AGDISTIS() {
-
     heuristicExpansionOn = AGDISTISConfiguration.INSTANCE.getHeuristicExpansion();
     algorithm = AGDISTISConfiguration.INSTANCE.getAlgorithm();
 
