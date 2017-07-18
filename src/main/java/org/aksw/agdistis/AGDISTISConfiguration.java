@@ -59,7 +59,7 @@ public class AGDISTISConfiguration {
     setCorporationAffixesPath(Paths.get("/config/corporationAffixes.txt"));
     setUsePopularity(false);
     setAlgorithm(Algorithm.HITS);
-    setResolveOverlaps(true);
+    setResolveOverlaps(false);
     setUseContext(false);
     setUseAcronym(true);
     setUseSurfaceForms(false);
