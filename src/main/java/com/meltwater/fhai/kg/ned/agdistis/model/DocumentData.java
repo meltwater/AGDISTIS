@@ -23,7 +23,7 @@
  */
 package com.meltwater.fhai.kg.ned.agdistis.model;
 
-import java.net.URL;
+import java.net.URI;
 
 /**
  * TODO type comment.
@@ -32,7 +32,7 @@ import java.net.URL;
  **/
 public class DocumentData {
   private String documentId;
-  private URL sourceURL;
+  private URI sourceURI;
 
   /**
    * @return the documentId
@@ -49,17 +49,17 @@ public class DocumentData {
   }
 
   /**
-   * @return the sourceURL
+   * @return the sourceURI
    */
-  public URL getSourceURL() {
-    return sourceURL;
+  public URI getSourceURI() {
+    return sourceURI;
   }
 
   /**
-   * @param sourceURL the sourceURL to set
+   * @param sourceURI the sourceURI to set
    */
-  public void setSourceURL(final URL sourceURL) {
-    this.sourceURL = sourceURL;
+  public void setSourceURI(final URI sourceURI) {
+    this.sourceURI = sourceURI;
   }
 
   /*
@@ -72,7 +72,7 @@ public class DocumentData {
     final int prime = 31;
     int result = 1;
     result = (prime * result) + ((documentId == null) ? 0 : documentId.hashCode());
-    result = (prime * result) + ((sourceURL == null) ? 0 : sourceURL.hashCode());
+    result = (prime * result) + ((sourceURI == null) ? 0 : sourceURI.hashCode());
     return result;
   }
 
@@ -100,11 +100,11 @@ public class DocumentData {
     } else if (!documentId.equals(other.documentId)) {
       return false;
     }
-    if (sourceURL == null) {
-      if (other.sourceURL != null) {
+    if (sourceURI == null) {
+      if (other.sourceURI != null) {
         return false;
       }
-    } else if (!sourceURL.equals(other.sourceURL)) {
+    } else if (!sourceURI.equals(other.sourceURI)) {
       return false;
     }
     return true;
@@ -112,7 +112,7 @@ public class DocumentData {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.lang.Object#toString()
    */
   @Override
@@ -121,8 +121,8 @@ public class DocumentData {
     builder.append("DocumentData [");
     builder.append("Document Id: ");
     builder.append(documentId);
-    builder.append("Source URL: ");
-    builder.append(sourceURL);
+    builder.append("Source URI: ");
+    builder.append(sourceURI);
     builder.append("]");
     return builder.toString();
   }
