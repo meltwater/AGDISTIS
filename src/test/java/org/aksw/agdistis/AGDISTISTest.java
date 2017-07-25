@@ -1,11 +1,9 @@
 package org.aksw.agdistis;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Collection;
 import java.util.HashMap;
 
 import org.aksw.agdistis.algorithm.AGDISTIS;
@@ -15,9 +13,7 @@ import org.aksw.agdistis.datatypes.NamedEntityInText;
 import org.aksw.agdistis.util.Utils;
 import org.aksw.agdistis.webapp.DisambiguationService;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -73,57 +69,6 @@ public class AGDISTISTest {
       final String disambiguatedURL = namedEntity.getNamedEntityUri();
       System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
       Assert.assertEquals(correct.get(namedEntity.getLabel()), disambiguatedURL);
-    }
-  }
-
-  @Test
-  public void testOverlappingSpans() throws InterruptedException, IOException {
-
-    final String text = "LabCorp has partnered with Walk-In Lab part of Walk-In LLC to provide blood test services across the country.";
-
-    final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
-    final Collection<Range<Integer>> badRanges = Lists.newLinkedList();
-
-    Occurrence occ = new Occurrence(0, "LabCorp".length());
-    final InputEntity labcorp = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
-        "organisation", occ.getStartOffset(), occ.getEndOffset());
-    entities.put(occ, labcorp);
-
-    occ = new Occurrence(27, "Walk-In".length() + 27);
-    final InputEntity walkin = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "organisation",
-        occ.getStartOffset(), occ.getEndOffset());
-    entities.put(occ, walkin);
-
-    occ = new Occurrence(27, "Walk-In Lab".length() + 27);
-    final InputEntity walkinlab = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
-        "organisation", occ.getStartOffset(), occ.getEndOffset());
-    entities.put(occ, walkinlab);
-
-    occ = new Occurrence(47, "Walk-In LLC".length() + 47);
-    final InputEntity walkinllc = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
-        "organisation", occ.getStartOffset(), occ.getEndOffset());
-    entities.put(occ, walkinllc);
-
-    occ = new Occurrence(44, "of Wa".length() + 44);
-    final InputEntity beforeWalkin = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
-        "organisation", occ.getStartOffset(), occ.getEndOffset());
-    entities.put(occ, beforeWalkin);
-    badRanges.add(Range.between(occ.getStartOffset(), occ.getEndOffset()));
-
-    occ = new Occurrence(53, "n LLC".length() + 53);
-    final InputEntity AfterWalkin = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
-        "organisation", occ.getStartOffset(), occ.getEndOffset());
-    entities.put(occ, AfterWalkin);
-    badRanges.add(Range.between(occ.getStartOffset(), occ.getEndOffset()));
-
-    Document d = Utils.textToDocument("testId", text, entities);
-    Assert.assertEquals(6, d.getNamedEntitiesInText().getNamedEntities().size());
-
-    AGDISTISConfiguration.INSTANCE.setResolveOverlaps(true);
-    d = Utils.textToDocument("testId", text, entities);
-    Assert.assertEquals(3, d.getNamedEntitiesInText().getNamedEntities().size());
-    for (final NamedEntityInText namedEntity : d.getNamedEntitiesInText()) {
-      assertFalse(badRanges.contains(Range.between(namedEntity.getStartPos(), namedEntity.getEndPos())));
     }
   }
 

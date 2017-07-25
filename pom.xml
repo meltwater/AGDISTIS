@@ -292,6 +292,7 @@
 			<artifactId>java-string-similarity</artifactId>
 			<version>${info.debatty.java-string-similarity.version}</version>
 		</dependency>
+		
 	</dependencies>
 
 	<distributionManagement>

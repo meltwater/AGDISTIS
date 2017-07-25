@@ -59,7 +59,6 @@ public class AGDISTISConfiguration {
     setCorporationAffixesPath(Paths.get("/config/corporationAffixes.txt"));
     setUsePopularity(false);
     setAlgorithm(Algorithm.HITS);
-    setResolveOverlaps(false);
     setUseContext(false);
     setUseAcronym(true);
     setUseSurfaceForms(false);
@@ -125,9 +124,6 @@ public class AGDISTISConfiguration {
       if (prop.containsKey(ConfigProperty.POST_DISAMBIGUATION_WHITE_LIST_PATH.getPropertyName())) {
         setPostDisambiguationWhiteListPath(
             Paths.get(prop.getProperty(ConfigProperty.POST_DISAMBIGUATION_WHITE_LIST_PATH.getPropertyName())));
-      }
-      if (prop.containsKey(ConfigProperty.RESOLVE_OVERLAPS.getPropertyName())) {
-        setResolveOverlaps(Boolean.parseBoolean(prop.getProperty(ConfigProperty.RESOLVE_OVERLAPS.getPropertyName())));
       }
       if (prop.containsKey(ConfigProperty.CORPORATION_AFFIXES_PATH.getPropertyName())) {
         setCorporationAffixesPath(
@@ -281,10 +277,6 @@ public class AGDISTISConfiguration {
     return (boolean) CONFIGURATION.get(ConfigProperty.USE_COMMON_ENTITIES);
   }
 
-  public boolean getResolveOverlaps() {
-    return (boolean) CONFIGURATION.get(ConfigProperty.RESOLVE_OVERLAPS);
-  }
-
   public Path getIndexTTLPath() {
     return (Path) CONFIGURATION.get(ConfigProperty.INDEX_TTL_PATH);
   }
@@ -392,10 +384,6 @@ public class AGDISTISConfiguration {
 
   public void setUseContext(final boolean useContext) {
     CONFIGURATION.put(ConfigProperty.USE_CONTEXT, useContext);
-  }
-
-  public void setResolveOverlaps(final boolean resolveOverlaps) {
-    CONFIGURATION.put(ConfigProperty.RESOLVE_OVERLAPS, resolveOverlaps);
   }
 
   public void setUseSurfaceForms(final boolean surfaceForms) {
@@ -508,11 +496,6 @@ public class AGDISTISConfiguration {
     sb.append(ConfigProperty.USE_POPULARITY.name());
     sb.append(": ");
     sb.append(getUsePopularity());
-    sb.append(IOUtils.LINE_SEPARATOR);
-
-    sb.append(ConfigProperty.RESOLVE_OVERLAPS.name());
-    sb.append(": ");
-    sb.append(getResolveOverlaps());
     sb.append(IOUtils.LINE_SEPARATOR);
 
     sb.append(ConfigProperty.USE_SURFACE_FORMS.name());
