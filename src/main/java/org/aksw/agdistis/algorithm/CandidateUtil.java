@@ -185,13 +185,13 @@ public class CandidateUtil {
                 // follow redirect
                 triple2.setSubject(redirect(triple2.getSubject()));
                 if (commonEntities == true) {
-                  LOGGER.trace("Entity {} with url {} was added to the graph.", entity, triple2.getSubject());
                   addNodeToGraph(graph, nodes, entity, triple2, triple2.getSubject());
+                  LOGGER.trace("Entity {} with url {} was added to the graph.", entity, triple2.getSubject());
                   countFinalCandidates++;
                 } else {
                   if (preDisambiguationDomainWhiteLister.fitsIntoDomain(triple2.getSubject())) {
-                    LOGGER.trace("Entity {} with url {} was added to the graph.", entity, triple2.getSubject());
                     addNodeToGraph(graph, nodes, entity, triple2, triple2.getSubject());
+                    LOGGER.trace("Entity {} with url {} was added to the graph.", entity, triple2.getSubject());
                     countFinalCandidates++;
                   }
                 }
@@ -203,8 +203,8 @@ public class CandidateUtil {
               searchInSurfaceForms);
         }
       }
-      // searchByAcronymFinished
 
+      // Search by standard label
       if (countFinalCandidates == 0) {
         candidates = searchCandidatesByLabel(label, searchInSurfaceForms, "", popularity);
         if (searchInSurfaceForms) {
@@ -235,13 +235,13 @@ public class CandidateUtil {
           if (!candidates.isEmpty()) {
 
           }
-          LOGGER.debug("Found {} candidates by splitting {} into {}.", candidates.size(), label, camelSplit);
+          LOGGER.debug("Found '{}' candidates by splitting '{}' into '{}'.", candidates.size(), label, camelSplit);
         }
 
         if (candidates.isEmpty() && !label.equals(expandedLabel)) {
           candidates = searchCandidatesByLabel(expandedLabel, searchInSurfaceForms, "", popularity);
         }
-        LOGGER.debug("Found {} candidates for expanded label  {} of label {}.", candidates.size(), expandedLabel,
+        LOGGER.debug("Found {} candidates for expanded label  '{}' of label '{}'.", candidates.size(), expandedLabel,
             label);
 
         // If the set of candidates is still empty, here we apply stemming
@@ -258,7 +258,7 @@ public class CandidateUtil {
         // Prune candidates using string similarity.
         toBeAdded = Lists.newLinkedList();
         boolean added = false;
-        for (final Triple c : candidates) {
+        for (Triple c : candidates) {
           LOGGER.debug("Candidate triple to check: " + c);
           String candidateURL = c.getSubject();
           String surfaceForm = c.getObject();
@@ -284,8 +284,12 @@ public class CandidateUtil {
             if (isDisambiguationResource(candidateURL)) {
               continue;
             }
-            // follow redirect
-            candidateURL = redirect(candidateURL);
+            // Check if this candidateURL redirects to something else, and adjust the triple accordingly.
+            final String redirectedURL = redirect(candidateURL);
+            if (!candidateURL.equals(redirectedURL)) {
+              c = new Triple(redirectedURL, c.getPredicate(), c.getObject());
+              candidateURL = redirectedURL;
+            }
             if (commonEntities == true) {
               // Domain white list does not apply. All entities are accepted.
               toBeAdded.add(c);
@@ -383,7 +387,7 @@ public class CandidateUtil {
     }
   }
 
-  private List<Triple> searchCandidatesByLabel(final String label, final boolean searchInSurfaceFormsToo,
+  private List<Triple> searchCandidatesByLabel(final String label, final boolean searchAlternativeLabels,
       final String type, final boolean popularity) {
     List<Triple> tmp = Lists.newLinkedList();
     final List<Triple> tmp2 = Lists.newLinkedList();
@@ -391,10 +395,11 @@ public class CandidateUtil {
     ArrayList<Triple> candidatesScore = new ArrayList<Triple>();
 
     if (popularity) { // Frequency of entities.
-      tmp.addAll(index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label, 500));
-      if (searchInSurfaceFormsToo) {
-        tmp.clear();
+
+      if (searchAlternativeLabels) {
         tmp.addAll(index.search(null, "http://www.w3.org/2004/02/skos/core#altLabel", label, 500));
+      } else {
+        tmp.addAll(index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label, 500));
       }
 
       for (final Triple c : tmp) {
@@ -436,10 +441,10 @@ public class CandidateUtil {
       }
       return finalTmp;
     } else {
-      tmp = index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label);
-      if (searchInSurfaceFormsToo) {
-        tmp.clear();
+      if (searchAlternativeLabels) {
         tmp = index.search(null, "http://www.w3.org/2004/02/skos/core#altLabel", label);
+      } else {
+        tmp = index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label);
       }
       return tmp;
     }
