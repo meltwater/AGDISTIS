@@ -58,7 +58,7 @@ public class AGDISTISTest {
     agdistis.run(d, null);
 
     final String labcorpURL = "http://dbpedia.org/resource/LabCorp";
-    final String walkinlabURL = "http://dbpedia.org/resource/fhai/504bccfb-e4f7-3c3b-a222-c394ad5c62a0";
+    final String walkinlabURL = "http://dbpedia.org/resource/fhai/d09c653c-649d-4dcc-b24e-1b3e04ad9c39";
     final String walkinllcURL = "Walk-In LLC";
     final HashMap<String, String> correct = new HashMap<String, String>();
     correct.put(labcorp.getName(), labcorpURL);
@@ -232,13 +232,13 @@ public class AGDISTISTest {
   @Test
   public void testCasingMatch() throws InterruptedException, IOException {
     final String entity = "ConforMIS";
-    final String entityURL = "http://dbpedia.org/resource/fhai/45fdb6ae-966a-3024-885e-14b5aa8ecac0";
+    final String entityURL = "http://dbpedia.org/resource/fhai/62ee8e4d-dd49-4c60-a441-390439c799a0";
     final String entity2 = "GigSalad";
-    final String entity2URL = "http://dbpedia.org/resource/fhai/bafd9f0b68b1aee0f87d57e99cd24c11";
+    final String entity2URL = "http://dbpedia.org/resource/fhai/b7cc6678-5b7e-4d67-863a-79dcab567aff";
     final String entity3 = "eOasia";
-    final String entity3URL = "http://dbpedia.org/resource/fhai/fbd807a2-9678-3df8-b57c-e0063d5bda2f";
+    final String entity3URL = "http://dbpedia.org/resource/fhai/8959d6a0-2086-44d8-b421-8b3a412f82da";
     final String entity4 = "DermaDoctor";
-    final String entity4URL = "http://dbpedia.org/resource/fhai/a6f4d86b-69f7-3c4c-a2b0-473fc0e80cd4";
+    final String entity4URL = "http://dbpedia.org/resource/fhai/fa495250-6059-484f-bd5b-0bd126b7b9bf";
 
     final HashMap<String, String> correct = new HashMap<String, String>();
     correct.put(entity, entityURL);
@@ -408,4 +408,62 @@ public class AGDISTISTest {
 
     log.info(IOUtils.LINE_SEPARATOR + writer.writeValueAsString(mapper.readTree(agdistisOutput)));
   }
+
+  @Test
+  public void testApple() throws InterruptedException, IOException {
+
+    final String text = "The Taiwan-based company best known for manufacturing Apple products insists that its new plant won't damage the environment.";
+
+    final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
+
+    final Occurrence occ = new Occurrence(54, 54 + "Apple".length());
+    final InputEntity apple = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "organisation",
+        occ.getStartOffset(), occ.getEndOffset());
+    entities.put(occ, apple);
+
+    final DisambiguationService service = new DisambiguationService();
+    final String agdistisOutput = service.standardAG("testId", text, entities);
+    final ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
+
+    log.info(IOUtils.LINE_SEPARATOR + writer.writeValueAsString(mapper.readTree(agdistisOutput)));
+  }
+
+  @Test
+  public void testUber() throws InterruptedException, IOException {
+
+    final String text = "Uber drivers, street vendors, fast-food workers and union activists arrived downtown by the busload on Monday to participate in a boisterous march.";
+
+    final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
+
+    final Occurrence occ = new Occurrence(0, "Uber".length());
+    final InputEntity uber = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "organisation",
+        occ.getStartOffset(), occ.getEndOffset());
+    entities.put(occ, uber);
+
+    final DisambiguationService service = new DisambiguationService();
+    final String agdistisOutput = service.standardAG("testId", text, entities);
+    final ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
+
+    log.info(IOUtils.LINE_SEPARATOR + writer.writeValueAsString(mapper.readTree(agdistisOutput)));
+  }
+
+  @Test
+  public void testQBD() throws InterruptedException, IOException {
+
+    final String text = "Quick Business Deposit is a company.";
+
+    final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
+
+    final Occurrence occ = new Occurrence(0, "Quick Business Deposit".length());
+    final InputEntity qbd = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "organisation",
+        occ.getStartOffset(), occ.getEndOffset());
+    entities.put(occ, qbd);
+
+    final DisambiguationService service = new DisambiguationService();
+    final String agdistisOutput = service.standardAG("testId", text, entities);
+    final ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
+
+    log.info(IOUtils.LINE_SEPARATOR + writer.writeValueAsString(mapper.readTree(agdistisOutput)));
+  }
+
 }
