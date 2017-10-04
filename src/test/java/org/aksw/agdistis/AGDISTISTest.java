@@ -39,18 +39,18 @@ public class AGDISTISTest {
     final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
 
     Occurrence occ = new Occurrence(0, "LabCorp".length());
-    final InputEntity labcorp = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
-        "organisation", occ.getStartOffset(), occ.getEndOffset());
+    final InputEntity labcorp = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
+        occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, labcorp);
 
     occ = new Occurrence(27, "Walk-In Lab".length() + 27);
-    final InputEntity walkinlab = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
-        "organisation", occ.getStartOffset(), occ.getEndOffset());
+    final InputEntity walkinlab = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
+        occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, walkinlab);
 
     occ = new Occurrence(47, "Walk-In LLC".length() + 47);
-    final InputEntity walkinllc = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
-        "organisation", occ.getStartOffset(), occ.getEndOffset());
+    final InputEntity walkinllc = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
+        occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, walkinllc);
 
     final AGDISTIS agdistis = new AGDISTIS();
@@ -58,7 +58,7 @@ public class AGDISTISTest {
     agdistis.run(d, null);
 
     final String labcorpURL = "http://dbpedia.org/resource/LabCorp";
-    final String walkinlabURL = "http://dbpedia.org/resource/fhai/d09c653c-649d-4dcc-b24e-1b3e04ad9c39";
+    final String walkinlabURL = "http://dbpedia.org/resource/fhai/4f25afbc-4e61-4990-9d06-4c2cca0d2b0e";
     final String walkinllcURL = "Walk-In LLC";
     final HashMap<String, String> correct = new HashMap<String, String>();
     correct.put(labcorp.getName(), labcorpURL);
@@ -232,13 +232,13 @@ public class AGDISTISTest {
   @Test
   public void testCasingMatch() throws InterruptedException, IOException {
     final String entity = "ConforMIS";
-    final String entityURL = "http://dbpedia.org/resource/fhai/62ee8e4d-dd49-4c60-a441-390439c799a0";
+    final String entityURL = "http://dbpedia.org/resource/fhai/cde6bf96-cda8-45ef-9b10-10b5613b2ced";
     final String entity2 = "GigSalad";
-    final String entity2URL = "http://dbpedia.org/resource/fhai/b7cc6678-5b7e-4d67-863a-79dcab567aff";
+    final String entity2URL = "http://dbpedia.org/resource/fhai/eb561d3c-b836-40ae-adba-de9dbdc58893";
     final String entity3 = "eOasia";
-    final String entity3URL = "http://dbpedia.org/resource/fhai/8959d6a0-2086-44d8-b421-8b3a412f82da";
+    final String entity3URL = "http://dbpedia.org/resource/fhai/e81bf6ac-c538-4630-810b-e7a7d458ae02";
     final String entity4 = "DermaDoctor";
-    final String entity4URL = "http://dbpedia.org/resource/fhai/fa495250-6059-484f-bd5b-0bd126b7b9bf";
+    final String entity4URL = "http://dbpedia.org/resource/fhai/1e197314-b903-414b-ac6d-95a5711c5e8e";
 
     final HashMap<String, String> correct = new HashMap<String, String>();
     correct.put(entity, entityURL);
@@ -388,18 +388,18 @@ public class AGDISTISTest {
     final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
 
     Occurrence occ = new Occurrence(0, "LabCorp".length());
-    final InputEntity labcorp = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
-        "organisation", occ.getStartOffset(), occ.getEndOffset());
+    final InputEntity labcorp = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
+        occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, labcorp);
 
     occ = new Occurrence(27, "Walk-In Lab".length() + 27);
-    final InputEntity walkinlab = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
-        "organisation", occ.getStartOffset(), occ.getEndOffset());
+    final InputEntity walkinlab = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
+        occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, walkinlab);
 
     occ = new Occurrence(47, "Walk-In LLC".length() + 47);
-    final InputEntity walkinllc = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()),
-        "organisation", occ.getStartOffset(), occ.getEndOffset());
+    final InputEntity walkinllc = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
+        occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, walkinllc);
 
     final DisambiguationService service = new DisambiguationService();
@@ -417,7 +417,7 @@ public class AGDISTISTest {
     final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
 
     final Occurrence occ = new Occurrence(54, 54 + "Apple".length());
-    final InputEntity apple = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "organisation",
+    final InputEntity apple = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
         occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, apple);
 
@@ -436,7 +436,7 @@ public class AGDISTISTest {
     final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
 
     final Occurrence occ = new Occurrence(0, "Uber".length());
-    final InputEntity uber = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "organisation",
+    final InputEntity uber = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
         occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, uber);
 
@@ -455,7 +455,7 @@ public class AGDISTISTest {
     final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
 
     final Occurrence occ = new Occurrence(0, "Quick Business Deposit".length());
-    final InputEntity qbd = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "organisation",
+    final InputEntity qbd = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
         occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, qbd);
 

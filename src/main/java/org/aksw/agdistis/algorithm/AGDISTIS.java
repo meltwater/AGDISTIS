@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.aksw.agdistis.AGDISTISConfiguration;
 import org.aksw.agdistis.Algorithm;
@@ -94,8 +95,8 @@ public class AGDISTIS {
       for (final NamedEntityInText entity : namedEntities) {
         for (final Node m : orderedList) {
           // there can be one node (candidate) for two labels
-          if (m.containsId(entity.getStartPos())
-              && postDisambiguationDomainWhiteLister.fitsIntoDomain(m.getCandidateURI())) {
+          if (m.containsId(entity.getStartPos()) && postDisambiguationDomainWhiteLister
+              .fitsIntoDomain(m.getCandidateURI(), Optional.of(entity.getType()))) {
             final String candidateURI = m.getCandidateURI();
             entity.setNamedEntity(candidateURI);
             entity.setDisambiguatedTypes(cu.getDisambiguatedTypes(m.getCandidateURI(), index));

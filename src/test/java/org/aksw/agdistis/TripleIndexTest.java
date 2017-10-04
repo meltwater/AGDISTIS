@@ -58,7 +58,7 @@ public class TripleIndexTest {
 
   @Test
   public void testSameAs() {
-    final String candidateURL = "http://dbpedia.org/resource/fhai/b8cc84ee07d271cfdc808995baeb6b8a";
+    final String candidateURL = "http://dbpedia.org/resource/fhai/7022be80-951a-475b-b4c2-884a2f27aa48";
     final List<Triple> sameas = index.search(candidateURL, "http://www.w3.org/2002/07/owl#sameAs", null);
     assertEquals(1, sameas.size());
     assertEquals("http://dbpedia.org/resource/CDC_Group", sameas.get(0).getObject());

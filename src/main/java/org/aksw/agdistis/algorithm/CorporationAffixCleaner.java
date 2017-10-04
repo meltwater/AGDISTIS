@@ -21,9 +21,9 @@ public class CorporationAffixCleaner {
   }
 
   String cleanLabelsfromCorporationIdentifier(String label) {
-    final String[] tokens = StringUtils.splitPreserveAllTokens(label, _TOKEN_DELIMITERS);
+    final String[] tokens = StringUtils.split(label, _TOKEN_DELIMITERS);
     if ((tokens.length > 0) && corporationAffixes.contains(tokens[tokens.length - 1])) {
-      label = StringUtils.join(ArrayUtils.remove(tokens, tokens.length - 1));
+      label = StringUtils.join(ArrayUtils.remove(tokens, tokens.length - 1), " ");
     }
 
     return label.trim();

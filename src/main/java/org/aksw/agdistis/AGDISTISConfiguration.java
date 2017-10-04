@@ -11,6 +11,8 @@ import java.util.Properties;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.lucene.search.spell.NGramDistance;
 import org.apache.lucene.search.spell.StringDistance;
 import org.slf4j.Logger;
@@ -18,8 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-
-import net.logstash.logback.encoder.org.apache.commons.lang.exception.ExceptionUtils;
 
 /**
  * A (singleton) configuration class for AGDISTIS.
@@ -62,7 +62,12 @@ public class AGDISTISConfiguration {
     setUseContext(false);
     setUseAcronym(true);
     setUseSurfaceForms(false);
-    setUseCommonEntities(true);
+    setUseCommonEntities(false);
+    setForceNER2NEDMapping(true);
+    final Map<String, String> ner2ned = Maps.newHashMap();
+    ner2ned.put("Person", "PER");
+    ner2ned.put("Organization", "ORG");
+    setNER2NEDMapping(ner2ned);
     setIndexTTLPath(Paths.get("data/en"));
     setIndexSurfaceFormTSVPath(Paths.get("data/en/surface/en_surface_forms.tsv"));
 
@@ -74,7 +79,8 @@ public class AGDISTISConfiguration {
 
       // Load the meta-properties.
       prop.load(AGDISTISConfiguration.class.getResourceAsStream(_AGDISTIS_PROPERTY_FILE));
-      // Load the actual properties.
+
+      // Load the AGDISTIS properties.
       prop.load(AGDISTISConfiguration.class.getResourceAsStream(_PATH_DEFAULT_CONFIG_FILE.toString()));
 
       // Override properties with system properties provided via command line (if present).
@@ -132,11 +138,21 @@ public class AGDISTISConfiguration {
       if (prop.containsKey(ConfigProperty.USE_POPULARITY.getPropertyName())) {
         setUsePopularity(Boolean.parseBoolean(prop.getProperty(ConfigProperty.USE_POPULARITY.getPropertyName())));
       }
+      if (prop.containsKey(ConfigProperty.USE_SURFACE_FORMS.getPropertyName())) {
+        setUseSurfaceForms(Boolean.parseBoolean(prop.getProperty(ConfigProperty.USE_SURFACE_FORMS.getPropertyName())));
+      }
       if (prop.containsKey(ConfigProperty.ALGORITHM.getPropertyName())) {
         setAlgorithm(Algorithm.valueOf(prop.getProperty(ConfigProperty.ALGORITHM.getPropertyName())));
       }
+      if (prop.containsKey(ConfigProperty.NER2NED_MAPPING.getPropertyName())) {
+        setNER2NEDMapping(parseNER2NEDMapping(prop.getProperty(ConfigProperty.NER2NED_MAPPING.getPropertyName())));
+      }
       if (prop.containsKey(ConfigProperty.USE_CONTEXT.getPropertyName())) {
         setUseContext(Boolean.parseBoolean(prop.getProperty(ConfigProperty.USE_CONTEXT.getPropertyName())));
+      }
+      if (prop.containsKey(ConfigProperty.FORCE_NER2NED_MAPPING.getPropertyName())) {
+        setForceNER2NEDMapping(
+            Boolean.parseBoolean(prop.getProperty(ConfigProperty.FORCE_NER2NED_MAPPING.getPropertyName())));
       }
       if (prop.containsKey(ConfigProperty.USE_ACRONYM.getPropertyName())) {
         setUseAcronym(Boolean.parseBoolean(prop.getProperty(ConfigProperty.USE_ACRONYM.getPropertyName())));
@@ -153,10 +169,28 @@ public class AGDISTISConfiguration {
             Paths.get(prop.getProperty(ConfigProperty.INDEX_SURFACE_FORM_TSV_PATH.getPropertyName())));
       }
 
-    } catch (final IOException ioe) {
-      LOGGER.warn("Unable to load the default configuration from {}. Proceed with default values.",
-          _PATH_DEFAULT_CONFIG_FILE);
+    } catch (final IOException | AGDISTISConfigurationException e) {
+      LOGGER.warn("Unable to load the default configuration from {}. Proceed with default values. Message {}",
+          _PATH_DEFAULT_CONFIG_FILE, org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace(e));
     }
+  }
+
+  private Map<String, String> parseNER2NEDMapping(String mappingString) throws AGDISTISConfigurationException {
+
+    final Map<String, String> res = Maps.newHashMap();
+    if (mappingString.isEmpty() || (mappingString == null)) {
+      return res;
+    }
+    final String[] entries = StringUtils.split(mappingString, ",");
+    for (final String entry : entries) {
+      final String[] pair = StringUtils.split(entry, ":");
+      if (pair.length != 2) {
+        throw new AGDISTISConfigurationException(
+            "The NER 2 NED mapping definition is incorrect. Found line " + entry + " instead of key:value");
+      }
+      res.put(pair[0], pair[1]);
+    }
+    return res;
   }
 
   private StringDistance loadStringDistance(final String metric) throws AGDISTISConfigurationException {
@@ -175,9 +209,9 @@ public class AGDISTISConfiguration {
     } catch (final ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException
         | IllegalAccessException | IllegalArgumentException | InvocationTargetException cnfe) {
       LOGGER.error("Unable to load string distance metric {}. StackTrace: {}", metric,
-          ExceptionUtils.getFullStackTrace(cnfe));
+          ExceptionUtils.getStackTrace(cnfe));
       throw new AGDISTISConfigurationException(
-          "Unable to load string distance metric " + metric + "StackTrace: " + ExceptionUtils.getFullStackTrace(cnfe));
+          "Unable to load string distance metric " + metric + "StackTrace: " + ExceptionUtils.getStackTrace(cnfe));
     }
   }
 
@@ -269,6 +303,15 @@ public class AGDISTISConfiguration {
     return (boolean) CONFIGURATION.get(ConfigProperty.USE_CONTEXT);
   }
 
+  public boolean getForceNER2NEDMapping() {
+    return (boolean) CONFIGURATION.get(ConfigProperty.FORCE_NER2NED_MAPPING);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Map<String, String> getNER2NEDMapping() {
+    return (Map<String, String>) CONFIGURATION.get(ConfigProperty.NER2NED_MAPPING);
+  }
+
   public boolean getUseAcronym() {
     return (boolean) CONFIGURATION.get(ConfigProperty.USE_ACRONYM);
   }
@@ -358,6 +401,10 @@ public class AGDISTISConfiguration {
     CONFIGURATION.put(ConfigProperty.HEURISTIC_EXPANSION, heuristicExpansion);
   }
 
+  public void setForceNER2NEDMapping(final boolean forceNER2NEDMapping) {
+    CONFIGURATION.put(ConfigProperty.FORCE_NER2NED_MAPPING, forceNER2NEDMapping);
+  }
+
   public void setPreDisambiguationWhiteListPath(final Path preDisambiguationwhiteListPath) {
     Preconditions.checkNotNull(preDisambiguationwhiteListPath);
     CONFIGURATION.put(ConfigProperty.PRE_DISAMBIGUATION_WHITE_LIST_PATH, preDisambiguationwhiteListPath);
@@ -371,6 +418,10 @@ public class AGDISTISConfiguration {
   public void setCorporationAffixesPath(final Path corporationAffixesPath) {
     Preconditions.checkNotNull(corporationAffixesPath);
     CONFIGURATION.put(ConfigProperty.CORPORATION_AFFIXES_PATH, corporationAffixesPath);
+  }
+
+  private void setNER2NEDMapping(Map<String, String> ner2ned) {
+    CONFIGURATION.put(ConfigProperty.NER2NED_MAPPING, ner2ned);
   }
 
   public void setUsePopularity(final boolean usePopularity) {
@@ -418,6 +469,7 @@ public class AGDISTISConfiguration {
     CONFIGURATION.put(ConfigProperty.SCHEMA_VERSION, schemaVersion);
   }
 
+  @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("AGDISTIS Configuration:");
 
@@ -516,6 +568,16 @@ public class AGDISTISConfiguration {
     sb.append(ConfigProperty.USE_ACRONYM.name());
     sb.append(": ");
     sb.append(getUseAcronym());
+    sb.append(IOUtils.LINE_SEPARATOR);
+
+    sb.append(ConfigProperty.FORCE_NER2NED_MAPPING.name());
+    sb.append(": ");
+    sb.append(getForceNER2NEDMapping());
+    sb.append(IOUtils.LINE_SEPARATOR);
+
+    sb.append(ConfigProperty.NER2NED_MAPPING.name());
+    sb.append(": ");
+    sb.append(getNER2NEDMapping());
     sb.append(IOUtils.LINE_SEPARATOR);
 
     sb.append(ConfigProperty.USE_COMMON_ENTITIES.name());

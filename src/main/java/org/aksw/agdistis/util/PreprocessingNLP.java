@@ -23,8 +23,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class PreprocessingNLP {
 
-  private final static String[] _SPECIAL_CHARS = new String[] { "#", ",", "_", "-", "." };
-  private final static String[] _SPECIAL_CHARS_REPLACEMENTS = new String[] { "", "", " ", " ", "" };
+  private final static String[] _SPECIAL_CHARS = new String[] { "#", ",", "_", "." };
+  private final static String[] _SPECIAL_CHARS_REPLACEMENTS = new String[] { "", "", " ", "" };
 
   public String preprocess(String label) {
 
