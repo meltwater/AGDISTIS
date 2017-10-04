@@ -37,7 +37,9 @@ public enum ConfigProperty {
   USE_COMMON_ENTITIES,
   INDEX_TTL_PATH,
   INDEX_SURFACE_FORM_TSV_PATH,
-  AGDISTIS_VERSION;
+  AGDISTIS_VERSION,
+  FORCE_NER2NED_MAPPING,
+  NER2NED_MAPPING;
   //@formatter:on
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigProperty.class);
@@ -55,7 +57,8 @@ public enum ConfigProperty {
       .put(USE_CONTEXT, "context").put(USE_ACRONYM, "acronym").put(USE_COMMON_ENTITIES, "commonEntities")
       .put(INDEX_TTL_PATH, "folderWithTTLFiles").put(INDEX_SURFACE_FORM_TSV_PATH, "surfaceFormTSV")
       .put(AGDISTIS_VERSION, "agdistisVersion").put(RESOLVE_OVERLAPS, "resolveOverlaps")
-      .put(SCHEMA_VERSION, "schemaVersion").build();
+      .put(SCHEMA_VERSION, "schemaVersion").put(FORCE_NER2NED_MAPPING, "forceNER2NEDMapping")
+      .put(NER2NED_MAPPING, "NER2NEDMapping").build();
 
   public String getPropertyName() throws AGDISTISConfigurationException {
     if (keyMap.containsKey(this)) {
