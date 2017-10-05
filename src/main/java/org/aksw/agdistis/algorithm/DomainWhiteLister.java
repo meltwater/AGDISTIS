@@ -23,7 +23,7 @@ public class DomainWhiteLister {
 
   private final TripleIndex index;
   private final HashSet<String> whiteList = new HashSet<String>();
-  private final Cache<String, Boolean> whiteListCache = CacheBuilder.newBuilder().maximumSize(50000).build();
+  private final Cache<String, Boolean> whiteListCache = CacheBuilder.newBuilder().maximumSize(500000).build();
 
   public DomainWhiteLister(final TripleIndex index, final Path whiteListPath) {
 
@@ -47,7 +47,7 @@ public class DomainWhiteLister {
       whiteListCache.put(candidateURL, true);
       return true;
     }
-    final List<Triple> tmp = index.search(candidateURL, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", null);
+    final List<Triple> tmp = index.search(candidateURL, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", null, 20);
     if (tmp.isEmpty()) {
       whiteListCache.put(candidateURL, false);
       return false;

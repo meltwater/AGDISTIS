@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.aksw.agdistis.AGDISTISConfiguration;
 import org.aksw.agdistis.AGDISTISConfigurationException;
@@ -48,9 +50,13 @@ public class CandidateUtil {
   private final Algorithm algorithm;
   private final boolean acronym;
   private final boolean commonEntities;
-  private final Cache<String, Boolean> disambiguationCache = CacheBuilder.newBuilder().maximumSize(50000).build();
-  private final Cache<String, List<Triple>> candidateCache = CacheBuilder.newBuilder().maximumSize(50000).build();
+  private final Cache<String, Boolean> disambiguationCache = CacheBuilder.newBuilder().maximumSize(500000).build();
+  private final Cache<String, List<Triple>> candidateCache = CacheBuilder.newBuilder().maximumSize(500000).build();
   private final static Stemming stemmer = new Stemming();
+
+  private final static int _MAX_RETRIEVED_CANDIDATES = 150;
+  private final static int _MAX_RETRIEVED_ACRONYMS = 5;
+  private final static int _MAX_RETRIEVED_CONNECTIONS = 50;
 
   public CandidateUtil() {
     try {
@@ -217,31 +223,30 @@ public class CandidateUtil {
 
         if (candidates.size() == 0) {
           if (label.endsWith("'s")) {
-            // removing plural s
-            label = label.substring(0, label.lastIndexOf("'s"));
-            candidates = searchCandidatesByLabel(label, searchInSurfaceForms, "", popularity);
-            LOGGER.debug("No candidates founds for singularized label.");
-          } else if (label.endsWith("s")) {
             // removing genitive s
-            label = label.substring(0, label.lastIndexOf("s"));
-            candidates = searchCandidatesByLabel(label, searchInSurfaceForms, "", popularity);
+            label = label.substring(0, label.lastIndexOf("'s"));
+            candidates = searchCandidatesByLabel(label, searchInSurfaceForms, entity.getType(), popularity);
             LOGGER.debug("No candidates founds after removing genitive.");
+          } else if (label.endsWith("s")) {
+            // removing plural s
+            label = label.substring(0, label.lastIndexOf("s"));
+            candidates = searchCandidatesByLabel(label, searchInSurfaceForms, entity.getType(), popularity);
+            LOGGER.debug("No candidates founds for singularized label.");
           }
         }
 
-        // if the set of candidates is still empty, try chopping the label by camelcase.
+        // If the set of candidates is still empty, try chopping the label by camelcase.
         if (candidates.isEmpty() && (label.split(" ").length == 1)) {
           final String camelSplit = StringUtils.join(StringUtils.splitByCharacterTypeCamelCase(label), " ");
           label = camelSplit;
-          candidates = searchCandidatesByLabel(camelSplit, searchInSurfaceForms, "", popularity);
+          candidates = searchCandidatesByLabel(camelSplit, searchInSurfaceForms, entity.getType(), popularity);
           if (!candidates.isEmpty()) {
-
+            LOGGER.debug("Found '{}' candidates by splitting '{}' into '{}'.", candidates.size(), label, camelSplit);
           }
-          LOGGER.debug("Found '{}' candidates by splitting '{}' into '{}'.", candidates.size(), label, camelSplit);
         }
 
         if (candidates.isEmpty() && !label.equals(expandedLabel)) {
-          candidates = searchCandidatesByLabel(expandedLabel, searchInSurfaceForms, "", popularity);
+          candidates = searchCandidatesByLabel(expandedLabel, searchInSurfaceForms, entity.getType(), popularity);
           LOGGER.debug("Found {} candidates for expanded label  '{}' of label '{}'.", candidates.size(), expandedLabel,
               label);
         }
@@ -249,10 +254,9 @@ public class CandidateUtil {
         // If the set of candidates is still empty, here we apply stemming
         // technique
         if (candidates.isEmpty()) {
-
           final String temp = stemmer.stemming(label);
           if (StringUtils.isNotBlank(temp)) {
-            candidates = searchCandidatesByLabel(temp, searchInSurfaceForms, "", popularity);
+            candidates = searchCandidatesByLabel(temp, searchInSurfaceForms, entity.getType(), popularity);
           }
           LOGGER.debug("Found {} candidates for stem  {} of label {}.", candidates.size(), temp, label);
         }
@@ -391,19 +395,18 @@ public class CandidateUtil {
 
   private List<Triple> searchCandidatesByLabel(final String label, final boolean searchAlternativeLabels,
       final String type, final boolean popularity) {
-    List<Triple> tmp = Lists.newLinkedList();
-    final List<Triple> tmp2 = Lists.newLinkedList();
-    final List<Triple> finalTmp = Lists.newLinkedList();
-    ArrayList<Triple> candidatesScore = new ArrayList<Triple>();
 
-    if (popularity) { // Frequency of entities.
-
-      tmp.addAll(index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label, 500));
+    if (popularity) {
+      // Frequency of entities.
+      final List<Triple> tmp = Lists.newLinkedList();
+      final List<Triple> tmp2 = Lists.newLinkedList();
+      final List<Triple> finalTmp = Lists.newLinkedList();
+      ArrayList<Triple> candidatesScore = new ArrayList<Triple>();
+      tmp.addAll(index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label, _MAX_RETRIEVED_CANDIDATES));
       if (searchAlternativeLabels) {
-        for (final Triple t : index.search(null, "http://www.w3.org/2004/02/skos/core#altLabel", label, 500)) {
-          if (!tmp.contains(t)) {
-            tmp.add(t);
-          }
+        for (final Triple t : index.search(null, "http://www.w3.org/2004/02/skos/core#altLabel", label,
+            _MAX_RETRIEVED_CANDIDATES)) {
+          tmp.add(t);
         }
       }
 
@@ -444,33 +447,32 @@ public class CandidateUtil {
         }
 
       }
-      return finalTmp;
+      return Lists.newLinkedList(finalTmp);
     } else {
-      tmp = index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label);
+      final Set<Triple> tmp = new LinkedHashSet<Triple>();
+      tmp.addAll(index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label, _MAX_RETRIEVED_CANDIDATES));
       if (searchAlternativeLabels) {
-        for (final Triple t : index.search(null, "http://www.w3.org/2004/02/skos/core#altLabel", label, 500)) {
-          if (!tmp.contains(t)) {
-            tmp.add(t);
-          }
+        for (final Triple t : index.search(null, "http://www.w3.org/2004/02/skos/core#altLabel", label,
+            _MAX_RETRIEVED_CANDIDATES)) {
+          tmp.add(t);
         }
       }
-
-      return tmp;
+      return Lists.newLinkedList(tmp);
     }
   }
 
   public List<Triple> searchbyAcronym(final String label, final boolean searchInSurfaceFormsToo, final String type) {
-    return index.search(null, "http://dbpedia.org/property/acronym", label, 100);
+    return index.search(null, "http://dbpedia.org/property/acronym", label, _MAX_RETRIEVED_ACRONYMS);
   }
 
-  public List<Triple> searchAcronymByLabel(final String label, final boolean searchInSurfaceFormsToo,
+  public List<Triple> searchAcronymByLabel(final String acronym, final boolean searchInSurfaceFormsToo,
       final String type) {
-    return index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label, 100);
+    return index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", acronym, _MAX_RETRIEVED_ACRONYMS);
   }
 
   ArrayList<Triple> searchCandidatesByContext(final String entities, final String label) {
     final ArrayList<Triple> tmp = new ArrayList<Triple>();
-    tmp.addAll(index2.search(entities, label, null, 100));
+    tmp.addAll(index2.search(entities, label, null, _MAX_RETRIEVED_CANDIDATES));
 
     return tmp;
   }
@@ -483,7 +485,7 @@ public class CandidateUtil {
   }
 
   List<Triple> searchbyConnections(final String uri, final String uri2) {
-    return index.search(uri, null, uri2);
+    return index.search(uri, null, uri2, _MAX_RETRIEVED_CONNECTIONS);
   }
 
   List<Triple> searchCandidatesByUrl(final String url, final boolean searchInSurfaceFormsToo) {
@@ -493,7 +495,7 @@ public class CandidateUtil {
     ArrayList<Triple> candidatesScore = new ArrayList<Triple>();
 
     if (popularity) {
-      final List<Triple> tmp = index.search(url, "http://www.w3.org/2000/01/rdf-schema#label", null, 500);
+      final List<Triple> tmp = index.search(url, "http://www.w3.org/2000/01/rdf-schema#label", null, 100);
 
       for (final Triple c : tmp) {
         tmp2.add(new Triple(c.getSubject(), c.getPredicate(), c.getObject()));
@@ -534,7 +536,7 @@ public class CandidateUtil {
       }
       return finalTmp;
     } else {
-      return index.search(url, "http://www.w3.org/2000/01/rdf-schema#label", null);
+      return index.search(url, "http://www.w3.org/2000/01/rdf-schema#label", null, _MAX_RETRIEVED_CANDIDATES);
     }
   }
 
@@ -543,7 +545,7 @@ public class CandidateUtil {
 
     // get the type from the redirection.
     final List<Triple> triples = index.search(redirect(entityURI), "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-        null);
+        null, 20);
 
     for (final Triple triple : triples) {
       final String typeURI = triple.getObject();
@@ -561,7 +563,7 @@ public class CandidateUtil {
       return in;
     }
 
-    final List<Triple> tmp = index.search(candidateURL, "http://dbpedia.org/ontology/wikiPageDisambiguates", null);
+    final List<Triple> tmp = index.search(candidateURL, "http://dbpedia.org/ontology/wikiPageDisambiguates", null, 1);
     if (tmp.isEmpty()) {
       disambiguationCache.put(candidateURL, false);
       return false;
@@ -575,7 +577,7 @@ public class CandidateUtil {
     if (candidateURL == null) {
       return candidateURL;
     }
-    final List<Triple> redirect = index.search(candidateURL, "http://dbpedia.org/ontology/wikiPageRedirects", null);
+    final List<Triple> redirect = index.search(candidateURL, "http://dbpedia.org/ontology/wikiPageRedirects", null, 1);
     if (redirect.size() == 1) {
       return redirect.get(0).getObject();
     } else if (redirect.size() > 1) {

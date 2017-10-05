@@ -57,8 +57,8 @@ public class AGDISTISTest {
     final Document d = Utils.textToDocument("testId", text, entities);
     agdistis.run(d, null);
 
-    final String labcorpURL = "http://dbpedia.org/resource/LabCorp";
-    final String walkinlabURL = "http://dbpedia.org/resource/fhai/4f25afbc-4e61-4990-9d06-4c2cca0d2b0e";
+    final String labcorpURL = "http://dbpedia.org/resource/fhai/7d29a76f-e767-435f-a38b-2ae55ce0084c";
+    final String walkinlabURL = "Walk-In Lab";
     final String walkinllcURL = "Walk-In LLC";
     final HashMap<String, String> correct = new HashMap<String, String>();
     correct.put(labcorp.getName(), labcorpURL);

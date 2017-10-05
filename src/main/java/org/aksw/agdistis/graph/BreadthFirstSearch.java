@@ -18,6 +18,7 @@ public class BreadthFirstSearch {
   private static HashMap<String, Node> findNode = new HashMap<String, Node>();
   private final TripleIndex index;
   private final Algorithm algorithm;
+  private final int _MAX_OUTGOING_NODES = 100;
 
   public BreadthFirstSearch(final TripleIndex index, final Algorithm algorithm) {
     this.index = index;
@@ -36,7 +37,7 @@ public class BreadthFirstSearch {
       final int level = currentNode.getLevel();
       if (level < maxDepth) {
         List<Triple> outgoingNodes = null;
-        outgoingNodes = index.search(currentNode.getCandidateURI(), null, null);
+        outgoingNodes = index.search(currentNode.getCandidateURI(), null, null, _MAX_OUTGOING_NODES);
         if (outgoingNodes == null) {
           continue;
         }

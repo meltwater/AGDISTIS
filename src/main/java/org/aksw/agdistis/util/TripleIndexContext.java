@@ -55,7 +55,7 @@ public class TripleIndexContext {
     isearcher = new IndexSearcher(ireader);
     new UrlValidator();
 
-    cache = CacheBuilder.newBuilder().maximumSize(50000).build();
+    cache = CacheBuilder.newBuilder().maximumSize(1000).build();
   }
 
   public List<Triple> search(final String subject, final String predicate, final String object) {
