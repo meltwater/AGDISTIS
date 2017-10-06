@@ -18,8 +18,10 @@ public enum ConfigProperty {
   NODE_TYPE,
   EDGE_TYPE,
   BASE_URI,
-  DBPEDIA_ENDPOINT,
   NGRAM_DISTANCE,
+  MAX_CANDIDATE_LOOKUPS,
+  MAX_ACRONYM_LOOKUPS,
+  MAX_CONNECTION_LOOKUPS,
   SEMANTIC_DEPTH,
   CANDIDATE_PRUNING_METRIC,
   CANDIDATE_PRUNING_THRESHOLD,
@@ -39,30 +41,36 @@ public enum ConfigProperty {
   INDEX_SURFACE_FORM_TSV_PATH,
   AGDISTIS_VERSION,
   FORCE_NER2NED_MAPPING,
-  NER2NED_MAPPING;
+  NER2NED_MAPPING,
+  CANDIDATE_CACHE_SIZE,
+  DISAMBIGUATION_PAGE_CACHE_SIZE,
+  TRIPLE_INDEX_CACHE_SIZE;
   //@formatter:on
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigProperty.class);
 
-  private static final ImmutableMap<ConfigProperty, String> keyMap = new ImmutableMap.Builder<ConfigProperty, String>()
+  private static final ImmutableMap<ConfigProperty, String> propKeyMap = new ImmutableMap.Builder<ConfigProperty, String>()
       .put(MAIN_INDEX_PATH, "index").put(INDEX_BY_CONTEXT_PATH, "index2").put(NODE_TYPE, "nodeType")
-      .put(EDGE_TYPE, "edgeType").put(BASE_URI, "baseURI").put(DBPEDIA_ENDPOINT, "endpoint")
-      .put(NGRAM_DISTANCE, "ngramDistance").put(SEMANTIC_DEPTH, "maxDepth")
-      .put(CANDIDATE_PRUNING_THRESHOLD, "candidatePruningThreshold")
+      .put(EDGE_TYPE, "edgeType").put(BASE_URI, "baseURI").put(NGRAM_DISTANCE, "ngramDistance")
+      .put(SEMANTIC_DEPTH, "maxDepth").put(CANDIDATE_PRUNING_THRESHOLD, "candidatePruningThreshold")
       .put(CANDIDATE_PRUNING_METRIC, "candidatePruningMetric").put(USE_SURFACE_FORMS, "surfaceForms")
       .put(HEURISTIC_EXPANSION, "heuristicExpansionOn")
       .put(PRE_DISAMBIGUATION_WHITE_LIST_PATH, "preDisambiguationWhiteList")
       .put(POST_DISAMBIGUATION_WHITE_LIST_PATH, "postDisambiguationWhiteList")
       .put(CORPORATION_AFFIXES_PATH, "corporationAffixes").put(USE_POPULARITY, "popularity").put(ALGORITHM, "algorithm")
       .put(USE_CONTEXT, "context").put(USE_ACRONYM, "acronym").put(USE_COMMON_ENTITIES, "commonEntities")
-      .put(INDEX_TTL_PATH, "folderWithTTLFiles").put(INDEX_SURFACE_FORM_TSV_PATH, "surfaceFormTSV")
-      .put(AGDISTIS_VERSION, "agdistisVersion").put(RESOLVE_OVERLAPS, "resolveOverlaps")
-      .put(SCHEMA_VERSION, "schemaVersion").put(FORCE_NER2NED_MAPPING, "forceNER2NEDMapping")
-      .put(NER2NED_MAPPING, "NER2NEDMapping").build();
+      .put(INDEX_TTL_PATH, "folderWithTTLFiles").put(MAX_CANDIDATE_LOOKUPS, "maxCandidateLookups")
+      .put(MAX_ACRONYM_LOOKUPS, "maxAcronymLookups").put(MAX_CONNECTION_LOOKUPS, "maxConnectionLookups")
+      .put(INDEX_SURFACE_FORM_TSV_PATH, "surfaceFormTSV").put(AGDISTIS_VERSION, "agdistisVersion")
+      .put(RESOLVE_OVERLAPS, "resolveOverlaps").put(SCHEMA_VERSION, "schemaVersion")
+      .put(FORCE_NER2NED_MAPPING, "forceNER2NEDMapping").put(NER2NED_MAPPING, "NER2NEDMapping")
+      .put(CANDIDATE_CACHE_SIZE, "candidateCacheSize")
+      .put(DISAMBIGUATION_PAGE_CACHE_SIZE, "disambiguationPageCacheSize")
+      .put(TRIPLE_INDEX_CACHE_SIZE, "tripleIndexCacheSize").build();
 
   public String getPropertyName() throws AGDISTISConfigurationException {
-    if (keyMap.containsKey(this)) {
-      return keyMap.get(this);
+    if (propKeyMap.containsKey(this)) {
+      return propKeyMap.get(this);
     }
     final String message = "Unknown property name for property " + name();
     LOGGER.error(message);

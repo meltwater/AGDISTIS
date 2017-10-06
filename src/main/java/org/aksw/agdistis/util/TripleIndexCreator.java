@@ -41,7 +41,7 @@ public class TripleIndexCreator {
   public static final String N_TRIPLES = "NTriples";
   public static final String TTL = "ttl";
   public static final String TSV = "tsv";
-  public static final Version LUCENE_VERSION = Version.LUCENE_44;
+  public static final Version LUCENE_VERSION = Version.LUCENE_4_9;
 
   private Analyzer urlAnalyzer;
   private Analyzer literalAnalyzer;

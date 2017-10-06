@@ -30,7 +30,7 @@ import com.google.common.cache.CacheBuilder;
 
 public class TripleIndexContext {
 
-  private static final Version LUCENE44 = Version.LUCENE_44;
+  private static final Version LUCENE44 = Version.LUCENE_4_9;
 
   private final org.slf4j.Logger log = LoggerFactory.getLogger(TripleIndexContext.class);
 

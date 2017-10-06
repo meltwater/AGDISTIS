@@ -37,7 +37,7 @@ import com.google.common.cache.CacheBuilder;
 
 public class TripleIndex {
 
-  private static final Version LUCENE44 = Version.LUCENE_44;
+  private static final Version luceneVersion = Version.LUCENE_4_9;
 
   private final Logger log = LoggerFactory.getLogger(TripleIndex.class);
 
@@ -70,7 +70,7 @@ public class TripleIndex {
     isearcher = new IndexSearcher(ireader);
     urlValidator = new UrlValidator();
 
-    cache = CacheBuilder.newBuilder().maximumSize(500000).build();
+    cache = CacheBuilder.newBuilder().maximumSize(AGDISTISConfiguration.INSTANCE.getTripleIndexCacheSize()).build();
   }
 
   public List<Triple> search(final String subject, final String predicate, final String object) {
@@ -119,8 +119,8 @@ public class TripleIndex {
         }
 
         else {
-          final Analyzer analyzer = new LiteralAnalyzer(LUCENE44);
-          final QueryParser parser = new QueryParser(LUCENE44, FIELD_NAME_OBJECT_LITERAL, analyzer);
+          final Analyzer analyzer = new LiteralAnalyzer(luceneVersion);
+          final QueryParser parser = new QueryParser(luceneVersion, FIELD_NAME_OBJECT_LITERAL, analyzer);
           parser.setDefaultOperator(QueryParser.Operator.AND);
           q = parser.parse(QueryParserBase
               .escape(object = StringUtils.replaceEach(object, _LUCENE_KEYWORDS, _LUCENE_KEYWORDS_REPLACEMENTS)));

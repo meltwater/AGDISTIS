@@ -50,13 +50,15 @@ public class CandidateUtil {
   private final Algorithm algorithm;
   private final boolean acronym;
   private final boolean commonEntities;
-  private final Cache<String, Boolean> disambiguationCache = CacheBuilder.newBuilder().maximumSize(500000).build();
-  private final Cache<String, List<Triple>> candidateCache = CacheBuilder.newBuilder().maximumSize(500000).build();
+  private final Cache<String, Boolean> disambiguationPageCache = CacheBuilder.newBuilder()
+      .maximumSize(AGDISTISConfiguration.INSTANCE.getDisambiguationPageCacheSize()).build();
+  private final Cache<String, List<Triple>> candidateCache = CacheBuilder.newBuilder()
+      .maximumSize(AGDISTISConfiguration.INSTANCE.getCandidateCacheSize()).build();
   private final static Stemming stemmer = new Stemming();
 
-  private final static int _MAX_RETRIEVED_CANDIDATES = 150;
-  private final static int _MAX_RETRIEVED_ACRONYMS = 5;
-  private final static int _MAX_RETRIEVED_CONNECTIONS = 50;
+  private final static int _MAX_CANDIDATE_LOOKUPS = AGDISTISConfiguration.INSTANCE.getMaxCandidateLookups();
+  private final static int _MAX_RETRIEVED_ACRONYMS = AGDISTISConfiguration.INSTANCE.getMaxAcronymLookups();
+  private final static int _MAX_RETRIEVED_CONNECTIONS = AGDISTISConfiguration.INSTANCE.getMaxConnectionLookups();;
 
   public CandidateUtil() {
     try {
@@ -402,10 +404,10 @@ public class CandidateUtil {
       final List<Triple> tmp2 = Lists.newLinkedList();
       final List<Triple> finalTmp = Lists.newLinkedList();
       ArrayList<Triple> candidatesScore = new ArrayList<Triple>();
-      tmp.addAll(index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label, _MAX_RETRIEVED_CANDIDATES));
+      tmp.addAll(index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label, _MAX_CANDIDATE_LOOKUPS));
       if (searchAlternativeLabels) {
         for (final Triple t : index.search(null, "http://www.w3.org/2004/02/skos/core#altLabel", label,
-            _MAX_RETRIEVED_CANDIDATES)) {
+            _MAX_CANDIDATE_LOOKUPS)) {
           tmp.add(t);
         }
       }
@@ -450,10 +452,10 @@ public class CandidateUtil {
       return Lists.newLinkedList(finalTmp);
     } else {
       final Set<Triple> tmp = new LinkedHashSet<Triple>();
-      tmp.addAll(index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label, _MAX_RETRIEVED_CANDIDATES));
+      tmp.addAll(index.search(null, "http://www.w3.org/2000/01/rdf-schema#label", label, _MAX_CANDIDATE_LOOKUPS));
       if (searchAlternativeLabels) {
         for (final Triple t : index.search(null, "http://www.w3.org/2004/02/skos/core#altLabel", label,
-            _MAX_RETRIEVED_CANDIDATES)) {
+            _MAX_CANDIDATE_LOOKUPS)) {
           tmp.add(t);
         }
       }
@@ -472,7 +474,7 @@ public class CandidateUtil {
 
   ArrayList<Triple> searchCandidatesByContext(final String entities, final String label) {
     final ArrayList<Triple> tmp = new ArrayList<Triple>();
-    tmp.addAll(index2.search(entities, label, null, _MAX_RETRIEVED_CANDIDATES));
+    tmp.addAll(index2.search(entities, label, null, _MAX_CANDIDATE_LOOKUPS));
 
     return tmp;
   }
@@ -495,7 +497,7 @@ public class CandidateUtil {
     ArrayList<Triple> candidatesScore = new ArrayList<Triple>();
 
     if (popularity) {
-      final List<Triple> tmp = index.search(url, "http://www.w3.org/2000/01/rdf-schema#label", null, 100);
+      final List<Triple> tmp = index.search(url, "http://www.w3.org/2000/01/rdf-schema#label", null, 10);
 
       for (final Triple c : tmp) {
         tmp2.add(new Triple(c.getSubject(), c.getPredicate(), c.getObject()));
@@ -536,7 +538,7 @@ public class CandidateUtil {
       }
       return finalTmp;
     } else {
-      return index.search(url, "http://www.w3.org/2000/01/rdf-schema#label", null, _MAX_RETRIEVED_CANDIDATES);
+      return index.search(url, "http://www.w3.org/2000/01/rdf-schema#label", null, 10);
     }
   }
 
@@ -558,17 +560,17 @@ public class CandidateUtil {
 
   private boolean isDisambiguationResource(final String candidateURL) {
 
-    final Boolean in = disambiguationCache.getIfPresent(candidateURL);
+    final Boolean in = disambiguationPageCache.getIfPresent(candidateURL);
     if (in != null) {
       return in;
     }
 
     final List<Triple> tmp = index.search(candidateURL, "http://dbpedia.org/ontology/wikiPageDisambiguates", null, 1);
     if (tmp.isEmpty()) {
-      disambiguationCache.put(candidateURL, false);
+      disambiguationPageCache.put(candidateURL, false);
       return false;
     } else {
-      disambiguationCache.put(candidateURL, true);
+      disambiguationPageCache.put(candidateURL, true);
       return true;
     }
   }
