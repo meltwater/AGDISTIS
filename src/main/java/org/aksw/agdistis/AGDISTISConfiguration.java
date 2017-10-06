@@ -48,7 +48,12 @@ public class AGDISTISConfiguration {
     setNodeType(URI.create("http://dbpedia.org/resource/"));
     setEdgeType(URI.create("http://dbpedia.org/ontology/"));
     setBaseURI(URI.create("http://dbpedia.org"));
-    setDBPediaEndpoint(URI.create("http://live.dbpedia.org/sparql"));
+    setMaxCandidateLookups(100);
+    setMaxAcronymLookups(2);
+    setMaxConnectionLookups(20);
+    setCandidateCacheSize(500);
+    setDisambiguationPageCacheSize(500);
+    setTripleIndexCacheSize(1500);
     setNGramDistance(3);
     setCandidatePruningMetric("org.apache.lucene.search.spell.NGramDistance");
     setSemanticDepth(2);
@@ -109,6 +114,17 @@ public class AGDISTISConfiguration {
       if (prop.containsKey(ConfigProperty.NGRAM_DISTANCE.getPropertyName())) {
         setNGramDistance(Integer.parseInt(prop.getProperty(ConfigProperty.NGRAM_DISTANCE.getPropertyName())));
       }
+      if (prop.containsKey(ConfigProperty.MAX_CANDIDATE_LOOKUPS.getPropertyName())) {
+        setMaxCandidateLookups(
+            Integer.parseInt(prop.getProperty(ConfigProperty.MAX_CANDIDATE_LOOKUPS.getPropertyName())));
+      }
+      if (prop.containsKey(ConfigProperty.MAX_ACRONYM_LOOKUPS.getPropertyName())) {
+        setMaxAcronymLookups(Integer.parseInt(prop.getProperty(ConfigProperty.MAX_ACRONYM_LOOKUPS.getPropertyName())));
+      }
+      if (prop.containsKey(ConfigProperty.MAX_CONNECTION_LOOKUPS.getPropertyName())) {
+        setMaxConnectionLookups(
+            Integer.parseInt(prop.getProperty(ConfigProperty.MAX_CONNECTION_LOOKUPS.getPropertyName())));
+      }
       if (prop.containsKey(ConfigProperty.SEMANTIC_DEPTH.getPropertyName())) {
         setSemanticDepth(Integer.parseInt(prop.getProperty(ConfigProperty.SEMANTIC_DEPTH.getPropertyName())));
       }
@@ -160,6 +176,18 @@ public class AGDISTISConfiguration {
       if (prop.containsKey(ConfigProperty.USE_COMMON_ENTITIES.getPropertyName())) {
         setUseCommonEntities(
             Boolean.parseBoolean(prop.getProperty(ConfigProperty.USE_COMMON_ENTITIES.getPropertyName())));
+      }
+      if (prop.containsKey(ConfigProperty.CANDIDATE_CACHE_SIZE.getPropertyName())) {
+        setCandidateCacheSize(
+            Integer.parseInt(prop.getProperty(ConfigProperty.CANDIDATE_CACHE_SIZE.getPropertyName())));
+      }
+      if (prop.containsKey(ConfigProperty.DISAMBIGUATION_PAGE_CACHE_SIZE.getPropertyName())) {
+        setDisambiguationPageCacheSize(
+            Integer.parseInt(prop.getProperty(ConfigProperty.DISAMBIGUATION_PAGE_CACHE_SIZE.getPropertyName())));
+      }
+      if (prop.containsKey(ConfigProperty.TRIPLE_INDEX_CACHE_SIZE.getPropertyName())) {
+        setTripleIndexCacheSize(
+            Integer.parseInt(prop.getProperty(ConfigProperty.TRIPLE_INDEX_CACHE_SIZE.getPropertyName())));
       }
       if (prop.containsKey(ConfigProperty.INDEX_TTL_PATH.getPropertyName())) {
         setIndexTTLPath(Paths.get(prop.getProperty(ConfigProperty.INDEX_TTL_PATH.getPropertyName())));
@@ -251,16 +279,24 @@ public class AGDISTISConfiguration {
     return (URI) CONFIGURATION.get(ConfigProperty.BASE_URI);
   }
 
-  public URI getDBPediaEndpoint() {
-    return (URI) CONFIGURATION.get(ConfigProperty.DBPEDIA_ENDPOINT);
-  }
-
   public int getNGramDistance() {
     return (int) CONFIGURATION.get(ConfigProperty.NGRAM_DISTANCE);
   }
 
   public int getSemanticDepth() {
     return (int) CONFIGURATION.get(ConfigProperty.SEMANTIC_DEPTH);
+  }
+
+  public int getMaxCandidateLookups() {
+    return (int) CONFIGURATION.get(ConfigProperty.MAX_CANDIDATE_LOOKUPS);
+  }
+
+  public int getMaxAcronymLookups() {
+    return (int) CONFIGURATION.get(ConfigProperty.MAX_ACRONYM_LOOKUPS);
+  }
+
+  public int getMaxConnectionLookups() {
+    return (int) CONFIGURATION.get(ConfigProperty.MAX_CONNECTION_LOOKUPS);
   }
 
   public StringDistance getCandidatePruningMetric() {
@@ -328,6 +364,18 @@ public class AGDISTISConfiguration {
     return (Path) CONFIGURATION.get(ConfigProperty.INDEX_SURFACE_FORM_TSV_PATH);
   }
 
+  public int getCandidateCacheSize() {
+    return (int) CONFIGURATION.get(ConfigProperty.CANDIDATE_CACHE_SIZE);
+  }
+
+  public int getDisambiguationPageCacheSize() {
+    return (int) CONFIGURATION.get(ConfigProperty.DISAMBIGUATION_PAGE_CACHE_SIZE);
+  }
+
+  public int getTripleIndexCacheSize() {
+    return (int) CONFIGURATION.get(ConfigProperty.TRIPLE_INDEX_CACHE_SIZE);
+  }
+
   public String getAGDISTISVersion() {
     return (String) CONFIGURATION.get(ConfigProperty.AGDISTIS_VERSION);
   }
@@ -375,13 +423,20 @@ public class AGDISTISConfiguration {
     CONFIGURATION.put(ConfigProperty.BASE_URI, baseURI);
   }
 
-  public void setDBPediaEndpoint(final URI dbpediaEndpoint) {
-    Preconditions.checkNotNull(dbpediaEndpoint);
-    CONFIGURATION.put(ConfigProperty.DBPEDIA_ENDPOINT, dbpediaEndpoint);
-  }
-
   public void setNGramDistance(final int ngramDistance) {
     CONFIGURATION.put(ConfigProperty.NGRAM_DISTANCE, ngramDistance);
+  }
+
+  public void setMaxCandidateLookups(final int maxCandidateLookups) {
+    CONFIGURATION.put(ConfigProperty.MAX_CANDIDATE_LOOKUPS, maxCandidateLookups);
+  }
+
+  public void setMaxAcronymLookups(final int maxAcronymLookups) {
+    CONFIGURATION.put(ConfigProperty.MAX_ACRONYM_LOOKUPS, maxAcronymLookups);
+  }
+
+  public void setMaxConnectionLookups(final int maxConnectionLookups) {
+    CONFIGURATION.put(ConfigProperty.MAX_CONNECTION_LOOKUPS, maxConnectionLookups);
   }
 
   public void setSemanticDepth(final int semanticDepth) {
@@ -469,6 +524,21 @@ public class AGDISTISConfiguration {
     CONFIGURATION.put(ConfigProperty.SCHEMA_VERSION, schemaVersion);
   }
 
+  private void setCandidateCacheSize(final int size) {
+    Preconditions.checkNotNull(size);
+    CONFIGURATION.put(ConfigProperty.CANDIDATE_CACHE_SIZE, size);
+  }
+
+  private void setTripleIndexCacheSize(final int size) {
+    Preconditions.checkNotNull(size);
+    CONFIGURATION.put(ConfigProperty.TRIPLE_INDEX_CACHE_SIZE, size);
+  }
+
+  private void setDisambiguationPageCacheSize(final int size) {
+    Preconditions.checkNotNull(size);
+    CONFIGURATION.put(ConfigProperty.DISAMBIGUATION_PAGE_CACHE_SIZE, size);
+  }
+
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("AGDISTIS Configuration:");
@@ -498,11 +568,6 @@ public class AGDISTISConfiguration {
     sb.append(ConfigProperty.BASE_URI.name());
     sb.append(": ");
     sb.append(getBaseURI().toString());
-    sb.append(IOUtils.LINE_SEPARATOR);
-
-    sb.append(ConfigProperty.DBPEDIA_ENDPOINT.name());
-    sb.append(": ");
-    sb.append(getDBPediaEndpoint().toString());
     sb.append(IOUtils.LINE_SEPARATOR);
 
     sb.append(ConfigProperty.NGRAM_DISTANCE.name());
@@ -583,6 +648,36 @@ public class AGDISTISConfiguration {
     sb.append(ConfigProperty.USE_COMMON_ENTITIES.name());
     sb.append(": ");
     sb.append(getUseCommonEntities());
+    sb.append(IOUtils.LINE_SEPARATOR);
+
+    sb.append(ConfigProperty.CANDIDATE_CACHE_SIZE.name());
+    sb.append(": ");
+    sb.append(getCandidateCacheSize());
+    sb.append(IOUtils.LINE_SEPARATOR);
+
+    sb.append(ConfigProperty.DISAMBIGUATION_PAGE_CACHE_SIZE.name());
+    sb.append(": ");
+    sb.append(getDisambiguationPageCacheSize());
+    sb.append(IOUtils.LINE_SEPARATOR);
+
+    sb.append(ConfigProperty.TRIPLE_INDEX_CACHE_SIZE.name());
+    sb.append(": ");
+    sb.append(getTripleIndexCacheSize());
+    sb.append(IOUtils.LINE_SEPARATOR);
+
+    sb.append(ConfigProperty.MAX_ACRONYM_LOOKUPS.name());
+    sb.append(": ");
+    sb.append(getMaxAcronymLookups());
+    sb.append(IOUtils.LINE_SEPARATOR);
+
+    sb.append(ConfigProperty.MAX_CANDIDATE_LOOKUPS.name());
+    sb.append(": ");
+    sb.append(getMaxCandidateLookups());
+    sb.append(IOUtils.LINE_SEPARATOR);
+
+    sb.append(ConfigProperty.MAX_CONNECTION_LOOKUPS.name());
+    sb.append(": ");
+    sb.append(getMaxConnectionLookups());
     sb.append(IOUtils.LINE_SEPARATOR);
 
     sb.append(ConfigProperty.INDEX_TTL_PATH.name());

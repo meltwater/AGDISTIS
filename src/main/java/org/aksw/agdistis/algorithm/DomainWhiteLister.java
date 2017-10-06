@@ -23,7 +23,9 @@ public class DomainWhiteLister {
 
   private final TripleIndex index;
   private final HashSet<String> whiteList = new HashSet<String>();
-  private final Cache<String, Boolean> whiteListCache = CacheBuilder.newBuilder().maximumSize(500000).build();
+  // The size of this cache should be the same as the size of the candidate cache.
+  private final Cache<String, Boolean> whiteListCache = CacheBuilder.newBuilder()
+      .maximumSize(AGDISTISConfiguration.INSTANCE.getCandidateCacheSize()).build();
 
   public DomainWhiteLister(final TripleIndex index, final Path whiteListPath) {
 
