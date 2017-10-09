@@ -9,6 +9,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.aksw.agdistis.AGDISTISConfiguration;
 import org.aksw.agdistis.AGDISTISConfigurationException;
@@ -51,9 +52,12 @@ public class CandidateUtil {
   private final boolean acronym;
   private final boolean commonEntities;
   private final Cache<String, Boolean> disambiguationPageCache = CacheBuilder.newBuilder()
-      .maximumSize(AGDISTISConfiguration.INSTANCE.getDisambiguationPageCacheSize()).build();
+      .maximumSize(AGDISTISConfiguration.INSTANCE.getDisambiguationPageCacheSize())
+      .expireAfterWrite(30, TimeUnit.MINUTES).build();
+
   private final Cache<String, List<Triple>> candidateCache = CacheBuilder.newBuilder()
-      .maximumSize(AGDISTISConfiguration.INSTANCE.getCandidateCacheSize()).build();
+      .maximumSize(AGDISTISConfiguration.INSTANCE.getCandidateCacheSize()).expireAfterWrite(30, TimeUnit.MINUTES)
+      .build();
   private final static Stemming stemmer = new Stemming();
 
   private final static int _MAX_CANDIDATE_LOOKUPS = AGDISTISConfiguration.INSTANCE.getMaxCandidateLookups();

@@ -11,6 +11,7 @@ import org.aksw.agdistis.util.TripleIndex;
 import org.apache.lucene.search.spell.NGramDistance;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +58,7 @@ public class TripleIndexTest {
   }
 
   @Test
+  @Ignore
   public void testSameAs() {
     final String candidateURL = "http://dbpedia.org/resource/fhai/7022be80-951a-475b-b4c2-884a2f27aa48";
     final List<Triple> sameas = index.search(candidateURL, "http://www.w3.org/2002/07/owl#sameAs", null);

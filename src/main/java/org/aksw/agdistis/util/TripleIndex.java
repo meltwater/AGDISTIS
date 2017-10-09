@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.aksw.agdistis.AGDISTISConfiguration;
 import org.apache.commons.lang3.StringUtils;
@@ -70,7 +71,8 @@ public class TripleIndex {
     isearcher = new IndexSearcher(ireader);
     urlValidator = new UrlValidator();
 
-    cache = CacheBuilder.newBuilder().maximumSize(AGDISTISConfiguration.INSTANCE.getTripleIndexCacheSize()).build();
+    cache = CacheBuilder.newBuilder().maximumSize(AGDISTISConfiguration.INSTANCE.getTripleIndexCacheSize())
+        .expireAfterWrite(30, TimeUnit.MINUTES).build();
   }
 
   public List<Triple> search(final String subject, final String predicate, final String object) {
