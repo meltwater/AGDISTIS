@@ -32,7 +32,6 @@ public class AGDISTISTest {
   private static final ObjectMapper mapper = new ObjectMapper();
 
   @Test
-  @Ignore
   public void testCamelCaseOrgSuffix() throws InterruptedException, IOException {
 
     final String text = "LabCorp has partnered with Walk-In Lab part of Walk-In LLC to provide blood test services across the country.";
@@ -148,15 +147,15 @@ public class AGDISTISTest {
     final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
 
     Occurrence occ = new Occurrence(0, "Barack Obama".length());
-    final InputEntity obama = new InputEntity("Barack Obama", "person", occ.getStartOffset(), occ.getEndOffset());
+    final InputEntity obama = new InputEntity("Barack Obama", "PER", occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, obama);
 
     occ = new Occurrence(20, "Angela Merkel".length() + 20);
-    final InputEntity merkel = new InputEntity("Angela Merkel", "person", occ.getStartOffset(), occ.getEndOffset());
+    final InputEntity merkel = new InputEntity("Angela Merkel", "PER", occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, merkel);
 
     occ = new Occurrence(37, "Berlin".length() + 37);
-    final InputEntity berlin = new InputEntity("Berlin", "city", occ.getStartOffset(), occ.getEndOffset());
+    final InputEntity berlin = new InputEntity("Berlin", "LOC", occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, berlin);
 
     final String plainText = obama.getName() + " visits " + merkel.getName() + " in " + berlin.getName() + ".";
@@ -421,6 +420,25 @@ public class AGDISTISTest {
     final InputEntity apple = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
         occ.getStartOffset(), occ.getEndOffset());
     entities.put(occ, apple);
+
+    final DisambiguationService service = new DisambiguationService();
+    final String agdistisOutput = service.standardAG("testId", text, entities);
+    final ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
+
+    log.info(IOUtils.LINE_SEPARATOR + writer.writeValueAsString(mapper.readTree(agdistisOutput)));
+  }
+
+  @Test
+  public void testHonda() throws InterruptedException, IOException {
+
+    final String text = "Honda Motors is at the Auto Expo 2018, and one of its big showcases for this edition is the latest generation of the Honda CR-V";
+
+    final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
+
+    final Occurrence occ = new Occurrence(0, 0 + "Honda Motors".length());
+    final InputEntity honda = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
+        occ.getStartOffset(), occ.getEndOffset());
+    entities.put(occ, honda);
 
     final DisambiguationService service = new DisambiguationService();
     final String agdistisOutput = service.standardAG("testId", text, entities);

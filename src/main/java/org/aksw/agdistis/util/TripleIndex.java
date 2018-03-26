@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.aksw.agdistis.AGDISTISConfiguration;
 import org.apache.commons.lang3.StringUtils;
@@ -35,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Sets;
 
 public class TripleIndex {
 
@@ -46,9 +50,8 @@ public class TripleIndex {
   public static final String FIELD_NAME_PREDICATE = "predicate";
   public static final String FIELD_NAME_OBJECT_URI = "object_uri";
   public static final String FIELD_NAME_OBJECT_LITERAL = "object_literal";
-  private static final String[] _LUCENE_KEYWORDS = new String[] { "AND", "OR", "NOT", "TO" };
-  private static final String[] _LUCENE_KEYWORDS_REPLACEMENTS = new String[] { "\\AND", "\\OR", "\\NOT", "\\TO" };
-  // public static final String FIELD_URI_COUNT = "uri_counts";
+
+  private static final Set<String> _LUCENE_KEYWORDS = Sets.newHashSet("AND", "OR", "NOT", "TO");
   public static final String FIELD_FREQ = "freq";
 
   private final int defaultMaxNumberOfDocsRetrievedFromIndex = 100;
@@ -124,8 +127,7 @@ public class TripleIndex {
           final Analyzer analyzer = new LiteralAnalyzer(luceneVersion);
           final QueryParser parser = new QueryParser(luceneVersion, FIELD_NAME_OBJECT_LITERAL, analyzer);
           parser.setDefaultOperator(QueryParser.Operator.AND);
-          q = parser.parse(QueryParserBase
-              .escape(object = StringUtils.replaceEach(object, _LUCENE_KEYWORDS, _LUCENE_KEYWORDS_REPLACEMENTS)));
+          q = parser.parse(QueryParserBase.escape(object = escapeLuceneKeywords(object)));
           bq.add(q, BooleanClause.Occur.MUST);
         }
       }
@@ -179,6 +181,18 @@ public class TripleIndex {
 
   public DirectoryReader getIreader() {
     return ireader;
+  }
+
+  private String escapeLuceneKeywords(String queryString) {
+    final String[] tokens = StringUtils.split(queryString);
+    return Stream.of(tokens).parallel().map(token -> escapeLuceneKeyword(token)).collect(Collectors.joining(" "));
+  }
+
+  private String escapeLuceneKeyword(String token) {
+    if (_LUCENE_KEYWORDS.contains(token)) {
+      return "\\" + token;
+    }
+    return token;
   }
 
 }

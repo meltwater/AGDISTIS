@@ -2,6 +2,7 @@ corp
 corp.
 Corp
 Corp.
+Corporation
 ltd
 LTD
 Ltd

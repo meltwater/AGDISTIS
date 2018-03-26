@@ -56,8 +56,8 @@ public class DomainWhiteLister {
     }
     for (final Triple triple : tmp) {
       if (!triple.getObject().contains("wordnet") && !triple.getObject().contains("wikicategory")) {
-        if ((whiteList.contains(triple.getObject()) || whiteList.isEmpty())
-            && isNERCompliant(nerType.get(), triple.getObject())) {
+        if ((whiteList.contains(triple.getObject()) && isNERCompliant(nerType.get(), triple.getObject()))
+            || whiteList.isEmpty()) {
           whiteListCache.put(candidateURL, true);
           return true;
         }
@@ -69,7 +69,7 @@ public class DomainWhiteLister {
 
   private boolean isNERCompliant(final String nerType, final String nedURI) {
     if (AGDISTISConfiguration.INSTANCE.getForceNER2NEDMapping()) {
-      final String nedType = StringUtils.substringAfter(AGDISTISConfiguration.INSTANCE.getEdgeType().toString(),
+      final String nedType = StringUtils.substringAfter(nedURI,
           AGDISTISConfiguration.INSTANCE.getEdgeType().toString());
       if (AGDISTISConfiguration.INSTANCE.getNER2NEDMapping().containsKey(nedType)) {
         return nerType.equals(AGDISTISConfiguration.INSTANCE.getNER2NEDMapping().get(nedType));

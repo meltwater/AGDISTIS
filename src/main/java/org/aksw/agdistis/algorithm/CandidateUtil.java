@@ -101,7 +101,7 @@ public class CandidateUtil {
       sb.append(" ");
     }
     final String entities = StringUtils.normalizeSpace(sb.toString());
-    LOGGER.trace("entities" + entities);
+    LOGGER.trace("Entities: {}", entities);
     final HashSet<String> heuristicExpansion = new HashSet<String>();
     for (final NamedEntityInText entity : namedEntities) {
       LOGGER.debug("Disambiguating label: " + entity.getLabel());
@@ -162,13 +162,13 @@ public class CandidateUtil {
   }
 
   private void checkLabelCandidates(final DirectedSparseGraph<Node, String> graph, final double threshholdTrigram,
-      final HashMap<String, Node> nodes, final NamedEntityInText entity, final String expandedLabel,
-      final boolean searchInSurfaceForms, final String entities) throws IOException {
+      final HashMap<String, Node> nodes, final NamedEntityInText entity, final String expandedSurfaceForm,
+      final boolean alternativeLabels, final String entities) throws IOException {
 
     List<Triple> toBeAdded;
-    String label = entity.getLabel();
+    String surfaceForm = entity.getSurfaceForm();
     // Check the cache
-    if (null == (toBeAdded = candidateCache.getIfPresent(label))) {
+    if (null == (toBeAdded = candidateCache.getIfPresent(surfaceForm))) {
       List<Triple> candidates = new ArrayList<Triple>();
       List<Triple> acronymCandidatesTemp = new ArrayList<Triple>();
       List<Triple> acronymCandidatesTemp2 = new ArrayList<Triple>();
@@ -177,18 +177,19 @@ public class CandidateUtil {
       final List<Triple> linkedsbyContext = new ArrayList<Triple>();
       int countFinalCandidates = 0;
 
+      // Surface form cleaning.
       final PreprocessingNLP nlp = new PreprocessingNLP();
-      // Label treatment
-      label = corporationAffixCleaner.cleanLabelsfromCorporationIdentifier(label);
-      LOGGER.debug("Clean label: {}", label);
-      label = nlp.preprocess(label);
+
+      surfaceForm = corporationAffixCleaner.cleanLabelsfromCorporationIdentifier(surfaceForm);
+      LOGGER.debug("Clean label: {}", surfaceForm);
+      surfaceForm = nlp.preprocess(surfaceForm);
       // label treatment finished ->
       // searchByAcronym
       if (acronym == true) {
-        if (label.equals(label.toUpperCase()) && (label.length() <= 4)) {
-          acronymCandidatesTemp = searchbyAcronym(label, searchInSurfaceForms, entity.getType());
+        if (surfaceForm.equals(surfaceForm.toUpperCase()) && (surfaceForm.length() <= 4)) {
+          acronymCandidatesTemp = searchbyAcronym(surfaceForm, alternativeLabels, entity.getType());
           for (final Triple triple : acronymCandidatesTemp) {
-            acronymCandidatesTemp2 = searchAcronymByLabel(triple.getSubject(), searchInSurfaceForms, entity.getType());
+            acronymCandidatesTemp2 = searchAcronymByLabel(triple.getSubject(), alternativeLabels, entity.getType());
             for (final Triple triple2 : acronymCandidatesTemp2) {
               if (metric.getDistance(triple.getSubject(), triple2.getObject()) > threshholdTrigram) {
                 // iff it is a disambiguation resource, skip it
@@ -213,58 +214,59 @@ public class CandidateUtil {
             }
             acronymCandidatesTemp2.clear();
           }
-          LOGGER.debug("Found {} candidates for acronym {}. [surface form={}]", countFinalCandidates, label,
-              searchInSurfaceForms);
+          LOGGER.debug("Found {} candidates for acronym {}. [surface form={}]", countFinalCandidates, surfaceForm,
+              alternativeLabels);
         }
       }
 
       // Search by standard label
       if (countFinalCandidates == 0) {
-        candidates = searchCandidatesByLabel(label, searchInSurfaceForms, entity.getType(), popularity);
-        if (searchInSurfaceForms) {
-          LOGGER.debug("Found {} surface form candidates for label {}.", candidates.size(), label);
+        candidates = searchCandidatesByLabel(surfaceForm, alternativeLabels, entity.getType(), popularity);
+        if (alternativeLabels) {
+          LOGGER.debug("Found {} surface form candidates for label '{}'.", candidates.size(), surfaceForm);
         } else {
-          LOGGER.debug("Found {} candidates for label {}.", candidates.size(), label);
+          LOGGER.debug("Found {} candidates for label '{}'.", candidates.size(), surfaceForm);
         }
 
         if (candidates.size() == 0) {
-          if (label.endsWith("'s")) {
+          if (surfaceForm.endsWith("'s")) {
             // removing genitive s
-            label = label.substring(0, label.lastIndexOf("'s"));
-            candidates = searchCandidatesByLabel(label, searchInSurfaceForms, entity.getType(), popularity);
+            surfaceForm = surfaceForm.substring(0, surfaceForm.lastIndexOf("'s"));
+            candidates = searchCandidatesByLabel(surfaceForm, alternativeLabels, entity.getType(), popularity);
             LOGGER.debug("No candidates founds after removing genitive.");
-          } else if (label.endsWith("s")) {
+          } else if (surfaceForm.endsWith("s")) {
             // removing plural s
-            label = label.substring(0, label.lastIndexOf("s"));
-            candidates = searchCandidatesByLabel(label, searchInSurfaceForms, entity.getType(), popularity);
+            surfaceForm = surfaceForm.substring(0, surfaceForm.lastIndexOf("s"));
+            candidates = searchCandidatesByLabel(surfaceForm, alternativeLabels, entity.getType(), popularity);
             LOGGER.debug("No candidates founds for singularized label.");
           }
         }
 
         // If the set of candidates is still empty, try chopping the label by camelcase.
-        if (candidates.isEmpty() && (label.split(" ").length == 1)) {
-          final String camelSplit = StringUtils.join(StringUtils.splitByCharacterTypeCamelCase(label), " ");
-          label = camelSplit;
-          candidates = searchCandidatesByLabel(camelSplit, searchInSurfaceForms, entity.getType(), popularity);
+        if (candidates.isEmpty() && (surfaceForm.split(" ").length == 1)) {
+          final String camelSplit = StringUtils.join(StringUtils.splitByCharacterTypeCamelCase(surfaceForm), " ");
+          surfaceForm = camelSplit;
+          candidates = searchCandidatesByLabel(camelSplit, alternativeLabels, entity.getType(), popularity);
           if (!candidates.isEmpty()) {
-            LOGGER.debug("Found '{}' candidates by splitting '{}' into '{}'.", candidates.size(), label, camelSplit);
+            LOGGER.debug("Found '{}' candidates by splitting '{}' into '{}'.", candidates.size(), surfaceForm,
+                camelSplit);
           }
         }
 
-        if (candidates.isEmpty() && !label.equals(expandedLabel)) {
-          candidates = searchCandidatesByLabel(expandedLabel, searchInSurfaceForms, entity.getType(), popularity);
-          LOGGER.debug("Found {} candidates for expanded label  '{}' of label '{}'.", candidates.size(), expandedLabel,
-              label);
+        if (candidates.isEmpty() && !surfaceForm.equals(expandedSurfaceForm)) {
+          candidates = searchCandidatesByLabel(expandedSurfaceForm, alternativeLabels, entity.getType(), popularity);
+          LOGGER.debug("Found {} candidates for expanded label  '{}' of label '{}'.", candidates.size(), expandedSurfaceForm,
+              surfaceForm);
         }
 
         // If the set of candidates is still empty, here we apply stemming
         // technique
         if (candidates.isEmpty()) {
-          final String temp = stemmer.stemming(label);
+          final String temp = stemmer.stemming(surfaceForm);
           if (StringUtils.isNotBlank(temp)) {
-            candidates = searchCandidatesByLabel(temp, searchInSurfaceForms, entity.getType(), popularity);
+            candidates = searchCandidatesByLabel(temp, alternativeLabels, entity.getType(), popularity);
           }
-          LOGGER.debug("Found {} candidates for stem  {} of label {}.", candidates.size(), temp, label);
+          LOGGER.debug("Found {} candidates for stem  {} of label {}.", candidates.size(), temp, surfaceForm);
         }
 
         // Prune candidates using string similarity.
@@ -273,44 +275,56 @@ public class CandidateUtil {
         for (Triple c : candidates) {
           LOGGER.debug("Candidate triple to check: " + c);
           String candidateURL = c.getSubject();
-          String surfaceForm = corporationAffixCleaner.cleanLabelsfromCorporationIdentifier(c.getObject());
-          surfaceForm = nlp.preprocess(surfaceForm);
+          String cleanLabel = c.getObject();
+
+          // FIXME: This is a workaround for the aggressive cleaning of the labels in the index.
+          if (!c.getSubject().contains("/fhai/")) {
+            cleanLabel = StringUtils.normalizeSpace(
+                StringUtils.replaceChars(StringUtils.substringAfter(c.getSubject(), "resource/"), "_()", "   "));
+          }
+          // End of the fix.
+
+          cleanLabel = corporationAffixCleaner.cleanLabelsfromCorporationIdentifier(cleanLabel);
+          cleanLabel = nlp.preprocess(cleanLabel);
+
           // rule of thumb: no year numbers in candidates
           if (candidateURL.startsWith(nodeType)) {
-            // trigram similarity
-            if (c.getPredicate().equals("http://www.w3.org/2000/01/rdf-schema#label")) {
-
-              if ((metric.getDistance(surfaceForm.toLowerCase(), label.toLowerCase()) < 1.0)
-                  && !surfaceForm.equals(expandedLabel)) {
-                // Here we set the similarity as maximum because rfds:label refers to the main reference of a given
-                // resource
-                continue;
-
-              }
-            } else if (!c.getPredicate().equals("http://www.w3.org/2000/01/rdf-schema#label")) {
-              // Here the similarity is in accordance with the user's choice.
-              if (metric.getDistance(surfaceForm, label) < threshholdTrigram) {
+            // Trigram similarity.
+            if ((metric.getDistance(cleanLabel.toLowerCase(), surfaceForm.toLowerCase()) < threshholdTrigram)) {
+              if (expandedSurfaceForm.equals(cleanLabel)
+                  || (metric.getDistance(cleanLabel.toLowerCase(), expandedSurfaceForm.toLowerCase()) < threshholdTrigram)) {
                 continue;
               }
-            } // if it is a disambiguation resource, skip it
+
+            }
+            // If this is a disambiguation resource, skip it.
             if (isDisambiguationResource(candidateURL)) {
               continue;
             }
-            // Check if this candidateURL redirects to something else, and adjust the triple accordingly.
+            // Check if this candidateURL redirects to something else, accept only if search among alternative labels is
+            // enabled.
             final String redirectedURL = redirect(candidateURL);
             if (!candidateURL.equals(redirectedURL)) {
-              c = new Triple(redirectedURL, c.getPredicate(), c.getObject());
-              candidateURL = redirectedURL;
+              // Replace with the redirected triple.
+              final List<Triple> redirected = index.search(redirectedURL, c.getPredicate(), null);
+              if (!redirected.isEmpty()) {
+                c = redirected.get(0);
+                candidateURL = c.getSubject();
+              }
             }
             if (commonEntities == true) {
               // Domain white list does not apply. All entities are accepted.
-              toBeAdded.add(c);
+              if (!toBeAdded.contains(c)) {
+                toBeAdded.add(c);
+              }
               added = true;
               LOGGER.trace("Entity {} with url {} was added to the graph.", entity, candidateURL);
               countFinalCandidates++;
             } else {
               if (preDisambiguationDomainWhiteLister.fitsIntoDomain(candidateURL, Optional.of(entity.getType()))) {
-                toBeAdded.add(c);
+                if (!toBeAdded.contains(c)) {
+                  toBeAdded.add(c);
+                }
                 added = true;
                 LOGGER.trace("Entity {} with url {} was added to the graph.", entity, candidateURL);
                 countFinalCandidates++;
@@ -319,20 +333,20 @@ public class CandidateUtil {
           }
         }
         // Looking by context starts here.
-        if (!added && !searchInSurfaceForms && AGDISTISConfiguration.INSTANCE.getUseContext()) {
+        if (!added && !alternativeLabels && AGDISTISConfiguration.INSTANCE.getUseContext()) {
           LOGGER.debug("searchByContext");
-          candidatesContext = searchCandidatesByContext(entities, label); // looking
-                                                                          // for
-                                                                          // all
-                                                                          // entities
-                                                                          // together
+          candidatesContext = searchCandidatesByContext(entities, surfaceForm); // looking
+          // for
+          // all
+          // entities
+          // together
           LOGGER.debug("\t\tnumber of candidates by context: " + candidatesContext.size());
 
           // taking all possibles SF for each resource found.
           if (candidatesContext != null) {
             for (final Triple triple : candidatesContext) {
               final String url = nodeType + triple.getPredicate();
-              candidatesContextbyLabel.addAll(searchCandidatesByUrl(url, searchInSurfaceForms));
+              candidatesContextbyLabel.addAll(searchCandidatesByUrl(url, alternativeLabels));
             }
           }
 
@@ -345,7 +359,7 @@ public class CandidateUtil {
             cleanCandidateURL = nlp.preprocess(cleanCandidateURL);
             if (candidateURL.startsWith(nodeType)) {
               // trigram similarity over the URIS
-              if (metric.getDistance(cleanCandidateURL, label) < 0.3) {
+              if (metric.getDistance(cleanCandidateURL, surfaceForm) >= 0.3) {
                 continue;
               }
               // finding direct connections
@@ -381,12 +395,12 @@ public class CandidateUtil {
           }
         }
         // Cache the results
-        candidateCache.put(label, toBeAdded);
+        candidateCache.put(surfaceForm, toBeAdded);
 
         // Looking for the given label among the set of surface forms.
-        if (!added && !searchInSurfaceForms) {
+        if (!added && alternativeLabels) {
           LOGGER.debug("Search using SF from disambiguation, redirects and from anchors web pages");
-          checkLabelCandidates(graph, threshholdTrigram, nodes, entity, expandedLabel, true, entities);
+          checkLabelCandidates(graph, threshholdTrigram, nodes, entity, expandedSurfaceForm, true, entities);
         }
 
       }

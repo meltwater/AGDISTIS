@@ -13,3 +13,8 @@ lib/aida.jar
 *.txt
 indexdbpedia*
 /index*
+
+# Intellj project files
+*.iml
+*.eml
+/project/

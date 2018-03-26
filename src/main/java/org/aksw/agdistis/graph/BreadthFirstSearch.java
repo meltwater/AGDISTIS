@@ -47,15 +47,15 @@ public class BreadthFirstSearch {
           }
           if (targetNode.getPredicate().startsWith(edgeType) && targetNode.getObject().startsWith(nodeType)) {
             final int levelNow = level + 1;
-            Node Node = null;
-            if (findNode.containsKey(targetNode)) {
-              Node = findNode.get(targetNode);
+            Node node = null;
+            if (findNode.containsKey(targetNode.getObject())) {
+              node = findNode.get(targetNode.getObject());
             } else {
-              Node = new Node(targetNode.getObject(), 0, levelNow, algorithm);
-              findNode.put(targetNode.getObject(), Node);
-              q.add(Node);
+              node = new Node(targetNode.getObject(), 0, levelNow, algorithm);
+              findNode.put(targetNode.getObject(), node);
+              q.add(node);
             }
-            graph.addEdge(StringUtils.join(graph.getEdgeCount(), ";", targetNode.getPredicate()), currentNode, Node);
+            graph.addEdge(StringUtils.join(graph.getEdgeCount(), ";", targetNode.getPredicate()), currentNode, node);
           }
         }
       }
