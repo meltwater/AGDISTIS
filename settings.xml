@@ -1,0 +1,80 @@
+<settings>
+    <servers>
+        <server>
+            <id>meltwater-snapshots</id>
+            <username>${env.ARTIFACTORY_USERNAME}</username>
+            <password>${env.ARTIFACTORY_PASSWORD}</password>
+        </server>
+        <server>
+            <id>meltwater-releases</id>
+            <username>${env.ARTIFACTORY_USERNAME}</username>
+            <password>${env.ARTIFACTORY_PASSWORD}</password>
+        </server>
+        <server>
+            <id>team-karma</id>
+            <username>${env.ARTIFACTORY_USERNAME}</username>
+            <password>${env.ARTIFACTORY_PASSWORD}</password>
+        </server>
+    </servers>
+    <profiles>
+        <profile>
+            <id>nlp-dev</id>
+
+            <repositories>
+                <repository>
+                    <id>meltwater-releases</id>
+                    <url>https://meltwater.jfrog.io/meltwater/releases</url>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                        <checksumPolicy>fail</checksumPolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+
+                <repository>
+                    <id>meltwater-snapshots</id>
+                    <url>https://meltwater.jfrog.io/meltwater/snapshots</url>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                        <checksumPolicy>fail</checksumPolicy>
+                    </snapshots>
+                    <layout>default</layout>
+                </repository>
+
+                <repository>
+                    <id>team-karma</id>
+                    <url>https://meltwater.jfrog.io/meltwater/team-karma</url>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                        <checksumPolicy>fail</checksumPolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                        <checksumPolicy>fail</checksumPolicy>
+                    </snapshots>
+                    <layout>default</layout>
+                </repository>
+
+                <repository>
+                    <id>gate-sheffield</id>
+                    <url>http://repo.gate.ac.uk/content/repositories/public/</url>
+                </repository>
+
+            </repositories>
+        </profile>
+    </profiles>
+
+    <activeProfiles>
+        <!--make the profile active all the time -->
+        <activeProfile>nlp-dev</activeProfile>
+    </activeProfiles>
+</settings>
