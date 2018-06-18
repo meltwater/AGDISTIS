@@ -12,6 +12,8 @@ public class Node implements Comparable<Node> {
   private final HashSet<Integer> ids;
   private double activation;
   private String candidateURI;
+  private String candidateType;
+  private String labelString;
   private int level;
   private double hubWeightForCalculation = 1;
   private double authorityWeightForCalculation = 1;
@@ -26,9 +28,11 @@ public class Node implements Comparable<Node> {
   private final HashSet<Node> predecessors;
   private final HashSet<Node> successors;
 
-  public Node(final String uri, final double activation, final int level, final Algorithm algorithm)
+  public Node(final String uri,final String candidateType, final String labelString, final double activation, final int level, final Algorithm algorithm)
       throws IOException {
     candidateURI = uri;
+    this.candidateType = candidateType;
+    this.labelString = labelString;
     this.activation = activation;
     this.level = level;
     hubWeight = 1;
@@ -39,6 +43,20 @@ public class Node implements Comparable<Node> {
     pageRank = 0;
     this.algorithm = algorithm;
   }
+  
+  public Node(final String uri, final double activation, final int level, final Algorithm algorithm)
+          throws IOException {
+        candidateURI = uri;
+        this.activation = activation;
+        this.level = level;
+        hubWeight = 1;
+        authorityWeight = 1;
+        ids = new HashSet<Integer>();
+        successors = new HashSet<Node>();
+        predecessors = new HashSet<Node>();
+        pageRank = 0;
+        this.algorithm = algorithm;
+      }
 
   @Override
   public String toString() {
@@ -109,6 +127,14 @@ public class Node implements Comparable<Node> {
 
   public void setCandidateURI(final String uri) {
     candidateURI = uri;
+  }
+  
+  public String getLabelString() {
+      return labelString;
+  }
+  
+  public String getCandidateType() {
+      return candidateType;
   }
 
   public void setActivation(final double activation) {

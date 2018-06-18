@@ -51,7 +51,7 @@ public class BreadthFirstSearch {
             if (findNode.containsKey(targetNode.getObject())) {
               node = findNode.get(targetNode.getObject());
             } else {
-              node = new Node(targetNode.getObject(), 0, levelNow, algorithm);
+              node = new Node(targetNode.getObject(),targetNode.getPredicate(), targetNode.getObject(), 0, levelNow, algorithm);
               findNode.put(targetNode.getObject(), node);
               q.add(node);
             }

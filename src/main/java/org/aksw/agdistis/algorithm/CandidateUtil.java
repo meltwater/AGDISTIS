@@ -40,6 +40,7 @@ public class CandidateUtil {
   private static Logger LOGGER = LoggerFactory.getLogger(CandidateUtil.class);
   private static final String THING_TYPE = "http://www.w3.org/2002/07/owl#Thing";
   private static final String DBPEDIA_TYPE_PREFIX = "http://dbpedia.org/ontology/";
+  private static final String LABEL_SUFFIX = "rdf-schema#label";
 
   private final String nodeType;
   private final TripleIndex index;
@@ -62,7 +63,8 @@ public class CandidateUtil {
 
   private final static int _MAX_CANDIDATE_LOOKUPS = AGDISTISConfiguration.INSTANCE.getMaxCandidateLookups();
   private final static int _MAX_RETRIEVED_ACRONYMS = AGDISTISConfiguration.INSTANCE.getMaxAcronymLookups();
-  private final static int _MAX_RETRIEVED_CONNECTIONS = AGDISTISConfiguration.INSTANCE.getMaxConnectionLookups();;
+  private final static int _MAX_RETRIEVED_CONNECTIONS = AGDISTISConfiguration.INSTANCE.getMaxConnectionLookups();
+
 
   public CandidateUtil() {
     try {
@@ -144,7 +146,10 @@ public class CandidateUtil {
 
   public void addNodeToGraph(final DirectedSparseGraph<Node, String> graph, final HashMap<String, Node> nodes,
       final NamedEntityInText entity, final Triple c, final String candidateURL) throws IOException {
-    final Node currentNode = new Node(candidateURL, 0, 0, algorithm);
+      
+    final String labelType = (c.getPredicate() != null && c.getPredicate().endsWith(LABEL_SUFFIX)) ? c.getPredicate() : null;
+    final String labelString = (labelType != null && c.getObject() != null && !c.getObject().isEmpty()) ? c.getObject(): null;
+    final Node currentNode = new Node(candidateURL, labelType, labelString, 0, 0, algorithm);
     LOGGER.debug("CandidateURL: " + candidateURL);
     // candidates are connected to a specific label in the text via their
     // start position

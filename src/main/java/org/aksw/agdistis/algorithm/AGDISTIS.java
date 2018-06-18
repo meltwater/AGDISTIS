@@ -94,6 +94,8 @@ public class AGDISTIS {
                     if (m.containsId(entity.getStartPos()) && postDisambiguationDomainWhiteLister.fitsIntoDomain(m
                             .getCandidateURI(), Optional.of(entity.getType()))) {
                         final String candidateURI = m.getCandidateURI();
+                        final String canonicalName = m.getLabelString();
+                        entity.setCanonicalName(canonicalName);
                         entity.setNamedEntity(candidateURI);
                         entity.setDisambiguatedTypes(cu.getDisambiguatedTypes(m.getCandidateURI(), index));
                         if (algorithm == Algorithm.HITS) {

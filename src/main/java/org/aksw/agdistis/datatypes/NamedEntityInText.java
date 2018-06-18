@@ -14,6 +14,8 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
   private int length;
   private String namedEntityUri;
   private String label;
+  private String canonicalName; // it is usally the  label String attached to an entity.
+// eg: <http://dbpedia.org/resource/Tim_Cook> <http://www.w3.org/2000/01/rdf-schema#label> "Tim Cook"@en .
   private String surfaceForm;
   private String type;
   private Collection<String> disambiguatedTypes;
@@ -106,6 +108,14 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
     return label.replaceAll("[ _\\(\\)]", "");
   }
 
+  public String getCanonicalName() {
+      return canonicalName;
+  }
+
+  public void setCanonicalName(String canonicalName) {
+      this.canonicalName = canonicalName;
+  }
+  
   public String getType() {
     return type;
   }
