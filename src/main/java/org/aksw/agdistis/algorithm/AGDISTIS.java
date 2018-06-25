@@ -68,6 +68,9 @@ public class AGDISTIS {
             bfs.run(maxDepth, graph, edgeType, nodeType);
             LOGGER.trace("Graph size after BFS: " + graph.getVertexCount());
 
+            final long BFSTime = System.currentTimeMillis() - start;
+            
+            start = System.currentTimeMillis();
             if (algorithm == Algorithm.HITS) {
                 // 2.1) let HITS run
                 LOGGER.debug("Run HITS");
@@ -135,7 +138,8 @@ public class AGDISTIS {
             document.setCandidateSelectionTime(candidateSelectionTime);
             document.setAGDISTISVersion(AGDISTISConfiguration.INSTANCE.getAGDISTISVersion());
 
-            LOGGER.debug("Candidates computed in {} msecs", candidateSelectionTime);
+            LOGGER.debug("Candidates search and graph creation in {} msecs", candidateSelectionTime);
+            LOGGER.debug("BFS time {} msecs ", BFSTime);
             LOGGER.debug("Disambiguation completed in {} msecs.", disambiguationTime);
 
         } catch (final Exception e) {
@@ -145,6 +149,6 @@ public class AGDISTIS {
     }
 
     public TripleIndex getIndex() {
-        return cu.getIndex();
+        return index;
     }
 }

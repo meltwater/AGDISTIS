@@ -71,6 +71,8 @@ public class CandidateUtil {
       nodeType = AGDISTISConfiguration.INSTANCE.getNodeType().toString();
 
       index = new TripleIndex();
+      
+      index.warmUpIndex();
       if (AGDISTISConfiguration.INSTANCE.getUseContext()) { // in case the index by context exist
         index2 = new TripleIndexContext();
       }
@@ -91,6 +93,7 @@ public class CandidateUtil {
   public void insertCandidatesIntoText(final DirectedSparseGraph<Node, String> graph, final Document document,
       final double threshholdTrigram, final Boolean heuristicExpansionOn, final Boolean useSurfaceForms)
       throws IOException {
+      long candidateSearchTime = System.currentTimeMillis();
     final NamedEntitiesInText namedEntities = document.getNamedEntitiesInText();
     final HashMap<String, Node> nodes = new HashMap<String, Node>();
 
@@ -105,6 +108,7 @@ public class CandidateUtil {
     final String entities = StringUtils.normalizeSpace(sb.toString());
     LOGGER.trace("Entities: {}", entities);
     final HashSet<String> heuristicExpansion = new HashSet<String>();
+    
     for (final NamedEntityInText entity : namedEntities) {
       LOGGER.debug("Disambiguating label: " + entity.getLabel());
       final long start = System.currentTimeMillis();
@@ -117,6 +121,7 @@ public class CandidateUtil {
       checkLabelCandidates(graph, threshholdTrigram, nodes, entity, expandedlabel, useSurfaceForms, entities);
       LOGGER.trace("Candidates for {} located in {} msecs.", entity.getLabel(), (System.currentTimeMillis() - start));
     }
+    LOGGER.debug("candidate search time for {} entities in {} msecs ",(namedEntities.getNamedEntities() != null) ? namedEntities.getNamedEntities().size() : 0, (System.currentTimeMillis() - candidateSearchTime));
   }
 
   private String heuristicExpansion(final HashSet<String> heuristicExpansion, String label) {
@@ -170,6 +175,7 @@ public class CandidateUtil {
       final HashMap<String, Node> nodes, final NamedEntityInText entity, final String expandedSurfaceForm,
       final boolean alternativeLabels, final String entities) throws IOException {
 
+    
     List<Triple> toBeAdded;
     String surfaceForm = entity.getSurfaceForm();
     // Check the cache
@@ -186,7 +192,7 @@ public class CandidateUtil {
       final PreprocessingNLP nlp = new PreprocessingNLP();
 
       surfaceForm = corporationAffixCleaner.cleanLabelsfromCorporationIdentifier(surfaceForm);
-      LOGGER.debug("Clean label: {}", surfaceForm);
+      LOGGER.trace("Clean label: {}", surfaceForm);
       surfaceForm = nlp.preprocess(surfaceForm);
       // label treatment finished ->
       // searchByAcronym
@@ -219,7 +225,7 @@ public class CandidateUtil {
             }
             acronymCandidatesTemp2.clear();
           }
-          LOGGER.debug("Found {} candidates for acronym {}. [surface form={}]", countFinalCandidates, surfaceForm,
+          LOGGER.trace("Found {} candidates for acronym {}. [surface form={}]", countFinalCandidates, surfaceForm,
               alternativeLabels);
         }
       }
@@ -278,7 +284,7 @@ public class CandidateUtil {
         toBeAdded = Lists.newLinkedList();
         boolean added = false;
         for (Triple c : candidates) {
-          LOGGER.debug("Candidate triple to check: " + c);
+          LOGGER.trace("Candidate triple to check: " + c);
           String candidateURL = c.getSubject();
           String cleanLabel = c.getObject();
 
@@ -358,7 +364,7 @@ public class CandidateUtil {
           // Here, we apply two filters for increasing the quality of
           // possible candidates
           for (final Triple c : candidatesContextbyLabel) {
-            LOGGER.debug("Candidate triple to check: " + c);
+            LOGGER.trace("Candidate triple to check: " + c);
             String candidateURL = c.getSubject();
             String cleanCandidateURL = candidateURL.replace(nodeType, "");
             cleanCandidateURL = nlp.preprocess(cleanCandidateURL);
@@ -412,10 +418,12 @@ public class CandidateUtil {
     } else {
       LOGGER.trace("Candidate cache hit!");
     }
+    
     // Add surviving candidates to the graph
     for (final Triple t : toBeAdded) {
       addNodeToGraph(graph, nodes, entity, t, t.getSubject());
     }
+    
   }
 
   private List<Triple> searchCandidatesByLabel(final String label, final boolean searchAlternativeLabels,

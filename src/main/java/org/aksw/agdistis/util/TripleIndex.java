@@ -50,6 +50,8 @@ public class TripleIndex {
   public static final String FIELD_NAME_PREDICATE = "predicate";
   public static final String FIELD_NAME_OBJECT_URI = "object_uri";
   public static final String FIELD_NAME_OBJECT_LITERAL = "object_literal";
+  
+  public static final String warmUpQueryPredicate = "http://www.w3.org/2000/01/rdf-schema#label";
 
   private static final Set<String> _LUCENE_KEYWORDS = Sets.newHashSet("AND", "OR", "NOT", "TO");
   public static final String FIELD_FREQ = "freq";
@@ -66,16 +68,30 @@ public class TripleIndex {
   public TripleIndex() throws IOException {
     final String index = AGDISTISConfiguration.INSTANCE.getMainIndexPath().toString();
     log.info("The index will be loaded from: " + index);
-
     directory = new MMapDirectory(new File(index));
     final long start = System.currentTimeMillis();
     ireader = DirectoryReader.open(directory);
-    log.debug("Index loaded in {} msec", System.currentTimeMillis() - start);
+    log.info("Index loaded in {} msec", System.currentTimeMillis() - start);
     isearcher = new IndexSearcher(ireader);
     urlValidator = new UrlValidator();
+    
 
     cache = CacheBuilder.newBuilder().maximumSize(AGDISTISConfiguration.INSTANCE.getTripleIndexCacheSize())
         .expireAfterWrite(30, TimeUnit.MINUTES).build();
+  }
+  
+  public void warmUpIndex(){
+      log.info("warming up the index with a simple query... ");
+      Thread t = new Thread(new Runnable() {
+        
+        @Override
+        public void run() {
+            // dummy search to warm up the index.
+            search(null, warmUpQueryPredicate, null);
+            
+        }
+    });
+    t.start();
   }
 
   public List<Triple> search(final String subject, final String predicate, final String object) {
