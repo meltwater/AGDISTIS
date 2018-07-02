@@ -1,4 +1,8 @@
 <settings>
+
+    <!-- repository folder-->
+    <localRepository>./maven-repo</localRepository>
+
     <servers>
         <server>
             <id>meltwater-snapshots</id>
@@ -62,11 +66,6 @@
                         <checksumPolicy>fail</checksumPolicy>
                     </snapshots>
                     <layout>default</layout>
-                </repository>
-
-                <repository>
-                    <id>gate-sheffield</id>
-                    <url>http://repo.gate.ac.uk/content/repositories/public/</url>
                 </repository>
 
             </repositories>
