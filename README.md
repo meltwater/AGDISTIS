@@ -1,51 +1,28 @@
-# AGDISTIS
+# FHAI NLP AGDISTIS NED
 
 > AGDISTIS - Agnostic Named Entity Disambiguation.
 
-[![Build Status](https://gitlab.com/aksw/AGDISTIS/badges/master/build.svg)](https://gitlab.com/aksw/AGDISTIS/pipelines)
+![BuildStatus](https://drone.meltwater.io/api/badges/meltwater/AGDISTIS/status.svg)
 
 
-This projects aimes at delivering a framework for disambiguating a priori annotated named entities.
+This repo is a fork of [https://github.com/dice-group/AGDISTIS](https://github.com/dice-group/AGDISTIS) with performance 
+improvements, caching, corpus based neural disambiguation, and a bunch of other goodies.
 
-More information about the project can be found <a href="http://aksw.org/projects/AGDISTIS">here</a> and in our <a href="https://github.com/AKSW/AGDISTIS/wiki">Wiki</a>.
+Differently from AGDISTIS, this NED disambiguates against the Meltwater Graph (which includes DBPedia).
 
-Supplementary material can be found in the documents folder.
+## How to build
+Installing the service locally:
 
-We hope you will enjoy using AGDISTIS!
+      mvn -U clean install package -s settings.xml							
+      
+Note that the 'clean' task will both delete the target folder.
 
-### Support and Feedback
-If you need help or you have questions do not hesitate to write an email to  <a href="mailto:usbeck@informatik.uni-leipzig.de">Ricardo Usbeck</a>. Or use the issue tracker in the right sidebar.
+## Repository Maintainers
 
-### How to cite
-```Tex
-@incollection{AGDISTIS_ISWC,
-  author = {Usbeck, Ricardo and {Ngonga Ngomo}, Axel-Cyrille and Auer, S{\"o}ren and Gerber, Daniel and Both, Andreas},
-  booktitle = {13th International Semantic Web Conference},
-  title = {AGDISTIS - Graph-Based Disambiguation of Named Entities using Linked Data},
-  url = {http://svn.aksw.org/papers/2014/ISWC_AGDISTIS/public.pdf},
-  year = 2014
-}
-```
+This repository is maintained by [Team Karma](https://wiki.meltwater.net/pages/viewpage.action?pageId=74720584). 
+You can contact us by sending a mail to [karma.fhai@meltwater.com](mailto:karma.fhai@meltwater.com) or by dropping a message in the **NLP (Karma)** Slack channel if you are a Meltwater Engineer.
 
-### Acknowlegements
-This work has been supported by the ESF and the Free State of Saxony.
+## How to Contribute
 
-
-### Annotation Tool
-
-The used annotation tool can be downloaded from <a href="https://github.com/RicardoUsbeck/QRTool">here</a>.
-
-### Disclaimer
-
-The deployed webservice does not reflect the optimal parametrization of AGDISTIS as published.
-
-### Bindings
-* Python bindings: https://pypi.python.org/pypi/agdistispy/
-
-### Running AGDISTIS
-
-### How to run
-```
-mvn clean package tomcat:run
-```
-For more information, go to our <a href="https://github.com/AKSW/AGDISTIS/wiki/3-Running-the-webservice">Wiki</a>.
+We gladly accept improvement suggestions, comments and pull requests. 
+<!-- Before submitting a change please read the [contributing guidelines](https://wiki.meltwater.net/display/ENG/Horace+development+process+and+how+to+contribute).-->
