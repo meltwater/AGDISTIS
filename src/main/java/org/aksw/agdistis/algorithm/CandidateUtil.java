@@ -53,10 +53,10 @@ public class CandidateUtil {
   private final boolean commonEntities;
   private final Cache<String, Boolean> disambiguationPageCache = CacheBuilder.newBuilder()
       .maximumSize(AGDISTISConfiguration.INSTANCE.getDisambiguationPageCacheSize())
-      .expireAfterWrite(30, TimeUnit.MINUTES).build();
+      .expireAfterWrite(30, TimeUnit.SECONDS).build();
 
   private final Cache<String, List<Triple>> candidateCache = CacheBuilder.newBuilder()
-      .maximumSize(AGDISTISConfiguration.INSTANCE.getCandidateCacheSize()).expireAfterWrite(30, TimeUnit.MINUTES)
+      .maximumSize(AGDISTISConfiguration.INSTANCE.getCandidateCacheSize()).expireAfterWrite(30, TimeUnit.SECONDS)
       .build();
   /*
    * Stems will be used from the input.
