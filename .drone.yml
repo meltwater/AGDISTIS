@@ -23,7 +23,7 @@ pipeline:
     secrets: [ artifactory_username, artifactory_password ]
     commands:
       - echo 'Build and test.'
-      - mvn -U clean install -s settings.xml
+      - mvn -B -U clean install -s settings.xml
     when:
       event: [ push ]
 
@@ -34,7 +34,7 @@ pipeline:
     secrets: [ artifactory_username, artifactory_password ]
     commands:
       - echo 'Deploy snapshot artifact to Artifactory.'
-      - mvn -U clean deploy -s settings.xml
+      - mvn -B -U clean deploy -s settings.xml
     when:
       event: [ push ]
       branch: [ master ]
