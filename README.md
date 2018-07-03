@@ -20,7 +20,7 @@ Note that the 'clean' task will both delete the target folder.
 ## Repository Maintainers
 
 This repository is maintained by [Team Karma](https://wiki.meltwater.net/pages/viewpage.action?pageId=74720584). 
-You can contact us by sending a mail to [karma.fhai@meltwater.com](mailto:karma.fhai@meltwater.com) or by dropping a message in the **NLP (Karma)** Slack channel if you are a Meltwater Engineer.
+You can contact us by sending a mail to [karma.fhai@meltwater.com](mailto:karma.fhai@meltwater.com) or by dropping a message in the **NLP (Karma)** Slack channel if you are a Meltwater engineer.
 
 ## How to Contribute
 
