@@ -17,6 +17,8 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
   private String canonicalName; // it is usally the  label String attached to an entity.
 // eg: <http://dbpedia.org/resource/Tim_Cook> <http://www.w3.org/2000/01/rdf-schema#label> "Tim Cook"@en .
   private String surfaceForm;
+  private String stemmedSurfaceForm;
+  
   private String type;
   private Collection<String> disambiguatedTypes;
   private double authorityWeight;
@@ -40,6 +42,14 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
   public void setSurfaceForm(final String surfaceForm) {
     this.surfaceForm = surfaceForm;
   }
+  
+  public String getStemmedSurfaceForm() {
+      return stemmedSurfaceForm;
+  }
+
+  public void setStemmedSurfaceForm(String stemmedSurfaceForm) {
+      this.stemmedSurfaceForm = stemmedSurfaceForm;
+  }
 
   public NamedEntityInText(final int startPos, final int length, final String namedEntityUri, final String type,
       final String surfaceForm) {
@@ -53,6 +63,20 @@ public class NamedEntityInText implements Comparable<NamedEntityInText>, Cloneab
     disambiguatedTypes = Lists.newLinkedList();
     this.surfaceForm = surfaceForm;
   }
+  
+  public NamedEntityInText(final int startPos, final int length, final String namedEntityUri, final String type,
+          final String surfaceForm, final String stemmedSurfaceForm) {
+      this.startPos = startPos;
+      this.length = length;
+      this.namedEntityUri = namedEntityUri;
+      if (namedEntityUri != null) {
+        label = extractLabel(namedEntityUri);
+      }
+      this.type = type;
+      disambiguatedTypes = Lists.newLinkedList();
+      this.surfaceForm = surfaceForm;
+      this.stemmedSurfaceForm = stemmedSurfaceForm;
+    }
 
   public NamedEntityInText(final NamedEntityInText entity) {
     startPos = entity.startPos;

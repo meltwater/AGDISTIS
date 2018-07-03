@@ -239,12 +239,13 @@
             <artifactId>stanford-corenlp</artifactId>
             <version>${edu.stanford.nlp.version}</version>
         </dependency>
-        <dependency>
+	<!-- ~~~~~~~~~~~~~~~~~ Stanford models are ignored as stems are recieved as inputs ~~~~~~~~~~~ -->
+        <!-- <dependency>
             <groupId>edu.stanford.nlp</groupId>
             <artifactId>stanford-corenlp</artifactId>
             <version>${edu.stanford.nlp.version}</version>
             <classifier>models</classifier>
-        </dependency>
+        </dependency> -->
         <dependency>
             <groupId>com.github.haifengl</groupId>
             <artifactId>smile-nlp</artifactId>

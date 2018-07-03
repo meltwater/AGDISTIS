@@ -19,7 +19,6 @@ import org.aksw.agdistis.datatypes.NamedEntitiesInText;
 import org.aksw.agdistis.datatypes.NamedEntityInText;
 import org.aksw.agdistis.graph.Node;
 import org.aksw.agdistis.util.PreprocessingNLP;
-import org.aksw.agdistis.util.Stemming;
 import org.aksw.agdistis.util.Triple;
 import org.aksw.agdistis.util.TripleIndex;
 import org.aksw.agdistis.util.TripleIndexContext;
@@ -59,7 +58,10 @@ public class CandidateUtil {
   private final Cache<String, List<Triple>> candidateCache = CacheBuilder.newBuilder()
       .maximumSize(AGDISTISConfiguration.INSTANCE.getCandidateCacheSize()).expireAfterWrite(30, TimeUnit.MINUTES)
       .build();
-  private final static Stemming stemmer = new Stemming();
+  /*
+   * Stems will be used from the input.
+   */
+  //private final static Stemming stemmer = new Stemming();
 
   private final static int _MAX_CANDIDATE_LOOKUPS = AGDISTISConfiguration.INSTANCE.getMaxCandidateLookups();
   private final static int _MAX_RETRIEVED_ACRONYMS = AGDISTISConfiguration.INSTANCE.getMaxAcronymLookups();
@@ -71,8 +73,8 @@ public class CandidateUtil {
       nodeType = AGDISTISConfiguration.INSTANCE.getNodeType().toString();
 
       index = new TripleIndex();
-      
       index.warmUpIndex();
+      
       if (AGDISTISConfiguration.INSTANCE.getUseContext()) { // in case the index by context exist
         index2 = new TripleIndexContext();
       }
@@ -273,7 +275,7 @@ public class CandidateUtil {
         // If the set of candidates is still empty, here we apply stemming
         // technique
         if (candidates.isEmpty()) {
-          final String temp = stemmer.stemming(surfaceForm);
+          final String temp = entity.getStemmedSurfaceForm();//stemmer.stemming(surfaceForm);
           if (StringUtils.isNotBlank(temp)) {
             candidates = searchCandidatesByLabel(temp, alternativeLabels, entity.getType(), popularity);
           }
