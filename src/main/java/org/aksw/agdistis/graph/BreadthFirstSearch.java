@@ -15,7 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 
 public class BreadthFirstSearch {
-  private static HashMap<String, Node> findNode = new HashMap<String, Node>();
+  private final HashMap<String, Node> findNode = new HashMap<String, Node>();
   private final TripleIndex index;
   private final Algorithm algorithm;
   private final int _MAX_OUTGOING_NODES = 100;
@@ -25,7 +25,8 @@ public class BreadthFirstSearch {
     this.algorithm = algorithm;
   }
 
-  public void run(final int maxDepth, final DirectedSparseGraph<Node, String> graph, final String edgeType,
+  @SuppressWarnings("unchecked")
+ public void run(final int maxDepth, final DirectedSparseGraph<Node, String> graph, final String edgeType,
       final String nodeType) throws UnsupportedEncodingException, IOException {
     final Queue<Node> q = new LinkedList<Node>();
     for (final Node node : graph.getVertices()) {
