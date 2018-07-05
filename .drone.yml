@@ -30,6 +30,7 @@ pipeline:
     commands:
       - echo 'Pull the ned index'
       - aws s3 sync s3://$S3_NED_DATA_BUCKET/$S3_NED_DATA_KEY index.zip
+      - mkdir ned-index
       - unzip index.zip -d ned-index
       - rm index.zip
     when:
