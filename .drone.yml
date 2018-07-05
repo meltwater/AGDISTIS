@@ -11,8 +11,27 @@ pipeline:
     mount:
       - ./maven-repo
       - ./nlp-data
+      - ./ned-index
     volumes:
       - /tmp/cache:/cache
+    when:
+      event: [ push ]
+
+
+  # Fetch data from S3 for testing (ned index)
+  fetchModelData:
+    image: meltwaterfoundation/drone-awscli
+    pull: true
+    secrets: [ aws_access_key_id, aws_secret_access_key ]
+    environment:
+      - AWS_REGION=eu-west-1
+      - S3_NED_DATA_BUCKET=mw-fhai-nlp-models-eu-west-1
+      - S3_NED_DATA_KEY=fhai-nlp-en-ned-data/5.4/index.zip
+    commands:
+      - echo 'Pull the ned index'
+      - aws s3 sync s3://$S3_NED_DATA_BUCKET/$S3_NED_DATA_KEY index.zip
+      - unzip /workdir/index.zip -d /workdir/ned-index
+      - rm /workdir/index.zip
     when:
       event: [ push ]
 
@@ -102,6 +121,7 @@ pipeline:
     mount:
       - ./maven-repo
       - ./nlp-data
+      - ./ned-index
     volumes:
       - /tmp/cache:/cache
     when:
