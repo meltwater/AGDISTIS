@@ -26,13 +26,10 @@ pipeline:
     environment:
       - AWS_REGION=eu-west-1
       - S3_NED_DATA_BUCKET=mw-fhai-nlp-models-eu-west-1
-      - S3_NED_DATA_KEY=fhai-nlp-en-ned-data/5.4/index.zip
+      - S3_NED_DATA_KEY=fhai-nlp-en-ned-data/en-5.4
     commands:
       - echo 'Pull the ned index'
-      - aws s3 sync s3://$S3_NED_DATA_BUCKET/$S3_NED_DATA_KEY index.zip
-      - mkdir ned-index
-      - unzip index.zip -d ned-index
-      - rm index.zip
+      - aws s3 sync s3://$S3_NED_DATA_BUCKET/$S3_NED_DATA_KEY ned-index
     when:
       event: [ push ]
 
