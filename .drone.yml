@@ -30,8 +30,8 @@ pipeline:
     commands:
       - echo 'Pull the ned index'
       - aws s3 sync s3://$S3_NED_DATA_BUCKET/$S3_NED_DATA_KEY index.zip
-      - unzip /workdir/index.zip -d /workdir/ned-index
-      - rm /workdir/index.zip
+      - unzip index.zip -d ned-index
+      - rm index.zip
     when:
       event: [ push ]
 
