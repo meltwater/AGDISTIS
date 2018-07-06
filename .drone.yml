@@ -62,28 +62,41 @@ pipeline:
     pull: true
     secrets: [ artifactory_username, artifactory_password, karma_robot_email, karma_robot_username, karma_github_token ]
     commands:
-      - echo 'Release artifact'
-      - mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -s settings.xml -Dexpression=project.version -q -DforceStdout >> maven_artifact_version
-      - export MAVEN_VERSION=$(eval cut -d- -f1 maven_artifact_version)
-      - mvn -B versions:set -DremoveSnapshot -DnewVersion=$MAVEN_VERSION
-      - rm maven_artifact_version
+      - echo 'Configure Karma git robot'
+      - git remote update
+      - git fetch
+      - git checkout --track origin/release
       - git config credential.helper 'cache --timeout=120'
       - git config user.email "$KARMA_ROBOT_EMAIL"
       - git config user.name "$KARMA_ROBOT_USERNAME"
-      - git checkout release
-      - git tag -a $MAVEN_VERSION release -m "Preparing release $MAVEN_VERSION"
-      - git add pom.xml
-      - git branch
+
+      - echo 'Compute the release version'
+      - mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -s settings.xml -Dexpression=project.version -q -DforceStdout >> maven_artifact_version
+      - export MAVEN_VERSION=$(eval cut -d- -f1 maven_artifact_version)
+
+      - echo 'Set the new version'
+      - mvn -B versions:set -DremoveSnapshot -DnewVersion=$MAVEN_VERSION
+
+      - echo 'Commit the release version'
+      - git add ./\*pom.xml
       - git commit -m "Updating to release version $MAVEN_VERSION [CI SKIP]"
+      - git tag -a $MAVEN_VERSION release -m "Preparing release $MAVEN_VERSION"
       - git push origin $MAVEN_VERSION
       - git push origin release
-      - mvn -B -U clean deploy -s settings.xml
+
+      - echo 'Deploy the release version to Artifactory'
+      - mvn -U -B deploy -s settings.xml
+      - echo 'cleanup...'
+      - rm maven_artifact_version
+
       - echo 'Setting development version to next increment.'
-      - git fetch
       - git checkout --track origin/dev
-      - mvn build-helper:parse-version versions:set -DnewVersion=\$${parsedVersion.majorVersion}.\$${parsedVersion.minorVersion}.\$${parsedVersion.nextIncrementalVersion}-\$${parsedVersion.qualifier}
+      - echo 'Updating AGDISTIS dev branch'
+      - mvn org.codehaus.mojo:build-helper-maven-plugin:3.0.0:parse-version versions:set -DnewVersion=\$${parsedVersion.majorVersion}.\$${parsedVersion.minorVersion}.\$${parsedVersion.nextIncrementalVersion}-\$${parsedVersion.qualifier}
       - mvn versions:commit
-      - git add pom.xml
+
+      - echo 'Committing and pushing snapshot version'
+      - git add ./\*pom.xml
       - git commit -am "Incremented snapshot version."
       - git push origin dev
     when:
