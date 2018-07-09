@@ -35,13 +35,6 @@
                 </configuration>
             </plugin>
             <plugin>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>2.1.1</version>
-                <configuration>
-                    <attachClasses>true</attachClasses>
-                </configuration>
-            </plugin>
-            <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <archive>
@@ -67,19 +60,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.mortbay.jetty</groupId>
-                <artifactId>jetty-maven-plugin</artifactId>
-                <version>7.0.0.v20091005</version>
-                <configuration>
-                    <scanIntervalSeconds>2</scanIntervalSeconds>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.tomcat.maven</groupId>
-                <artifactId>tomcat7-maven-plugin</artifactId>
-                <version>2.2</version>
-            </plugin>
         </plugins>
     </build>
     <!-- PROPERTIES -->
@@ -89,17 +69,13 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <mavenVersion>4.0</mavenVersion>
         <info.debatty.java-string-similarity.version>0.23</info.debatty.java-string-similarity.version>
-        <edu.stanford.nlp.version>3.7.0</edu.stanford.nlp.version>
-        <org.restlet.version>2.3.0</org.restlet.version>
-
         <com.google.guava.version>20.0</com.google.guava.version>
 
         <!-- Utils: Logback -->
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
 
         <!-- Utils: Logstash -->
-        <net.logstash.logback.logstash-logback.encoder.version>4.8
-        </net.logstash.logback.logstash-logback.encoder.version>
+        <logstash.version>5.1</logstash.version>
 
     </properties>
 
@@ -138,7 +114,7 @@
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>${net.logstash.logback.logstash-logback.encoder.version}</version>
+            <version>${logstash.version}</version>
         </dependency>
 
         <dependency>
@@ -183,6 +159,7 @@
             <artifactId>lucene-analyzers-common</artifactId>
             <version>4.9.1</version>
         </dependency>
+
         <!-- Used for N-Gram Similarity -->
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -190,30 +167,6 @@
             <version>3.6.2</version>
         </dependency>
         <!-- ~~~~~~~~~~~~~~~~~~~ End Lucene for Indexing ~~~~~~~~~~~~~~~~~~~~~~ -->
-        <!-- ~~~~~~~~~~~~~~~~~~~ JSON ~~~~~~~~~~~~~~~~~~~~~~ -->
-        <dependency>
-            <groupId>com.googlecode.json-simple</groupId>
-            <artifactId>json-simple</artifactId>
-            <version>1.1.1</version>
-        </dependency>
-        <!-- ~~~~~~~~~~~~~~~~~~~ End JSON ~~~~~~~~~~~~~~~~~~~~~~ -->
-        <!-- ~~~~~~~~~~~~~~~~~~~ Restlet for restful API ~~~~~~~~~~~~~~~~~~~~~~ -->
-        <dependency>
-            <groupId>org.restlet.jse</groupId>
-            <artifactId>org.restlet</artifactId>
-            <version>${org.restlet.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.restlet.jse</groupId>
-            <artifactId>org.restlet.ext.simple</artifactId>
-            <version>${org.restlet.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.restlet.jee</groupId>
-            <artifactId>org.restlet.ext.servlet</artifactId>
-            <version>${org.restlet.version}</version>
-        </dependency>
-        <!-- ~~~~~~~~~~~~~~~~~~~ End Restlet for restful API ~~~~~~~~~~~~~~~~~~~~~~ -->
         <!-- ~~~~~~~~~~~~~~~~~~~ Validating URIs ~~~~~~~~~~~~~~~~~~~~~~ -->
         <dependency>
             <groupId>commons-validator</groupId>
@@ -235,18 +188,6 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>edu.stanford.nlp</groupId>
-            <artifactId>stanford-corenlp</artifactId>
-            <version>${edu.stanford.nlp.version}</version>
-        </dependency>
-	<!-- ~~~~~~~~~~~~~~~~~ Stanford models are ignored as stems are recieved as inputs ~~~~~~~~~~~ -->
-        <!-- <dependency>
-            <groupId>edu.stanford.nlp</groupId>
-            <artifactId>stanford-corenlp</artifactId>
-            <version>${edu.stanford.nlp.version}</version>
-            <classifier>models</classifier>
-        </dependency> -->
-        <dependency>
             <groupId>com.github.haifengl</groupId>
             <artifactId>smile-nlp</artifactId>
             <version>1.2.0</version>
@@ -254,7 +195,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.4</version>
+            <version>3.7</version>
             <type>jar</type>
         </dependency>
 

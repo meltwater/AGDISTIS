@@ -77,7 +77,7 @@ pipeline:
       - echo 'Set the new version'
       - mvn -B versions:set -DremoveSnapshot -DnewVersion=$MAVEN_VERSION
       - mvn -B versions:commit
-      
+
       - echo 'Commit the release version'
       - git add ./\*pom.xml
       - git commit -m "Updating to release version $MAVEN_VERSION [CI SKIP]"

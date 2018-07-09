@@ -11,7 +11,6 @@ import org.aksw.agdistis.datatypes.Document;
 import org.aksw.agdistis.datatypes.NamedEntitiesInText;
 import org.aksw.agdistis.datatypes.NamedEntityInText;
 import org.aksw.agdistis.util.Utils;
-import org.aksw.agdistis.webapp.DisambiguationService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.ext.com.google.common.collect.Maps;
@@ -379,110 +378,4 @@ public class AGDISTISTest {
       System.out.println(namedEntity.getLabel() + " -> " + disambiguatedURL);
     }
   }
-
-  @Test
-  public void testJsonOutput() throws InterruptedException, IOException {
-
-    final String text = "LabCorp has partnered with Walk-In Lab part of Walk-In LLC to provide blood test services across the country.";
-
-    final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
-
-    Occurrence occ = new Occurrence(0, "LabCorp".length());
-    final InputEntity labcorp = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
-        occ.getStartOffset(), occ.getEndOffset());
-    entities.put(occ, labcorp);
-
-    occ = new Occurrence(27, "Walk-In Lab".length() + 27);
-    final InputEntity walkinlab = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
-        occ.getStartOffset(), occ.getEndOffset());
-    entities.put(occ, walkinlab);
-
-    occ = new Occurrence(47, "Walk-In LLC".length() + 47);
-    final InputEntity walkinllc = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
-        occ.getStartOffset(), occ.getEndOffset());
-    entities.put(occ, walkinllc);
-
-    final DisambiguationService service = new DisambiguationService();
-    final String agdistisOutput = service.standardAG("testId", text, entities);
-    final ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
-
-    log.info(IOUtils.LINE_SEPARATOR + writer.writeValueAsString(mapper.readTree(agdistisOutput)));
-  }
-
-  @Test
-  public void testApple() throws InterruptedException, IOException {
-
-    final String text = "The Taiwan-based company best known for manufacturing Apple products insists that its new plant won't damage the environment.";
-
-    final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
-
-    final Occurrence occ = new Occurrence(54, 54 + "Apple".length());
-    final InputEntity apple = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
-        occ.getStartOffset(), occ.getEndOffset());
-    entities.put(occ, apple);
-
-    final DisambiguationService service = new DisambiguationService();
-    final String agdistisOutput = service.standardAG("testId", text, entities);
-    final ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
-
-    log.info(IOUtils.LINE_SEPARATOR + writer.writeValueAsString(mapper.readTree(agdistisOutput)));
-  }
-
-  @Test
-  public void testHonda() throws InterruptedException, IOException {
-
-    final String text = "Honda Motors is at the Auto Expo 2018, and one of its big showcases for this edition is the latest generation of the Honda CR-V";
-
-    final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
-
-    final Occurrence occ = new Occurrence(0, 0 + "Honda Motors".length());
-    final InputEntity honda = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
-        occ.getStartOffset(), occ.getEndOffset());
-    entities.put(occ, honda);
-
-    final DisambiguationService service = new DisambiguationService();
-    final String agdistisOutput = service.standardAG("testId", text, entities);
-    final ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
-
-    log.info(IOUtils.LINE_SEPARATOR + writer.writeValueAsString(mapper.readTree(agdistisOutput)));
-  }
-
-  @Test
-  public void testUber() throws InterruptedException, IOException {
-
-    final String text = "Uber drivers, street vendors, fast-food workers and union activists arrived downtown by the busload on Monday to participate in a boisterous march.";
-
-    final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
-
-    final Occurrence occ = new Occurrence(0, "Uber".length());
-    final InputEntity uber = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
-        occ.getStartOffset(), occ.getEndOffset());
-    entities.put(occ, uber);
-
-    final DisambiguationService service = new DisambiguationService();
-    final String agdistisOutput = service.standardAG("testId", text, entities);
-    final ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
-
-    log.info(IOUtils.LINE_SEPARATOR + writer.writeValueAsString(mapper.readTree(agdistisOutput)));
-  }
-
-  @Test
-  public void testQBD() throws InterruptedException, IOException {
-
-    final String text = "Quick Business Deposit is a company.";
-
-    final HashMap<Occurrence, InputEntity> entities = Maps.newHashMap();
-
-    final Occurrence occ = new Occurrence(0, "Quick Business Deposit".length());
-    final InputEntity qbd = new InputEntity(text.substring(occ.getStartOffset(), occ.getEndOffset()), "ORG",
-        occ.getStartOffset(), occ.getEndOffset());
-    entities.put(occ, qbd);
-
-    final DisambiguationService service = new DisambiguationService();
-    final String agdistisOutput = service.standardAG("testId", text, entities);
-    final ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
-
-    log.info(IOUtils.LINE_SEPARATOR + writer.writeValueAsString(mapper.readTree(agdistisOutput)));
-  }
-
 }
