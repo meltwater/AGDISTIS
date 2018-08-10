@@ -1,12 +1,12 @@
 package org.aksw.agdistis.datatypes;
 
-import java.io.Serializable;
+import java.util.Optional;
 
-public class Document implements Comparable<Document>, Serializable {
+public class Document {
 
   private static final long serialVersionUID = -3213426637730517409L;
 
-  protected String documentId;
+  protected Optional<String> documentId;
   private String text;
   private NamedEntitiesInText nes;
   private long disambiguationTime;
@@ -17,15 +17,15 @@ public class Document implements Comparable<Document>, Serializable {
   }
 
   public Document(final String documentId) {
-    this.documentId = documentId;
+    this.documentId = Optional.of(documentId);
   }
 
-  public String getDocumentId() {
+  public Optional<String> getDocumentId() {
     return documentId;
   }
 
   public void setDocumentId(final String documentId) {
-    this.documentId = documentId;
+    this.documentId = Optional.of(documentId);
   }
 
   @Override
@@ -35,14 +35,6 @@ public class Document implements Comparable<Document>, Serializable {
     } else {
       return super.equals(obj);
     }
-  }
-
-  @Override
-  public int compareTo(final Document document) {
-    if (documentId == document.getDocumentId()) {
-      return 0;
-    }
-    return documentId.compareTo(document.getDocumentId());
   }
 
   @Override
