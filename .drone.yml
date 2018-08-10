@@ -40,7 +40,7 @@ pipeline:
     secrets: [ artifactory_username, artifactory_password ]
     commands:
       - echo 'Build and test.'
-      - mvn -B -U clean install -s settings.xml
+      - mvn -B -U clean install -Dindex=ned-index -s settings.xml
     when:
       event: [ push ]
 
@@ -51,7 +51,7 @@ pipeline:
     secrets: [ artifactory_username, artifactory_password ]
     commands:
       - echo 'Deploy snapshot artifact to Artifactory.'
-      - mvn -B -U clean deploy -s settings.xml
+      - mvn -B -U clean deploy -Dindex=ned-index -s settings.xml
     when:
       event: [ push ]
       branch: [ master ]
@@ -107,10 +107,10 @@ pipeline:
   slack:
     group: notifications
     image: plugins/slack
-    webhook: https://hooks.slack.com/services/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
+    webhook: https://hooks.slack.com/services/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
     icon_url: https://logo.clearbit.com/drone.io
     username: 'Drone'
-    channel: nlp-bots
+    channel: eng-karma-bots
     template: |
       {{#success build.status}}
         Build succeeded.
