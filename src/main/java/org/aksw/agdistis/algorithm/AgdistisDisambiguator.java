@@ -111,16 +111,16 @@ public class AgdistisDisambiguator {
     }
 
 
-    private void disambiguate(Collection<AnchorOccurrence> anchorOccurences) {
-        
-        List<DisambiguatedDocument[]> candidatesList = collectCandidateSenses(anchorOccurences);
-        
-        final Map<String, DisambiguatedDocument> bestSenseByStaticScore = new HashMap<>();
-        for (final DisambiguatedDocument[] candidates : candidatesList) {
-          bestSenseByStaticScore.put(candidates[0].getAnchor(), candidates[0]);
-        }
-    }
-    
+//    private void disambiguate(Collection<AnchorOccurrence> anchorOccurences) {
+//        
+//        List<DisambiguatedDocument[]> candidatesList = collectCandidateSenses(anchorOccurences);
+//        
+//        final Map<String, DisambiguatedDocument> bestSenseByStaticScore = new HashMap<>();
+//        for (final DisambiguatedDocument[] candidates : candidatesList) {
+//          bestSenseByStaticScore.put(candidates[0].getAnchor(), candidates[0]);
+//        }
+//    }
+//    
     
     private List<DisambiguatedDocument[]> collectCandidateSenses(Collection<AnchorOccurrence> anchorOccurrences) {
           final List<DisambiguatedDocument[]> candidatesList = new ArrayList<>();
