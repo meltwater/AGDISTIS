@@ -73,11 +73,11 @@ public class AGDISTISConfiguration {
     ner2ned.put("Person", "PER");
     ner2ned.put("Organization", "ORG");
     setNER2NEDMapping(ner2ned);
-    setIndexTTLPath(Paths.get("data/en"));
+//    setIndexTTLPath(Paths.get("data/en"));
     setIndexSurfaceFormTSVPath(Paths.get("data/en/surface/en_surface_forms.tsv"));
-    setPageIdsFilePath(Paths.get("data/en/ids/kg_page_ids-merged.txt"));
-    setAnchorTextsFilePath(Paths.get("data/en/anchor/kg_anchor_stats-remapped.txt"));
-    setInLinkFilePath(Paths.get("data/en/inlinks/kg_graph_in-merged-remapped.txt"));
+    //setPageIdsFilePath(Paths.get("data/en/ids/kg_page_ids-merged.txt"));
+    //setAnchorTextsFilePath(Paths.get("data/en/anchor/kg_anchor_stats-remapped.txt"));
+    //setInLinkFilePath(Paths.get("data/en/inlinks/kg_graph_in-merged-remapped.txt"));
 
     // Attempt to load the configuration file. Values in the file-based configuration override the default
     // configuration.
@@ -198,6 +198,20 @@ public class AGDISTISConfiguration {
       if (prop.containsKey(ConfigProperty.INDEX_SURFACE_FORM_TSV_PATH.getPropertyName())) {
         setIndexSurfaceFormTSVPath(
             Paths.get(prop.getProperty(ConfigProperty.INDEX_SURFACE_FORM_TSV_PATH.getPropertyName())));
+      }
+      if(prop.containsKey(ConfigProperty.PAGE_IDS_FILE_PATH.getPropertyName())){
+          setPageIdsFilePath(
+            Paths.get(prop.getProperty(ConfigProperty.PAGE_IDS_FILE_PATH.getPropertyName())));
+      }
+      
+      if(prop.containsKey(ConfigProperty.PAGE_IDS_FILE_PATH.getPropertyName())){
+          setPageIdsFilePath(
+            Paths.get(prop.getProperty(ConfigProperty.PAGE_IDS_FILE_PATH.getPropertyName())));
+      }
+      
+      if(prop.containsKey(ConfigProperty.ANCHOR_TEXT_FILE_PATH.getPropertyName())){
+          setAnchorTextsFilePath(
+            Paths.get(prop.getProperty(ConfigProperty.ANCHOR_TEXT_FILE_PATH.getPropertyName())));
       }
 
     } catch (final IOException | AGDISTISConfigurationException e) {

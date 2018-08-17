@@ -67,9 +67,10 @@ public class IndexCreator {
     
     
     private Map<String, Integer> resourceToId;
-    private static String baseURI;
+    
+    private static String resourceURI = "resource";
     private static final String projectName = "fhai";
-    private static final String anchorTextUri = "<http://dbpedia.org/ontology/anchorText>";
+    private static final String anchorTextUri = "http://dbpedia.org/ontology/anchorText";
     private Map<Integer, Map<String,Double>> idToAnchorTextToProb;
     
     
@@ -81,19 +82,23 @@ public class IndexCreator {
             final String index = AGDISTISConfiguration.INSTANCE.getMainIndexPath().toString();
             log.info("The index will be here: " + index);
     
+            final String baseURI = AGDISTISConfiguration.INSTANCE.getBaseURI().toString();
+            log.info("Setting Base URI to: " + baseURI);
             
-            final String pageIds = AGDISTISConfiguration.INSTANCE.getPageIdsFilePath().toString();
-            if(pageIds != null && !pageIds.isEmpty()){
-                log.info("Reading page id information from" +pageIds);
-                obj.readPageIds(pageIds);
+            resourceURI = baseURI + "/"+resourceURI+"/";
+            log.info("Setting Base resource URI  to: " + resourceURI);
+            
+            final String pageIdsFilePath = AGDISTISConfiguration.INSTANCE.getPageIdsFilePath().toString();
+            if(pageIdsFilePath != null && !pageIdsFilePath.isEmpty()){
+                log.info("Setting page id file path to: " +pageIdsFilePath);
             }
             
-            final String anchorTextFilePath = AGDISTISConfiguration.INSTANCE.getAnchorTextsFilePath().toString();
-            if(anchorTextFilePath != null && !anchorTextFilePath.isEmpty()){
-               log.info("Reading anchor texts from "+anchorTextFilePath);
-               obj.readAnchorTexts(anchorTextFilePath);
+            final String anchorTextsFilePath = AGDISTISConfiguration.INSTANCE.getAnchorTextsFilePath().toString();
+            if(anchorTextsFilePath != null && !anchorTextsFilePath.isEmpty()){
+                log.info("Setting anchor text file path to: "+anchorTextsFilePath);
             }
-           
+                    
+            
             final String folder = AGDISTISConfiguration.INSTANCE.getIndexTTLPath().toString();
             log.info("Getting triple data from: " + folder);
             final List<File> listOfFiles = new ArrayList<File>();
@@ -103,11 +108,10 @@ public class IndexCreator {
               }
             }
             
-            final String baseURI = AGDISTISConfiguration.INSTANCE.getBaseURI().toString();
-            log.info("Setting Base URI to: " + baseURI);
+           
     
             final IndexCreator ic = new IndexCreator();
-            ic.createIndex(listOfFiles, index, baseURI);
+            ic.createIndex(listOfFiles, index, baseURI, pageIdsFilePath, anchorTextsFilePath);
             ic.close();
         } catch (IOException e) {
             log.error("Error while creating index. Maybe the index is corrupt now.", e);
@@ -116,6 +120,7 @@ public class IndexCreator {
     
     
     private void readPageIds(String pageIdsFilePath) throws IOException{
+        resourceToId = new HashMap<String, Integer>();
         LineNumberReader lnr = new LineNumberReader(new InputStreamReader(new FileInputStream(pageIdsFilePath), "UTF-8"))  ;
         int lineCnt = 0;
         while(true){
@@ -175,7 +180,7 @@ public class IndexCreator {
         lnr.close();
     }
 
-    public void createIndex(final List<File> files, final String idxDirectory, final String baseURI) {
+    public void createIndex(final List<File> files, final String idxDirectory, final String baseURI, final String pageIdsFilePath, final String anchorTextsFilePath) {
         try {
           urlAnalyzer = new SimpleAnalyzer(LUCENE_VERSION);
           literalAnalyzer = new LiteralAnalyzer(LUCENE_VERSION);
@@ -195,7 +200,7 @@ public class IndexCreator {
           for (final File file : files) {
             final String type = FileUtil.getFileExtension(file.getName());
             if (type.equals(TTL)) {
-              indexTTLFile(file, baseURI);
+              indexTTLFile(file, baseURI, pageIdsFilePath, anchorTextsFilePath);
             }
             iwriter.commit();
           }
@@ -206,11 +211,11 @@ public class IndexCreator {
         }
       }
 
-      private void indexTTLFile(final File file, final String baseURI)
+      private void indexTTLFile(final File file, final String baseURI, final String pageIdsFilePath, final String anchorTextsFilePath)
           throws RDFParseException, RDFHandlerException, FileNotFoundException, IOException {
         log.info("Start parsing: " + file);
         final RDFParser parser = new TurtleParser();
-        final OnlineStatementHandler osh = new OnlineStatementHandler();
+        final OnlineStatementHandler osh = new OnlineStatementHandler(pageIdsFilePath, anchorTextsFilePath);
         parser.setRDFHandler(osh);
         parser.setStopAtFirstError(false);
         parser.parse(new FileReader(file), baseURI);
@@ -242,8 +247,7 @@ public class IndexCreator {
             // if the predicate carries anchorText <http://dbpedia.org/ontology/anchorText>
             double anchorProb = 0.0;
             if(predicate.equals(anchorTextUri)){
-                String anchorText = object.substring(1, object.lastIndexOf("\""));
-                anchorProb = getAnchorProb(id,anchorText);
+                anchorProb = getAnchorProb(id,object);
                 doc.add(new DoubleField(CandidateSearcher.FIELD_NAME_ANCHOR_PROB, anchorProb, Store.YES));
             }
             iwriter.addDocument(doc);
@@ -256,8 +260,8 @@ public class IndexCreator {
 
 
     private Integer titleToId(String subject) {
-          int baseUriIndex = subject.indexOf(baseURI);
-          String title = subject.substring(baseUriIndex + baseURI.length());
+          int baseUriIndex = subject.indexOf(resourceURI);
+          String title = subject.substring(baseUriIndex + resourceURI.length());
           if(title.startsWith(projectName)){
               title = title.substring(projectName.length());
           }
@@ -274,6 +278,24 @@ public class IndexCreator {
           }
 
           private class OnlineStatementHandler extends RDFHandlerBase {
+              
+            public OnlineStatementHandler(final String pageIdsFilePath, final String anchorTextsFilePath){
+                super();
+                if(null == resourceToId){
+                    try {
+                        readPageIds(pageIdsFilePath);
+                    } catch (IOException e) {
+                        log.error("Problem loadin the page ids");
+                    }
+                }
+                if(null == idToAnchorTextToProb){
+                    try {
+                        readAnchorTexts(anchorTextsFilePath);
+                    } catch (IOException e) {
+                        log.error("Problem loading the anchor texts");
+                    }
+                }
+            }
             @Override
             public void handleStatement(final Statement st) {
               final String subject = st.getSubject().stringValue();
