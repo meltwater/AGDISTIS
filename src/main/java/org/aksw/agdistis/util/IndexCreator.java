@@ -257,7 +257,15 @@ public class IndexCreator {
       
       
       private double getAnchorProb(int id, String anchorText) {
-        return idToAnchorTextToProb.get(id).get(anchorText);
+        Double prob = 0d;
+        Map<String, Double> probMap = idToAnchorTextToProb.get(id);
+        if(probMap != null && probMap.size() > 0){
+            prob = probMap.get(anchorText);
+            if(null == prob){
+                prob = 0d;
+            }
+        }
+        return prob;
     }
 
 
