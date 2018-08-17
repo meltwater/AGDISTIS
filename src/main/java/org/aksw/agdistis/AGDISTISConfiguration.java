@@ -387,16 +387,16 @@ public class AGDISTISConfiguration {
     return (String) CONFIGURATION.get(ConfigProperty.SCHEMA_VERSION);
   }
   
-  public String getPageIdsFilePath(){
-      return (String) CONFIGURATION.get(ConfigProperty.PAGE_IDS_FILE_PATH);
+  public Path getPageIdsFilePath(){
+      return (Path) CONFIGURATION.get(ConfigProperty.PAGE_IDS_FILE_PATH);
   }
   
-  public String getAnchorTextsFilePath(){
-      return (String) CONFIGURATION.get(ConfigProperty.ANCHOR_TEXT_FILE_PATH);
+  public Path getAnchorTextsFilePath(){
+      return (Path) CONFIGURATION.get(ConfigProperty.ANCHOR_TEXT_FILE_PATH);
   }
   
-  public Object getInLinkFilePath() {
-      return (String) CONFIGURATION.get(ConfigProperty.INLINK_FILE_PATH);
+  public Path getInLinkFilePath() {
+      return (Path) CONFIGURATION.get(ConfigProperty.INLINK_FILE_PATH);
   }
 
   /*
