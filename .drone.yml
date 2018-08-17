@@ -55,7 +55,7 @@ pipeline:
       - mvn -B -U clean deploy -Dindex=ned-index -s settings.xml
     when:
       event: [ push ]
-      branch: [ master ]
+      branch: [ dev, master ]
 
   # Build test deploy release artifact to artifactory
   mavenDeployRelease:
