@@ -75,6 +75,9 @@ public class AGDISTISConfiguration {
     setNER2NEDMapping(ner2ned);
     setIndexTTLPath(Paths.get("data/en"));
     setIndexSurfaceFormTSVPath(Paths.get("data/en/surface/en_surface_forms.tsv"));
+    setPageIdsFilePath(Paths.get("data/en/ids/kg_page_ids-merged.txt"));
+    setAnchorTextsFilePath(Paths.get("data/en/anchor/kg_anchor_stats-remapped.txt"));
+    setInLinkFilePath(Paths.get("data/en/inlinks/kg_graph_in-merged-remapped.txt"));
 
     // Attempt to load the configuration file. Values in the file-based configuration override the default
     // configuration.
@@ -383,6 +386,18 @@ public class AGDISTISConfiguration {
   public String getSchemaVersion() {
     return (String) CONFIGURATION.get(ConfigProperty.SCHEMA_VERSION);
   }
+  
+  public String getPageIdsFilePath(){
+      return (String) CONFIGURATION.get(ConfigProperty.PAGE_IDS_FILE_PATH);
+  }
+  
+  public String getAnchorTextsFilePath(){
+      return (String) CONFIGURATION.get(ConfigProperty.ANCHOR_TEXT_FILE_PATH);
+  }
+  
+  public Object getInLinkFilePath() {
+      return (String) CONFIGURATION.get(ConfigProperty.INLINK_FILE_PATH);
+  }
 
   /*
    * Setters. These values override the default and file-based configuration values.
@@ -513,7 +528,23 @@ public class AGDISTISConfiguration {
     Preconditions.checkNotNull(surfaceFormTSVPath);
     CONFIGURATION.put(ConfigProperty.INDEX_SURFACE_FORM_TSV_PATH, surfaceFormTSVPath);
   }
+  
+  public void setPageIdsFilePath(final Path pageIdsFilePath) {
+      Preconditions.checkNotNull(pageIdsFilePath);
+      CONFIGURATION.put(ConfigProperty.PAGE_IDS_FILE_PATH, pageIdsFilePath);
+    }
+  
+  public void setAnchorTextsFilePath(final Path anchorTextsFilePath) {
+      Preconditions.checkNotNull(anchorTextsFilePath);
+      CONFIGURATION.put(ConfigProperty.ANCHOR_TEXT_FILE_PATH, anchorTextsFilePath);
+    }
+  
+  public void setInLinkFilePath(final Path inLinkFilePath) {
+      Preconditions.checkNotNull(inLinkFilePath);
+      CONFIGURATION.put(ConfigProperty.INLINK_FILE_PATH, inLinkFilePath);
+    }
 
+  
   private void setAGDISTISVersion(final String agdistisVersion) {
     Preconditions.checkNotNull(agdistisVersion);
     CONFIGURATION.put(ConfigProperty.AGDISTIS_VERSION, agdistisVersion);
@@ -689,6 +720,23 @@ public class AGDISTISConfiguration {
     sb.append(": ");
     sb.append(getIndexSurfaceFormTSVPath());
     sb.append(IOUtils.LINE_SEPARATOR);
+    
+    sb.append(ConfigProperty.PAGE_IDS_FILE_PATH.name());
+    sb.append(": ");
+    sb.append(getPageIdsFilePath());
+    sb.append(IOUtils.LINE_SEPARATOR);
+    
+    sb.append(ConfigProperty.ANCHOR_TEXT_FILE_PATH.name());
+    sb.append(": ");
+    sb.append(getAnchorTextsFilePath());
+    sb.append(IOUtils.LINE_SEPARATOR);
+    
+    sb.append(ConfigProperty.INLINK_FILE_PATH.name());
+    sb.append(": ");
+    sb.append(getInLinkFilePath());
+    sb.append(IOUtils.LINE_SEPARATOR);
+    
+    
 
     return sb.toString();
   }
@@ -696,5 +744,7 @@ public class AGDISTISConfiguration {
   public AGDISTISConfiguration getInstance() {
     return AGDISTISConfiguration.INSTANCE;
   }
+
+
 
 }
