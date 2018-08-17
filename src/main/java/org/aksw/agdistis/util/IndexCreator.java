@@ -226,7 +226,7 @@ public class IndexCreator {
       private void addDocumentToIndex(final IndexWriter iwriter, final String subject, final String predicate,
               final String object, final boolean isUri) throws IOException {
             final Document doc = new Document();
-            log.debug(subject + " " + predicate + " " + object);
+//            log.debug(subject + " " + predicate + " " + object);
             
             Integer id = titleToId(subject);
             if(id == null){
@@ -265,7 +265,7 @@ public class IndexCreator {
           int baseUriIndex = subject.indexOf(resourceURI);
           String title = subject.substring(baseUriIndex + resourceURI.length());
           if(title.startsWith(projectName)){
-              title = title.substring(projectName.length());
+              title = title.substring(projectName.length() + 1);
           }
           return resourceToId.get(title);
       }
