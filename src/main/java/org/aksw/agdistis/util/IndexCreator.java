@@ -232,7 +232,9 @@ public class IndexCreator {
             if(id == null){
                 // This should not happen
                 log.error("id is null for "+subject);
-                throw new RuntimeException("id is null for "+subject);
+                //throw new RuntimeException("id is null for "+subject);
+                // TODO this should not happen but happens
+                return;
             }
             doc.add(new IntField(CandidateSearcher.FIELD_NAME_ID, id, Store.YES));
             
