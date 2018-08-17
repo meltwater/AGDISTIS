@@ -61,7 +61,6 @@ public class CandidateUtil {
   /*
    * Stems will be used from the input.
    */
-  //private final static Stemming stemmer = new Stemming();
 
   private final static int _MAX_CANDIDATE_LOOKUPS = AGDISTISConfiguration.INSTANCE.getMaxCandidateLookups();
   private final static int _MAX_RETRIEVED_ACRONYMS = AGDISTISConfiguration.INSTANCE.getMaxAcronymLookups();

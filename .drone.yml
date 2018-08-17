@@ -25,11 +25,12 @@ pipeline:
     secrets: [ aws_access_key_id, aws_secret_access_key ]
     environment:
       - AWS_REGION=eu-west-1
-      - S3_NED_DATA_BUCKET=mw-fhai-nlp-models-eu-west-1
-      - S3_NED_DATA_KEY=fhai-nlp-en-ned-data/en-5.4
+      - S3_NED_DATA_BUCKET=mw-fhai-fhaid-nlp-models-eu-west-1
+      - S3_NED_DATA_KEY=fhai-nlp-en-ned-data/5.4
     commands:
       - echo 'Pull the ned index'
       - aws s3 sync s3://$S3_NED_DATA_BUCKET/$S3_NED_DATA_KEY ned-index
+
     when:
       event: [ push ]
 
@@ -40,7 +41,7 @@ pipeline:
     secrets: [ artifactory_username, artifactory_password ]
     commands:
       - echo 'Build and test.'
-      - mvn -B -U clean install -s settings.xml
+      - mvn -B -U clean install -Dindex=ned-index -s settings.xml
     when:
       event: [ push ]
 
@@ -51,7 +52,7 @@ pipeline:
     secrets: [ artifactory_username, artifactory_password ]
     commands:
       - echo 'Deploy snapshot artifact to Artifactory.'
-      - mvn -B -U clean deploy -s settings.xml
+      - mvn -B -U clean deploy -Dindex=ned-index -s settings.xml
     when:
       event: [ push ]
       branch: [ master ]
@@ -60,30 +61,44 @@ pipeline:
   mavenDeployRelease:
     image: meltwaterfoundation/drone-maven-jdk8
     pull: true
-    secrets: [ artifactory_username, artifactory_password, karma_robot_email, karma_robot_username, karma_github_token ]
+    secrets: [ artifactory_username, artifactory_password, karma_robot_email, karma_robot_username ]
     commands:
-      - echo 'Release artifact'
-      - mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -s settings.xml -Dexpression=project.version -q -DforceStdout >> maven_artifact_version
-      - export MAVEN_VERSION=$(eval cut -d- -f1 maven_artifact_version)
-      - mvn -B versions:set -DremoveSnapshot -DnewVersion=$MAVEN_VERSION
-      - rm maven_artifact_version
-      - git config credential.helper 'cache --timeout=120'
+      - echo 'Configure Karma git robot'
+      - git remote update
+      - git fetch
+      - git checkout --track origin/release
+      - git config --global credential.helper 'cache --timeout=120'
       - git config user.email "$KARMA_ROBOT_EMAIL"
       - git config user.name "$KARMA_ROBOT_USERNAME"
-      - git checkout release
-      - git tag -a $MAVEN_VERSION release -m "Preparing release $MAVEN_VERSION"
-      - git add pom.xml
-      - git branch
+
+      - echo 'Compute the release version'
+      - mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -s settings.xml -Dexpression=project.version -q -DforceStdout >> maven_artifact_version
+      - export MAVEN_VERSION=$(eval cut -d- -f1 maven_artifact_version)
+
+      - echo 'Set the new version'
+      - mvn -B versions:set -DremoveSnapshot -DnewVersion=$MAVEN_VERSION
+      - mvn -B versions:commit
+
+      - echo 'Commit the release version'
+      - git add ./\*pom.xml
       - git commit -m "Updating to release version $MAVEN_VERSION [CI SKIP]"
+      - git tag -a $MAVEN_VERSION release -m "Preparing release $MAVEN_VERSION"
       - git push origin $MAVEN_VERSION
       - git push origin release
-      - mvn -B -U clean deploy -s settings.xml
+
+      - echo 'Deploy the release version to Artifactory'
+      - mvn -U -B deploy -s settings.xml
+      - echo 'cleanup...'
+      - rm maven_artifact_version
+
       - echo 'Setting development version to next increment.'
-      - git fetch
       - git checkout --track origin/dev
-      - mvn build-helper:parse-version versions:set -DnewVersion=\$${parsedVersion.majorVersion}.\$${parsedVersion.minorVersion}.\$${parsedVersion.nextIncrementalVersion}-\$${parsedVersion.qualifier}
+      - echo 'Updating AGDISTIS dev branch'
+      - mvn org.codehaus.mojo:build-helper-maven-plugin:3.0.0:parse-version versions:set -DnewVersion=\$${parsedVersion.majorVersion}.\$${parsedVersion.minorVersion}.\$${parsedVersion.nextIncrementalVersion}-\$${parsedVersion.qualifier}
       - mvn versions:commit
-      - git add pom.xml
+
+      - echo 'Committing and pushing snapshot version'
+      - git add ./\*pom.xml
       - git commit -am "Incremented snapshot version."
       - git push origin dev
     when:
@@ -93,10 +108,10 @@ pipeline:
   slack:
     group: notifications
     image: plugins/slack
-    webhook: https://hooks.slack.com/services/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
+    webhook: https://hooks.slack.com/services/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
     icon_url: https://logo.clearbit.com/drone.io
     username: 'Drone'
-    channel: nlp-bots
+    channel: eng-karma-bots
     template: |
       {{#success build.status}}
         Build succeeded.

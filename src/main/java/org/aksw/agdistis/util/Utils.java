@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class Utils {
 
@@ -38,7 +39,7 @@ public class Utils {
                     (), entity.getName()));
         }
 
-        return documentFrom(documentId, plainText, list);
+        return documentFrom(Optional.of(documentId), plainText, list);
     }
 
     public static Document textToDocument(final String documentId, final String preAnnotatedText) {
@@ -67,16 +68,18 @@ public class Utils {
                     preAnnotatedText, IOUtils.LINE_SEPARATOR, ExceptionUtils.getStackTrace(iobe));
         }
 
-        return documentFrom(documentId, preAnnotatedText.replaceAll("<entity>", "").replaceAll("</entity>", ""), list);
+        return documentFrom(Optional.of(documentId), preAnnotatedText.replaceAll("<entity>", "").replaceAll("</entity>", ""), list);
 
     }
 
-    public static Document documentFrom(final String documentId, final String text, final List<NamedEntityInText>
+    public static Document documentFrom(final Optional<String> documentId, final String text, final List<NamedEntityInText>
             entities) {
         final Document document = new Document();
         document.addText(text);
         document.addNamedEntitiesInText(new NamedEntitiesInText(entities));
-        document.setDocumentId(documentId);
+        if (documentId.isPresent()) {
+            document.setDocumentId(documentId.get());
+        }
         return document;
     }
 }
