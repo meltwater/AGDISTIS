@@ -72,12 +72,12 @@ public class IndexCreator {
     private static final String projectName = "fhai";
     private static final String anchorTextUri = "http://dbpedia.org/ontology/anchorText";
     private Map<Integer, Map<String,Double>> idToAnchorTextToProb;
+    private Map<Integer, Double> idToPageRank;
     
     
     
     public static void main(String[] args){
         
-        final IndexCreator obj = new IndexCreator();
         try {
             final String index = AGDISTISConfiguration.INSTANCE.getMainIndexPath().toString();
             log.info("The index will be here: " + index);
@@ -97,7 +97,11 @@ public class IndexCreator {
             if(anchorTextsFilePath != null && !anchorTextsFilePath.isEmpty()){
                 log.info("Setting anchor text file path to: "+anchorTextsFilePath);
             }
-                    
+            
+            final String pageRankFilePath = AGDISTISConfiguration.INSTANCE.getPageRankFilePath().toString();
+            if(pageRankFilePath != null && !pageRankFilePath.isEmpty()){
+                log.info("Setting pagerank  file path to: "+pageRankFilePath);
+            }     
             
             final String folder = AGDISTISConfiguration.INSTANCE.getIndexTTLPath().toString();
             log.info("Getting triple data from: " + folder);
@@ -107,11 +111,9 @@ public class IndexCreator {
                 listOfFiles.add(file);
               }
             }
-            
-           
     
             final IndexCreator ic = new IndexCreator();
-            ic.createIndex(listOfFiles, index, baseURI, pageIdsFilePath, anchorTextsFilePath);
+            ic.createIndex(listOfFiles, index, baseURI, pageIdsFilePath, anchorTextsFilePath, pageRankFilePath);
             ic.close();
         } catch (IOException e) {
             log.error("Error while creating index. Maybe the index is corrupt now.", e);
@@ -139,6 +141,34 @@ public class IndexCreator {
         }
         lnr.close();
         log.info(resourceToId.size() + " pages read");
+    }
+    
+    
+    private void readPageRankValues(String pageRankFilePath) throws IOException{
+        idToPageRank = new LinkedHashMap<Integer, Double>();
+        InputStream is = new FileInputStream(pageRankFilePath);
+        InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+        LineNumberReader lnr = new LineNumberReader(isr);
+        System.out.println("Processing " + pageRankFilePath + " ...");
+        int lineCnt = 0;
+        while (true) {
+            lineCnt++;
+            if (lineCnt % 10000 == 0) System.out.print(".");
+            if (lineCnt % 1000000 == 0) {
+                System.out.println(lineCnt);
+            }
+            
+            String line = lnr.readLine();
+            if (line == null) break;
+            String[] parts = line.split("\t");
+            int id = Integer.parseInt(parts[0]);
+            double pageRank = Double.parseDouble(parts[1]);
+            if(id == -1)continue;
+            if(!idToPageRank.containsKey(id)){
+                idToPageRank.put(id, pageRank);
+            }
+        }
+        lnr.close();
     }
     
     private void readAnchorTexts(String anchorTextFilePath) throws IOException{
@@ -180,7 +210,7 @@ public class IndexCreator {
         lnr.close();
     }
 
-    public void createIndex(final List<File> files, final String idxDirectory, final String baseURI, final String pageIdsFilePath, final String anchorTextsFilePath) {
+    public void createIndex(final List<File> files, final String idxDirectory, final String baseURI, final String pageIdsFilePath, final String anchorTextsFilePath, final String pageRankFilePath) {
         try {
           urlAnalyzer = new SimpleAnalyzer(LUCENE_VERSION);
           literalAnalyzer = new LiteralAnalyzer(LUCENE_VERSION);
@@ -200,7 +230,7 @@ public class IndexCreator {
           for (final File file : files) {
             final String type = FileUtil.getFileExtension(file.getName());
             if (type.equals(TTL)) {
-              indexTTLFile(file, baseURI, pageIdsFilePath, anchorTextsFilePath);
+              indexTTLFile(file, baseURI, pageIdsFilePath, anchorTextsFilePath, pageRankFilePath);
             }
             iwriter.commit();
           }
@@ -211,11 +241,11 @@ public class IndexCreator {
         }
       }
 
-      private void indexTTLFile(final File file, final String baseURI, final String pageIdsFilePath, final String anchorTextsFilePath)
+      private void indexTTLFile(final File file, final String baseURI, final String pageIdsFilePath, final String anchorTextsFilePath, final String pageRankFilePath)
           throws RDFParseException, RDFHandlerException, FileNotFoundException, IOException {
         log.info("Start parsing: " + file);
         final RDFParser parser = new TurtleParser();
-        final OnlineStatementHandler osh = new OnlineStatementHandler(pageIdsFilePath, anchorTextsFilePath);
+        final OnlineStatementHandler osh = new OnlineStatementHandler(pageIdsFilePath, anchorTextsFilePath, pageRankFilePath);
         parser.setRDFHandler(osh);
         parser.setStopAtFirstError(false);
         parser.parse(new FileReader(file), baseURI);
@@ -252,11 +282,22 @@ public class IndexCreator {
                 anchorProb = getAnchorProb(id,object);
                 doc.add(new DoubleField(CandidateSearcher.FIELD_NAME_ANCHOR_PROB, anchorProb, Store.YES));
             }
+            
+            double pageRank = idToPageRank(id);
+            doc.add(new DoubleField(CandidateSearcher.FIELD_NAME_PAGE_RANK, pageRank, Store.YES));
             iwriter.addDocument(doc);
       }
       
       
-      private double getAnchorProb(int id, String anchorText) {
+      
+
+
+    private double idToPageRank(Integer id) {
+        return idToPageRank.get(id);
+    }
+
+
+    private double getAnchorProb(int id, String anchorText) {
         Double prob = 0d;
         Map<String, Double> probMap = idToAnchorTextToProb.get(id);
         if(probMap != null && probMap.size() > 0){
@@ -289,7 +330,7 @@ public class IndexCreator {
 
           private class OnlineStatementHandler extends RDFHandlerBase {
               
-            public OnlineStatementHandler(final String pageIdsFilePath, final String anchorTextsFilePath){
+            public OnlineStatementHandler(final String pageIdsFilePath, final String anchorTextsFilePath, final String pageRankFilePath){
                 super();
                 if(null == resourceToId){
                     try {
@@ -303,6 +344,13 @@ public class IndexCreator {
                         readAnchorTexts(anchorTextsFilePath);
                     } catch (IOException e) {
                         log.error("Problem loading the anchor texts");
+                    }
+                }
+                if(null == idToPageRank){
+                    try {
+                        readPageRankValues(pageRankFilePath);
+                    } catch (IOException e) {
+                        log.error("Problem loading the page rank values");
                     }
                 }
             }

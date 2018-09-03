@@ -199,9 +199,9 @@ public class AGDISTISConfiguration {
         setIndexSurfaceFormTSVPath(
             Paths.get(prop.getProperty(ConfigProperty.INDEX_SURFACE_FORM_TSV_PATH.getPropertyName())));
       }
-      if(prop.containsKey(ConfigProperty.PAGE_IDS_FILE_PATH.getPropertyName())){
-          setPageIdsFilePath(
-            Paths.get(prop.getProperty(ConfigProperty.PAGE_IDS_FILE_PATH.getPropertyName())));
+      if(prop.containsKey(ConfigProperty.INLINK_FILE_PATH.getPropertyName())){
+          setInLinkFilePath(
+            Paths.get(prop.getProperty(ConfigProperty.INLINK_FILE_PATH.getPropertyName())));
       }
       
       if(prop.containsKey(ConfigProperty.PAGE_IDS_FILE_PATH.getPropertyName())){
@@ -212,6 +212,11 @@ public class AGDISTISConfiguration {
       if(prop.containsKey(ConfigProperty.ANCHOR_TEXT_FILE_PATH.getPropertyName())){
           setAnchorTextsFilePath(
             Paths.get(prop.getProperty(ConfigProperty.ANCHOR_TEXT_FILE_PATH.getPropertyName())));
+      }
+      
+      if(prop.containsKey(ConfigProperty.PAGERANK_FILE_PATH.getPropertyName())){
+          setPageRankFilePath(
+            Paths.get(prop.getProperty(ConfigProperty.PAGERANK_FILE_PATH.getPropertyName())));
       }
 
     } catch (final IOException | AGDISTISConfigurationException e) {
@@ -412,6 +417,12 @@ public class AGDISTISConfiguration {
   public Path getInLinkFilePath() {
       return (Path) CONFIGURATION.get(ConfigProperty.INLINK_FILE_PATH);
   }
+  
+  public Path getPageRankFilePath() {
+      return (Path) CONFIGURATION.get(ConfigProperty.PAGERANK_FILE_PATH);
+  }
+  
+  
 
   /*
    * Setters. These values override the default and file-based configuration values.
@@ -556,6 +567,11 @@ public class AGDISTISConfiguration {
   public void setInLinkFilePath(final Path inLinkFilePath) {
       Preconditions.checkNotNull(inLinkFilePath);
       CONFIGURATION.put(ConfigProperty.INLINK_FILE_PATH, inLinkFilePath);
+    }
+  
+  public void setPageRankFilePath(final Path pageRankFilePath) {
+      Preconditions.checkNotNull(pageRankFilePath);
+      CONFIGURATION.put(ConfigProperty.PAGERANK_FILE_PATH, pageRankFilePath);
     }
 
   
@@ -750,6 +766,11 @@ public class AGDISTISConfiguration {
     sb.append(getInLinkFilePath());
     sb.append(IOUtils.LINE_SEPARATOR);
     
+    sb.append(ConfigProperty.PAGERANK_FILE_PATH.name());
+    sb.append(": ");
+    sb.append(getPageRankFilePath());
+    sb.append(IOUtils.LINE_SEPARATOR);
+    
     
 
     return sb.toString();
@@ -758,6 +779,8 @@ public class AGDISTISConfiguration {
   public AGDISTISConfiguration getInstance() {
     return AGDISTISConfiguration.INSTANCE;
   }
+
+
 
 
 

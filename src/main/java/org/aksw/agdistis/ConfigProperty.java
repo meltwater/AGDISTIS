@@ -45,7 +45,7 @@ public enum ConfigProperty {
   CANDIDATE_CACHE_SIZE,
   DISAMBIGUATION_PAGE_CACHE_SIZE,
   TRIPLE_INDEX_CACHE_SIZE, 
-  PAGE_IDS_FILE_PATH, ANCHOR_TEXT_FILE_PATH, INLINK_FILE_PATH;
+  PAGE_IDS_FILE_PATH, ANCHOR_TEXT_FILE_PATH, INLINK_FILE_PATH, PAGERANK_FILE_PATH;
   //@formatter:on
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigProperty.class);
@@ -70,7 +70,8 @@ public enum ConfigProperty {
       .put(TRIPLE_INDEX_CACHE_SIZE, "tripleIndexCacheSize")
       .put(PAGE_IDS_FILE_PATH,"pageIdsFilePath")
       .put(ANCHOR_TEXT_FILE_PATH,"anchorTextFilePath")
-      .put(INLINK_FILE_PATH,"inLinksFilePath").build();
+      .put(INLINK_FILE_PATH,"inLinksFilePath")
+      .put(PAGERANK_FILE_PATH, "pageRankFilePath").build();
       
       
 
