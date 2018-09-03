@@ -50,6 +50,7 @@ public class CandidateSearcher {
 
     public static final String FIELD_NAME_ID = "id";
     public static final String FIELD_NAME_ANCHOR_PROB = "anchor_prob";
+    public static final String FIELD_NAME_PAGE_RANK = "page_rank";
 
     public static final String FIELD_NAME_SUBJECT = "subject";
     public static final String FIELD_NAME_PREDICATE = "predicate";

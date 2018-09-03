@@ -3,12 +3,10 @@ package org.aksw.agdistis.algorithm;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.aksw.agdistis.datatypes.AnchorDocument;
-import org.aksw.agdistis.datatypes.DisambiguatedDocument;
 import org.aksw.agdistis.datatypes.Document;
 import org.aksw.agdistis.datatypes.NamedEntitiesInText;
 import org.aksw.agdistis.datatypes.NamedEntityInText;
@@ -27,6 +25,8 @@ public class AgdistisDisambiguator {
     private static String resourceURI = "http://dbpedia.org/resource/";
     private static final String projectName = "fhai";
     CandidateSearcher cs;
+
+    private double logW = 3332693;//WikiSize
     
     public AgdistisDisambiguator() {
         try {
@@ -40,14 +40,104 @@ public class AgdistisDisambiguator {
     public void run(final Document document){
         // search for candidate AnchorDocument given a NE mention
         Collection<AnchorOccurrence> anchorOccurences = collectAnchorOccurences(document.getNamedEntitiesInText());
-        disambiguateBasedOnAnchor(anchorOccurences);
+        List<AnchorDocument> trustedDocs = collectTrustedDocs(anchorOccurences);
+        double[] trustedWeights = calculateLinkWeight(trustedDocs);
+        
+        for(AnchorOccurrence anchorOccurence: anchorOccurences){
+            if (anchorOccurence.anchorDocs.size() == 1) {
+                continue;
+              }
+              for (final AnchorDocument sense : anchorOccurence.anchorDocs) {
+                // spec handling of lists
+                senseScore(trustedDocs, trustedWeights, sense);
+              }
+        }
+        
+        chooseTheTop(anchorOccurences);
     }
 
 
-    private void disambiguateBasedOnAnchor(Collection<AnchorOccurrence> anchorOccurences) {
+    
+
+    private void senseScore(List<AnchorDocument> allCandidates,
+            double[] trustedWeights, AnchorDocument sense) {
+
+        double sum = 0.0;
+        double sumW = 0.0;
+        for (int i = 0; i < allCandidates.size(); i++) {
+          final AnchorDocument trustedCand = allCandidates.get(i);
+          if (trustedCand.id == sense.id) {
+            continue;
+          }
+          final double r = getRelatedness(sense.inLinks, trustedCand.inLinks);
+          final double w = trustedWeights[i];
+          sum += w * r;
+          sumW += w;
+        }
+        if (sumW > 0.0) {
+          sense.setSenseScoreContext(sum / sumW);
+        }
+      
+    }
+
+
+    private double[] calculateLinkWeight(List<AnchorDocument> trustedDocs) {
+        
+        
+        final int trustedCount = trustedDocs.size();
+        final double[] trustWeights = new double[trustedCount];
+        for (int i = 0; i < trustedCount; i++) {
+          double sum = 0.0;
+          for (int j = 0; j < trustedCount; j++) {
+            if (i == j) {
+              continue;
+            }
+            final List<Integer> idI = trustedDocs.get(i).inLinks;
+            final List<Integer> idJ = trustedDocs.get(j).inLinks;
+            final double r = getRelatedness(idI, idJ);
+            sum += r;
+          }
+          trustWeights[i] = sum / trustedCount;
+          trustWeights[i] *= trustedDocs.get(i).anchorProb;
+        }
+        double avgTrustWeight = 0.0;
+        for (final double d : trustWeights) {
+          avgTrustWeight += d;
+        }
+        avgTrustWeight /= trustWeights.length;
+        // Set them to 1 to avoid divisionByZero later
+        if (avgTrustWeight == 0) {
+          for (int i = 0; i < trustedCount; i++) {
+            trustWeights[i] = 1;
+          }
+        }
+        return trustWeights;
+        
+        
+        
+    }
+
+
+    private List<AnchorDocument> collectTrustedDocs(
+            Collection<AnchorOccurrence> anchorOccurences) {
+        List<AnchorDocument> trustedDocs = Lists.newArrayList();
+        for(AnchorOccurrence anchorOccurence:anchorOccurences){
+            
+            /**
+             * Filter by high sense prob 
+             */
+            List<AnchorDocument> anchorDocuments = anchorOccurence.anchorDocs.stream()
+            .filter(senseCandidate -> (senseCandidate.anchorProb > 0.90)).collect(Collectors.toList());
+            trustedDocs.addAll(anchorDocuments);
+        }
+        return trustedDocs;
+    }
+
+
+    private void chooseTheTop(Collection<AnchorOccurrence> anchorOccurences) {
         
         for(AnchorOccurrence anchorOccurrence: anchorOccurences){
-            final AnchorDocument topScored = getTopSenseProbabilityCandidate(anchorOccurrence.anchorDocs);
+            final AnchorDocument topScored = getTopSenseContextProbabilityCandidate(anchorOccurrence.anchorDocs);
             if(null == topScored){
                 continue;
             }
@@ -59,7 +149,7 @@ public class AgdistisDisambiguator {
             }
             originalEntity.setCanonicalName(canonicalName);
             originalEntity.setNamedEntity(candidateURI);
-            originalEntity.setAuthorityWeight(topScored.anchorProb);
+            originalEntity.setAuthorityWeight(topScored.getSenseScoreContext());
             originalEntity.setDisambiguatedTypes(Lists.newArrayList());
         }
         
@@ -94,13 +184,13 @@ public class AgdistisDisambiguator {
     }
 
 
-    private AnchorDocument getTopSenseProbabilityCandidate(
+    private AnchorDocument getTopSenseContextProbabilityCandidate(
             List<AnchorDocument> anchorDocs) {
         AnchorDocument topDocument = null;
         double topProb = 0;
         for(AnchorDocument anchorDoc:anchorDocs){
-            if(anchorDoc.anchorProb > topProb){
-                topProb = anchorDoc.anchorProb;
+            if(anchorDoc.getSenseScoreContext() > topProb){
+                topProb = anchorDoc.getSenseScoreContext();
                 topDocument = anchorDoc;
             }
         }
@@ -111,55 +201,111 @@ public class AgdistisDisambiguator {
     }
 
 
-//    private void disambiguate(Collection<AnchorOccurrence> anchorOccurences) {
-//        
-//        List<DisambiguatedDocument[]> candidatesList = collectCandidateSenses(anchorOccurences);
-//        
-//        final Map<String, DisambiguatedDocument> bestSenseByStaticScore = new HashMap<>();
-//        for (final DisambiguatedDocument[] candidates : candidatesList) {
-//          bestSenseByStaticScore.put(candidates[0].getAnchor(), candidates[0]);
-//        }
-//    }
-//    
+    public double getRelatedness(List<Integer> A, List<Integer> B){
+        if(A == null || B == null)return 0d;
+        final double distance = getDistance(100, A.size(), B.size(), A, B);
+        return distance;
+    }
     
-    private List<DisambiguatedDocument[]> collectCandidateSenses(Collection<AnchorOccurrence> anchorOccurrences) {
-          final List<DisambiguatedDocument[]> candidatesList = new ArrayList<>();
-          for (final AnchorOccurrence ao : anchorOccurrences) {
-            final List<AnchorDocument> stats = ao.anchorDocs;
-            final int count = stats.size(); // all senses considered
-            // shouldn't happen, but:
-            // TODO: This does happen!
-            if (count == 0) {
-              continue;
-            }
-            final DisambiguatedDocument[] candidates = new DisambiguatedDocument[count];
-            candidatesList.add(candidates);
-            final String anchor = ao.originalForm;
-            for (int i = 0; i < count; i++) {
-              candidates[i] = new DisambiguatedDocument(anchor, ao.indexes.size(), stats.get(i).id, stats.get(i).subject, stats.get(i).anchorProb,stats.get(i).anchorProb);
+    private double getDistance(int maxLinkToConsider, int countA, int countB, List<Integer> A, List<Integer> B) {
+        int i = 0;
+        int j = 0;
+        int countCommon = 0;
+        if ((maxLinkToConsider == -1) || ((countA <= maxLinkToConsider) && (countB <= maxLinkToConsider))) {
+          /**
+           * search in full id ranges
+           */
+          while ((i < countA) && (j < countB)) {
+            final int diff = A.get(i) - B.get(j);
+            if (diff < 0) {
+              i++;
+            } else if (diff > 0) {
+              j++;
+            } else {
+              countCommon++;
+              i++;
+              j++;
             }
           }
-          return candidatesList;
+          return distance(countA, countB, countCommon);
+        } else {
+          /**
+           * subsampled matching and extrapolating result
+           */
+          int countA2 = countA;
+          int countB2 = countB;
+          double ratioA = 1;
+          if (countA > maxLinkToConsider) {
+            ratioA = (double) countA / maxLinkToConsider;
+            countA2 = maxLinkToConsider;
+          }
+          double ratioB = 1;
+          if (countB > maxLinkToConsider) {
+            ratioB = (double) countB / maxLinkToConsider;
+            countB2 = maxLinkToConsider;
+          }
+          double iD = i;
+          double jD = j;
+          while ((i < countA) && (j < countB)) {
+            final int diff = A.get(i) - B.get(j);
+            if (diff < 0) {
+              iD += ratioA;
+              i = (int) iD;
+            } else if (diff > 0) {
+              jD += ratioB;
+              j = (int) jD;
+            } else {
+              countCommon++;
+              iD += ratioA;
+              i = (int) iD;
+              jD += ratioB;
+              j = (int) jD;
+            }
+          }
+          return distance(countA2, countB2, countCommon);
         }
+      }
     
     
-    public double getRelatedness(int i, int j){
-//        TODO complete relatedness calculation
-        List<AnchorDocument> iDocs = cs.search(String.valueOf(i), 100);
-        List<AnchorDocument> jDocs = cs.search(String.valueOf(j), 100);
-        
-        return 0;
-    }
+    private double distance(int countA, int countB, int countCommon) {
+        if (countCommon == 0) {
+          return 1;
+        }
+
+        final int maxCount = Math.max(countA, countB);
+        final int minCount = Math.min(countA, countB);
+
+        // normalized google distance (logW: log(wikisize))
+        return (Math.log(maxCount) - Math.log(countCommon)) / (logW - Math.log(minCount));
+      }
 
 
     private Collection<AnchorOccurrence> collectAnchorOccurences(
             NamedEntitiesInText namedEntitiesInText) {
         List<AnchorOccurrence> anchorOccurences = new ArrayList<AgdistisDisambiguator.AnchorOccurrence>();
         for(NamedEntityInText ne:namedEntitiesInText){
-            final List<AnchorDocument> anchorDocuments = candidateSearch(ne.getSurfaceForm());
+            List<AnchorDocument> anchorDocuments = candidateSearch(ne.getSurfaceForm());
+            
+            /**
+             * Collect in links ids
+             */
+            for(AnchorDocument anchorDocument:anchorDocuments){
+                anchorDocument.inLinks = searchForInLinks(anchorDocument);
+            }
             anchorOccurences.add(new AnchorOccurrence(anchorDocuments, ne));
         }
         return anchorOccurences;
+    }
+
+
+    private List<Integer> searchForInLinks(AnchorDocument anchorDocument) {
+        List<Integer> inLinkIds = Lists.newArrayList();
+        List<AnchorDocument> inlinkDocs = cs.search(String.valueOf(anchorDocument.id), 100);
+        if(null == inlinkDocs)return inLinkIds;
+        for(AnchorDocument inLinkDoc:inlinkDocs){
+            inLinkIds.add(inLinkDoc.id);
+        }
+        return inLinkIds;
     }
 
 
@@ -186,14 +332,13 @@ public class AgdistisDisambiguator {
     
     private class AnchorOccurrence {
         List<AnchorDocument> anchorDocs;
-        public String originalForm;
+//        public String originalForm;
         public NamedEntityInText originalEntity;
-        private final List<Integer> indexes = new ArrayList<>();
+//        private final List<Integer> indexes = new ArrayList<>();
 
         private AnchorOccurrence(List<AnchorDocument> anchorDocs, NamedEntityInText originalEntity) {
           this.anchorDocs = anchorDocs;
           this.originalEntity = originalEntity;
-          this.originalForm = originalEntity.getSurfaceForm();
         }
     }
 

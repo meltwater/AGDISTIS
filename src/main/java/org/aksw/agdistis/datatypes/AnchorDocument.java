@@ -1,12 +1,18 @@
 package org.aksw.agdistis.datatypes;
 
+import java.util.List;
+
+import org.apache.jena.ext.com.google.common.collect.Lists;
+
 
 
 public class AnchorDocument implements Comparable<AnchorDocument>{
 
     public int id;
     public double anchorProb;
+    public double senseScoreContext;
     public double score;
+    public List<Integer> inLinks;
     
     public double getScore() {
         return score;
@@ -18,6 +24,7 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
 
 
     public String subject, predicate, object;
+    public double linkWeight;
     
     public AnchorDocument(final String subject, final String predicate, final String object) {
         id = -1;
@@ -68,6 +75,14 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
       return "AnchorDocument{" + "subject='" + subject + '\''+ ", Id="
           + id + ", senseProbabilityStatic=" + anchorProb
           + ", score=" + score + '}';
+    }
+
+    public void setSenseScoreContext(double d) {
+        this.senseScoreContext = d;
+    }
+    
+    public double getSenseScoreContext(){
+        return this.senseScoreContext;
     }
     
 
