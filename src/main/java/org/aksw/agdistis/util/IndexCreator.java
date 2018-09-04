@@ -213,12 +213,10 @@ public class IndexCreator {
     public void createIndex(final List<File> files, final String idxDirectory, final String baseURI, final String pageIdsFilePath, final String anchorTextsFilePath, final String pageRankFilePath) {
         try {
           urlAnalyzer = new SimpleAnalyzer(LUCENE_VERSION);
-          literalAnalyzer = new LiteralAnalyzer(LUCENE_VERSION);
           final Map<String, Analyzer> mapping = new HashMap<String, Analyzer>();
           mapping.put(CandidateSearcher.FIELD_NAME_SUBJECT, urlAnalyzer);
           mapping.put(CandidateSearcher.FIELD_NAME_PREDICATE, urlAnalyzer);
           mapping.put(CandidateSearcher.FIELD_NAME_OBJECT_URI, urlAnalyzer);
-          mapping.put(CandidateSearcher.FIELD_NAME_OBJECT_LITERAL, literalAnalyzer);
           final PerFieldAnalyzerWrapper perFieldAnalyzer = new PerFieldAnalyzerWrapper(urlAnalyzer, mapping);
 
           final File indexDirectory = new File(idxDirectory);
