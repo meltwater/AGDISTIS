@@ -271,7 +271,7 @@ public class IndexCreator {
             if (isUri) {
               doc.add(new StringField(CandidateSearcher.FIELD_NAME_OBJECT_URI, object, Store.YES));
             } else {
-              doc.add(new StringField(CandidateSearcher.FIELD_NAME_OBJECT_LITERAL, object, Store.YES));
+              doc.add(new TextField(CandidateSearcher.FIELD_NAME_OBJECT_LITERAL, object, Store.YES));
             }
             // if the predicate carries anchorText <http://dbpedia.org/ontology/anchorText>
             double anchorProb = 0.0;
