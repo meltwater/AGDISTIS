@@ -28,9 +28,11 @@ public class AgdistisDisambiguator {
 
     private double logW = 3332693;//WikiSize
     
+    
     public AgdistisDisambiguator() {
         try {
             cs = new CandidateSearcher();
+            
         } catch (IOException e) {
             LOGGER.error("problem initializing the searcher, check in the index.");
         }
@@ -94,9 +96,12 @@ public class AgdistisDisambiguator {
             }
             final List<Integer> idI = trustedDocs.get(i).inLinks;
             final List<Integer> idJ = trustedDocs.get(j).inLinks;
+            
             final double r = getRelatedness(idI, idJ);
+            System.out.println(" dist "+r+" with: "+trustedDocs.get(j).subject);
             sum += r;
           }
+          
           trustWeights[i] = sum / trustedCount;
           trustWeights[i] *= trustedDocs.get(i).anchorProb;
         }
@@ -127,7 +132,7 @@ public class AgdistisDisambiguator {
              * Filter by high sense prob 
              */
             List<AnchorDocument> anchorDocuments = anchorOccurence.anchorDocs.stream()
-            .filter(senseCandidate -> (senseCandidate.anchorProb > 0.90)).collect(Collectors.toList());
+            .filter(senseCandidate -> (senseCandidate.anchorProb > 0.10)).collect(Collectors.toList());
             trustedDocs.addAll(anchorDocuments);
         }
         return trustedDocs;
@@ -137,6 +142,7 @@ public class AgdistisDisambiguator {
     private void chooseTheTop(Collection<AnchorOccurrence> anchorOccurences) {
         
         for(AnchorOccurrence anchorOccurrence: anchorOccurences){
+            
             final AnchorDocument topScored = getTopSenseContextProbabilityCandidate(anchorOccurrence.anchorDocs);
             if(null == topScored){
                 continue;
@@ -151,6 +157,7 @@ public class AgdistisDisambiguator {
             originalEntity.setNamedEntity(candidateURI);
             originalEntity.setAuthorityWeight(topScored.getSenseScoreContext());
             originalEntity.setDisambiguatedTypes(Lists.newArrayList());
+            System.out.println("original: "+originalEntity.getLabel() + " assinged "+candidateURI+ " anchor score "+topScored.anchorProb+" sense: "+topScored.getSenseScoreContext()+" pagrank "+topScored.pageRank);
         }
         
     }
@@ -203,7 +210,7 @@ public class AgdistisDisambiguator {
 
     public double getRelatedness(List<Integer> A, List<Integer> B){
         if(A == null || B == null)return 0d;
-        final double distance = getDistance(100, A.size(), B.size(), A, B);
+        final double distance = getDistance(500, A.size(), B.size(), A, B);
         return distance;
     }
     
@@ -269,13 +276,13 @@ public class AgdistisDisambiguator {
     
     private double distance(int countA, int countB, int countCommon) {
         if (countCommon == 0) {
-          return 1;
+          return 0;
         }
 
         final int maxCount = Math.max(countA, countB);
         final int minCount = Math.min(countA, countB);
 
-        // normalized google distance (logW: log(wikisize))
+        // normalized google distance (logW: log(kgsize))
         return (Math.log(maxCount) - Math.log(countCommon)) / (logW - Math.log(minCount));
       }
 
@@ -300,7 +307,7 @@ public class AgdistisDisambiguator {
 
     private List<Integer> searchForInLinks(AnchorDocument anchorDocument) {
         List<Integer> inLinkIds = Lists.newArrayList();
-        List<AnchorDocument> inlinkDocs = cs.search(String.valueOf(anchorDocument.id), 100);
+        List<AnchorDocument> inlinkDocs = cs.searchInLinks(anchorDocument.subject);
         if(null == inlinkDocs)return inLinkIds;
         for(AnchorDocument inLinkDoc:inlinkDocs){
             inLinkIds.add(inLinkDoc.id);
@@ -313,11 +320,11 @@ public class AgdistisDisambiguator {
         
 //        String anchorAsObject = "\""+anchor+"\"@en";
         String anchorAsObject = anchor;
-        List<AnchorDocument> results = cs.search(null, null, anchorAsObject);
+        List<AnchorDocument> results = cs.searchAnchorText(anchorAsObject);
         if(null == results || results.isEmpty()){
             // lowercased anchor
-            anchorAsObject = "\""+anchor.toLowerCase()+"\"@en";
-            results = cs.search(null, null, anchorAsObject);
+            anchorAsObject = anchor.toLowerCase();
+            results = cs.searchAnchorText(anchorAsObject);
         }
         if(null == results){
             results = new ArrayList<AnchorDocument>();
@@ -332,13 +339,15 @@ public class AgdistisDisambiguator {
     
     private class AnchorOccurrence {
         List<AnchorDocument> anchorDocs;
-//        public String originalForm;
         public NamedEntityInText originalEntity;
-//        private final List<Integer> indexes = new ArrayList<>();
 
         private AnchorOccurrence(List<AnchorDocument> anchorDocs, NamedEntityInText originalEntity) {
           this.anchorDocs = anchorDocs;
           this.originalEntity = originalEntity;
+        }
+        
+        public String toString(){
+            return originalEntity.getLabel();
         }
     }
 

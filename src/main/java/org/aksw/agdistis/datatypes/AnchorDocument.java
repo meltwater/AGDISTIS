@@ -11,6 +11,7 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
     public int id;
     public double anchorProb;
     public double senseScoreContext;
+    public double pageRank;
     public double score;
     public List<Integer> inLinks;
     
@@ -23,7 +24,8 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
     }
 
 
-    public String subject, predicate, object;
+    public String subject, predicate, 
+    object; // Object will be either anchor text or URI of another entity.
     public double linkWeight;
     
     public AnchorDocument(final String subject, final String predicate, final String object) {
@@ -33,12 +35,18 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
         this.object = object;
     }
     
-    public AnchorDocument(final int id, final String subject, final String predicate, final String object, final double anchorProb){
+    public AnchorDocument(final int id, final String subject, final String predicate, final String object, final double anchorProb, final double pageRank){
         this.id = id;
         this.anchorProb = anchorProb;
         this.subject = subject;
         this.predicate = predicate;
         this.object = object;
+        this.pageRank = pageRank;
+    }
+    
+    
+    public String getAnchorText(){
+        return this.object;
     }
     
     @Override
