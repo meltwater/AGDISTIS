@@ -19,6 +19,7 @@ import java.util.Map;
 import org.aksw.agdistis.AGDISTISConfiguration;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
@@ -59,8 +60,6 @@ public class IndexCreator {
     public static final String TTL = "ttl";
     public static final Version LUCENE_VERSION = Version.LUCENE_4_9;
 
-    private Analyzer urlAnalyzer;
-    private Analyzer literalAnalyzer;
     private DirectoryReader ireader;
     private IndexWriter iwriter;
     private MMapDirectory directory;
@@ -70,7 +69,8 @@ public class IndexCreator {
     
     private static String resourceURI = "resource";
     private static final String projectName = "fhai";
-    private static final String anchorTextUri = "http://dbpedia.org/ontology/anchorText";
+    public static final String anchorTextURI = "http://dbpedia.org/ontology/anchorText";
+    public static final String inlinkURI = "http://dbpedia.org/ontology/inlink";
     private Map<Integer, Map<String,Double>> idToAnchorTextToProb;
     private Map<Integer, Double> idToPageRank;
     
@@ -212,12 +212,16 @@ public class IndexCreator {
 
     public void createIndex(final List<File> files, final String idxDirectory, final String baseURI, final String pageIdsFilePath, final String anchorTextsFilePath, final String pageRankFilePath) {
         try {
-          urlAnalyzer = new SimpleAnalyzer(LUCENE_VERSION);
+          Analyzer simpleAnalyzer = new SimpleAnalyzer(LUCENE_VERSION);
           final Map<String, Analyzer> mapping = new HashMap<String, Analyzer>();
-          mapping.put(CandidateSearcher.FIELD_NAME_SUBJECT, urlAnalyzer);
-          mapping.put(CandidateSearcher.FIELD_NAME_PREDICATE, urlAnalyzer);
-          mapping.put(CandidateSearcher.FIELD_NAME_OBJECT_URI, urlAnalyzer);
-          final PerFieldAnalyzerWrapper perFieldAnalyzer = new PerFieldAnalyzerWrapper(urlAnalyzer, mapping);
+          mapping.put(CandidateSearcher.FIELD_NAME_ID, new KeywordAnalyzer());
+          
+          mapping.put(CandidateSearcher.FIELD_NAME_SUBJECT, simpleAnalyzer);
+          mapping.put(CandidateSearcher.FIELD_NAME_PREDICATE, simpleAnalyzer);
+          mapping.put(CandidateSearcher.FIELD_NAME_OBJECT_URI, simpleAnalyzer);
+          
+          mapping.put(CandidateSearcher.FIELD_NAME_OBJECT_LITERAL, new LiteralAnalyzer(LUCENE_VERSION));
+          final PerFieldAnalyzerWrapper perFieldAnalyzer = new PerFieldAnalyzerWrapper(simpleAnalyzer, mapping);
 
           final File indexDirectory = new File(idxDirectory);
           indexDirectory.mkdir();
@@ -235,7 +239,7 @@ public class IndexCreator {
           iwriter.close();
           ireader = DirectoryReader.open(directory);
         } catch (final Exception e) {
-          log.error("Error while creating TripleIndex.", e);
+          log.error("Error while creating Index.", e);
         }
       }
 
@@ -275,7 +279,7 @@ public class IndexCreator {
             }
             // if the predicate carries anchorText <http://dbpedia.org/ontology/anchorText>
             double anchorProb = 0.0;
-            if(predicate.equals(anchorTextUri)){
+            if(predicate.equals(anchorTextURI)){
                 anchorProb = getAnchorProb(id,object);
                 doc.add(new DoubleField(CandidateSearcher.FIELD_NAME_ANCHOR_PROB, anchorProb, Store.YES));
             }

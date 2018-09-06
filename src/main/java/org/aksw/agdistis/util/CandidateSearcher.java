@@ -3,8 +3,10 @@ package org.aksw.agdistis.util;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -16,11 +18,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.jena.ext.com.google.common.collect.Lists;
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.apache.lucene.search.BooleanClause;
@@ -32,9 +32,6 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
-import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.NumericUtils;
-import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +41,6 @@ import com.google.common.collect.Sets;
 
 public class CandidateSearcher {
 
-    private static final Version luceneVersion = Version.LUCENE_4_9;
 
     private final Logger log = LoggerFactory.getLogger(TripleIndex.class);
 
@@ -63,7 +59,10 @@ public class CandidateSearcher {
             "OR", "NOT", "TO");
     public static final String FIELD_FREQ = "freq";
 
-    private final int defaultMaxNumberOfDocsRetrievedFromIndex = 100;
+    private final int anchorTextLimit = 500;
+    private final int inLinksLimit = 500;
+    
+    public double matchThreshold = 0.90;
 
     private final Directory directory;
     private final IndexSearcher isearcher;
@@ -90,12 +89,6 @@ public class CandidateSearcher {
                                 .getTripleIndexCacheSize())
                 .expireAfterWrite(30, TimeUnit.MINUTES).build();
     }
-
-    public List<AnchorDocument> search(final String subject,
-            final String predicate, final String object) {
-        return search(subject, predicate, object,
-                defaultMaxNumberOfDocsRetrievedFromIndex);
-    }
     
     public List<AnchorDocument> search(final String id, final int maxNumberOfResults){
         final BooleanQuery bq = new BooleanQuery();
@@ -118,6 +111,89 @@ public class CandidateSearcher {
         return results;
         
     }
+    
+    
+    public List<AnchorDocument> searchInLinks(final String subject){
+        final BooleanQuery bq = new BooleanQuery();
+        List<AnchorDocument> results = new ArrayList<AnchorDocument>();
+        final Query subjectQuery = new TermQuery(new Term(FIELD_NAME_OBJECT_URI,subject));
+        bq.add(subjectQuery, BooleanClause.Occur.MUST);
+        
+        final Query predicateQuery = new TermQuery(new Term(FIELD_NAME_PREDICATE,
+                IndexCreator.inlinkURI));
+        bq.add(predicateQuery, BooleanClause.Occur.MUST);
+        
+        try {
+            results = getFromIndex(inLinksLimit, bq);
+         // use the cache
+            if (null == (results = cache.getIfPresent(bq))) {
+                results = getFromIndex(inLinksLimit, bq);
+                cache.put(bq, results);
+            }
+        } catch (final IOException ioe) {
+            log.error(
+                    "I/O exception occurred while reading from the index. Corrupt?. StackTrace {}",
+                    ExceptionUtils.getStackTrace(ioe), subject);
+            return Lists.newLinkedList();
+        } 
+        return results;
+    }
+    
+    public List<AnchorDocument> searchAnchorText(final String anchorText){
+        List<AnchorDocument> results = search(null, null, anchorText, anchorTextLimit);
+        if(results.size() == 0){
+            return results;
+        }
+        Map<String, double[]> targetAnchorTextToPos = new HashMap<String, double[]>();
+        // double[] = {matchProb, startPos, endPos}
+        int index = 0;
+        double maxScore = 0;
+        String topTargetAnchorText = null;
+        for(AnchorDocument doc: results){
+            
+            double[] metrics = targetAnchorTextToPos.get(doc.getAnchorText());
+            
+            if(null == metrics){
+                double matchScore = calculateMatch(anchorText, doc.getAnchorText());
+                if(matchScore > maxScore){
+                    maxScore = matchScore;
+                    topTargetAnchorText = doc.getAnchorText();
+                }
+                metrics = new double[]{matchScore, index, index};
+            }else{
+                metrics[2]++;
+            }
+            targetAnchorTextToPos.put(doc.getAnchorText(), metrics);
+            index++;
+        }
+        if(maxScore >= matchThreshold){
+            double[] metrics = targetAnchorTextToPos.get(topTargetAnchorText);
+            return results.subList((int)metrics[1], (int)metrics[2]);
+        }
+        return null; // This should be very rare;
+
+    }
+    
+    private double calculateMatch(String anchorText, String targetAnchorText) {
+        
+        int index = targetAnchorText.indexOf(anchorText);
+        if(index == -1)return 0d;
+        // there is match and targetAnchorText is longer than the anchorText
+        double match = 0;
+        for(int i=0; i<anchorText.length(); i++){
+            if(anchorText.charAt(i) == targetAnchorText.charAt( i + index)){
+                match++;
+            }
+        }
+        double anchorMatchProb = Math.max(0, match/(double)anchorText.length());
+        
+        double targetMatchProb = targetAnchorText.length();
+        targetMatchProb = (targetMatchProb - match)/targetMatchProb;
+        targetMatchProb = Math.max(0, 1.0 - targetMatchProb);
+        
+        return targetMatchProb * anchorMatchProb;
+    }
+
 
     public List<AnchorDocument> search(final String subject,
             final String predicate, String object, final int maxNumberOfResults) {
@@ -125,56 +201,28 @@ public class CandidateSearcher {
         List<AnchorDocument> triples;
 
         try {
-            if ((subject != null)
-                    && subject.equals("http://aksw.org/notInWiki")) {
-                log.error("A subject 'http://aksw.org/notInWiki' is searched in the index. That is strange and should not happen");
-            }
             if (subject != null) {
-                final Query tq = new TermQuery(new Term(FIELD_NAME_SUBJECT,
+                final Query q = new TermQuery(new Term(FIELD_NAME_SUBJECT,
                         subject));
-                bq.add(tq, BooleanClause.Occur.MUST);
+                bq.add(q, BooleanClause.Occur.MUST);
             }
             if (predicate != null) {
-                final Query tq = new TermQuery(new Term(FIELD_NAME_PREDICATE,
+                final Query q = new TermQuery(new Term(FIELD_NAME_PREDICATE,
                         predicate));
-                bq.add(tq, BooleanClause.Occur.MUST);
+                bq.add(q, BooleanClause.Occur.MUST);
             }
 
-            // if (object != null) {
-            // Query tq = new TermQuery(new Term(FIELD_NAME_OBJECT_LITERAL,
-            // object));
-            // bq.add(tq, BooleanClause.Occur.MUST);
-            // }
             if ((object != null) && !StringUtils.isBlank(object)) {
                 Query q = null;
-                if (urlValidator.isValid(object)) {
-
-                    q = new TermQuery(new Term(FIELD_NAME_OBJECT_URI, object));
-                    bq.add(q, BooleanClause.Occur.MUST);
-
-                } else if (StringUtils.isNumeric(object)) {
-                    // System.out.println("here numeric");
-                    final int tempInt = Integer.parseInt(object);
-                    final BytesRef bytes = new BytesRef(
-                            NumericUtils.BUF_SIZE_INT);
-                    NumericUtils.intToPrefixCoded(tempInt, 0, bytes);
-                    q = new TermQuery(new Term(FIELD_NAME_OBJECT_LITERAL,
-                            bytes.utf8ToString()));
-                    bq.add(q, BooleanClause.Occur.MUST);
-
-                }
-
-                else {
-                    final Analyzer analyzer = new LiteralAnalyzer(luceneVersion);
-                    final QueryParser parser = new QueryParser(luceneVersion,
-                            FIELD_NAME_OBJECT_LITERAL, analyzer);
+                if(urlValidator.isValid(object)){
+                    q  = new TermQuery(new Term(CandidateSearcher.FIELD_NAME_OBJECT_URI, object));
+                }else{
+                    final QueryParser parser = new QueryParser(IndexCreator.LUCENE_VERSION, CandidateSearcher.FIELD_NAME_OBJECT_LITERAL, new LiteralAnalyzer(IndexCreator.LUCENE_VERSION));
                     parser.setDefaultOperator(QueryParser.Operator.AND);
-                    q = parser.parse(QueryParserBase
-                            .escape(object = escapeLuceneKeywords(object)));
-                    bq.add(q, BooleanClause.Occur.MUST);
+                    q = parser.parse(QueryParserBase.escape(object = escapeLuceneKeywords(object)));
                 }
+                bq.add(q, BooleanClause.Occur.MUST);
             }
-
             // use the cache
             if (null == (triples = cache.getIfPresent(bq))) {
                 triples = getFromIndex(maxNumberOfResults, bq);
@@ -186,7 +234,7 @@ public class CandidateSearcher {
                     "I/O exception occurred while reading from the index. Corrupt?. StackTrace {}",
                     ExceptionUtils.getStackTrace(ioe), subject);
             return Lists.newLinkedList();
-        } catch (final ParseException pe) {
+        } catch (final Exception pe) {
             log.error("Unable to parse the object from the triple <{},{},{}>.",
                     subject, predicate, object);
             return Lists.newLinkedList();
@@ -205,7 +253,7 @@ public class CandidateSearcher {
         final ScoreDoc[] hits = collector.topDocs().scoreDocs;
 
         final List<AnchorDocument> triples = new LinkedList<AnchorDocument>();
-        String idStr, s, p, o, probStr;
+        String idStr, s, p, o, probStr, pageRankStr;
         for (final ScoreDoc hit : hits) {
             final Document hitDoc = isearcher.doc(hit.doc);
             idStr = hitDoc.get(FIELD_NAME_ID);
@@ -216,20 +264,34 @@ public class CandidateSearcher {
                 o = hitDoc.get(FIELD_NAME_OBJECT_LITERAL);
             }
 
-            probStr = hitDoc.get(FIELD_NAME_ANCHOR_PROB);
+            
             int id = -1;
-            double prob = 0;
+           
             try {
                 id = Integer.parseInt(idStr);
             } catch (NumberFormatException e) {
                 id = -1;
             }
-            try {
-                prob = Double.parseDouble(probStr);
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
+            double anchorProb = 0d;
+            probStr = hitDoc.get(FIELD_NAME_ANCHOR_PROB);
+            if(null != probStr){
+                try {
+                    anchorProb = Double.parseDouble(probStr);
+                } catch (NumberFormatException e) {
+                    anchorProb = 0d;
+                }
             }
-            final AnchorDocument triple = new AnchorDocument(id, s, p, o, prob);
+            double pageRank = 0d;
+            pageRankStr = hitDoc.get(FIELD_NAME_PAGE_RANK);
+            if(null != pageRankStr){
+                try {
+                    pageRank = Double.parseDouble(pageRankStr);
+                } catch (NumberFormatException e) {
+                    pageRank = 0d;
+                }
+            }
+            
+            final AnchorDocument triple = new AnchorDocument(id, s, p, o, anchorProb, pageRank);
             triples.add(triple);
         }
         log.trace("finished asking index...");
