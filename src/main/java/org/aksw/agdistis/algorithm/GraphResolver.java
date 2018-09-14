@@ -135,7 +135,7 @@ public class GraphResolver {
         
         double previousMinWeightedDegree = Double.MAX_VALUE;
         int iterations = 0;
-        while(iterations <= entityCount){
+        while(iterations <= entityCount && entityCount > 1){
             iterations++;
             AnchorDocument entityToRemove = null;
             double mentionToRemoveCnt = 0;
@@ -144,7 +144,7 @@ public class GraphResolver {
             double anchorProbToRemove = 0;
             double pageRankDistanceToRemove = 0;
             double avgLinkShareToRemove = 0;
-            double minWeightedDegree = Double.MAX_VALUE;
+            Double minWeightedDegree = null;
             boolean allTabooRemoved = true;
             for(AnchorDocument entity:trustedDocs){
                 
@@ -168,6 +168,10 @@ public class GraphResolver {
                 entity.setMentionProb(mentionProbShare);
                 entity.setAverageLinkShare(avgLinkShare);
                 entity.setPageRankDistance(pageRankDistanceShare);
+                if(null == minWeightedDegree){
+                    minWeightedDegree = weightedDegree;
+                    continue;
+                }
                 if(weightedDegree < minWeightedDegree){
                     minWeightedDegree = weightedDegree;
                     entityToRemove = entity;
