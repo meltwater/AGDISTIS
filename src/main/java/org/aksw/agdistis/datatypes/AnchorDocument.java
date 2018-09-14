@@ -7,8 +7,9 @@ import java.util.List;
 public class AnchorDocument implements Comparable<AnchorDocument>{
 
     public int id;
+    private String idTypeString;
     
-    
+
     private double anchorProb;
     private double linkShare;
     private double pageRank;
@@ -27,7 +28,7 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
 
     private double mentionProb;
     private double pageRankDistance;
-    private double averageLinkShare;
+    private double averageLinkShare; 
     
     private double mentionProbStatic;
     private double pageRankDistanceStatic;
@@ -42,8 +43,9 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
         this.object = object;
     }
     
-    public AnchorDocument(final int id, final String subject, final String predicate, final String object, final double anchorProb, final double pageRank){
+    public AnchorDocument(final int id, final String idTypeString, final String subject, final String predicate, final String object, final double anchorProb, final double pageRank){
         this.id = id;
+        this.idTypeString = idTypeString;
         this.anchorProb = anchorProb;
         this.subject = subject;
         this.predicate = predicate;
@@ -66,6 +68,14 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
         this.pageRankDistance = 0d;
         this.pageRankDistanceStatic = 0d;
         
+    }
+    
+    public String getIdTypeString() {
+        return idTypeString;
+    }
+
+    public void setIdTypeString(String idTypeString) {
+        this.idTypeString = idTypeString;
     }
     
     public double getMentionProbStatic() {
@@ -91,7 +101,6 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
     public void setAverageLinkShareStatic(double averageLinkShareStatic) {
         this.averageLinkShareStatic = averageLinkShareStatic;
     }
-    
     
     
     public double getAverageLinkShare() {

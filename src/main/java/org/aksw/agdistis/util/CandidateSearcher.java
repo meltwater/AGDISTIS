@@ -264,10 +264,11 @@ public class CandidateSearcher {
             final ScoreDoc[] hits = collector.topDocs().scoreDocs;
 
             
-            String idStr, s, p, o, probStr, pageRankStr;
+            String idStr, idTypeStr, s, p, o, probStr, pageRankStr;
             for (final ScoreDoc hit : hits) {
                 final Document hitDoc = isearcher.doc(hit.doc);
                 idStr = hitDoc.get(FIELD_NAME_ID);
+                idTypeStr = hitDoc.get(FIELD_NAME_IDTYPE);
                 s = hitDoc.get(FIELD_NAME_SUBJECT);
                 p = hitDoc.get(FIELD_NAME_PREDICATE);
                 o = hitDoc.get(FIELD_NAME_OBJECT_URI);
@@ -300,7 +301,7 @@ public class CandidateSearcher {
                     }
                 }
                 
-                final AnchorDocument triple = new AnchorDocument(id, s, p, o, anchorProb, pageRank);
+                final AnchorDocument triple = new AnchorDocument(id, idTypeStr, s, p, o, anchorProb, pageRank);
                 triples.add(triple);
             }
             log.trace("finished asking index...");
