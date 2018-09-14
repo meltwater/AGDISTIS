@@ -262,6 +262,14 @@ public class IndexCreator {
 //            log.debug(subject + " " + predicate + " " + object);
             
             IDandType idAndType = titleToIdanType(subject);
+            if(idAndType == null){
+             // This should not happen
+                log.error("could not find id for: "+subject);
+                System.out.println("could not find id for: "+subject);
+                //throw new RuntimeException("id is null for "+subject);
+                // TODO this should not happen but happens
+                return;
+            }
             if(idAndType.id == null){
                 // This should not happen
                 log.error("id is null for "+subject);
