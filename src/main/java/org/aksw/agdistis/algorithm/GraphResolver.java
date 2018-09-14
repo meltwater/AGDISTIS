@@ -208,7 +208,6 @@ public class GraphResolver {
     private void chooseTheTop(Collection<MentionOccurrence> mentionOccurences) {
 
         for (MentionOccurrence mentionOccurence : mentionOccurences) {
-
             final AnchorDocument topScored = getTopCandidate(mentionOccurence.anchorDocs);
             if (null == topScored) {
                 continue;
@@ -282,7 +281,7 @@ public class GraphResolver {
         if(null != topDocument && topDocument.getScore() >= DISAMBIGUATTION_THRES){
             return topDocument;
         }
-        return topDocument;
+        return null;
     }
     
     private void calculateCombinedScore(AnchorDocument doc) {
