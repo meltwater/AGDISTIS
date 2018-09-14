@@ -65,7 +65,7 @@ public class IndexCreator {
     private MMapDirectory directory;
     
     
-    private Map<String, Integer> resourceToId;
+    private Map<String, IDandType> resourceToId;
     
     private static String resourceURI = "resource";
     private static final String projectName = "fhai";
@@ -122,7 +122,7 @@ public class IndexCreator {
     
     
     private void readPageIds(String pageIdsFilePath) throws IOException{
-        resourceToId = new HashMap<String, Integer>();
+        resourceToId = new HashMap<String, IndexCreator.IDandType>();
         LineNumberReader lnr = new LineNumberReader(new InputStreamReader(new FileInputStream(pageIdsFilePath), "UTF-8"))  ;
         int lineCnt = 0;
         while(true){
@@ -137,7 +137,8 @@ public class IndexCreator {
             String[] parts = line.split("\t");
             int id = Integer.parseInt(parts[0]);
             String title = parts[1];
-            resourceToId.put(title, id);
+            String typeString = parts[2];
+            resourceToId.put(title, new IDandType(id, typeString));
         }
         lnr.close();
         log.info(resourceToId.size() + " pages read");
@@ -260,15 +261,22 @@ public class IndexCreator {
             final Document doc = new Document();
 //            log.debug(subject + " " + predicate + " " + object);
             
-            Integer id = titleToId(subject);
-            if(id == null){
+            IDandType idAndType = titleToIdanType(subject);
+            if(idAndType.id == null){
                 // This should not happen
                 log.error("id is null for "+subject);
                 //throw new RuntimeException("id is null for "+subject);
                 // TODO this should not happen but happens
                 return;
             }
-            doc.add(new IntField(CandidateSearcher.FIELD_NAME_ID, id, Store.YES));
+            if(idAndType.typeString == null){
+                // This should not happen
+                log.error("id's type String is null for "+subject);
+                // TODO this should not happen but happens
+                return;
+            }
+            doc.add(new IntField(CandidateSearcher.FIELD_NAME_ID, idAndType.id, Store.YES));
+            doc.add(new StringField(CandidateSearcher.FIELD_NAME_IDTYPE, idAndType.typeString, Store.YES));
             
             doc.add(new StringField(CandidateSearcher.FIELD_NAME_SUBJECT, subject, Store.YES));
             doc.add(new StringField(CandidateSearcher.FIELD_NAME_PREDICATE, predicate, Store.YES));
@@ -280,11 +288,11 @@ public class IndexCreator {
             // if the predicate carries anchorText <http://dbpedia.org/ontology/anchorText>
             double anchorProb = 0.0;
             if(predicate.equals(anchorTextURI)){
-                anchorProb = getAnchorProb(id,object);
+                anchorProb = getAnchorProb(idAndType.id,object);
                 doc.add(new DoubleField(CandidateSearcher.FIELD_NAME_ANCHOR_PROB, anchorProb, Store.YES));
             }
             
-            double pageRank = idToPageRank(id);
+            double pageRank = idToPageRank(idAndType.id);
             doc.add(new DoubleField(CandidateSearcher.FIELD_NAME_PAGE_RANK, pageRank, Store.YES));
             iwriter.addDocument(doc);
       }
@@ -311,7 +319,7 @@ public class IndexCreator {
     }
 
 
-    private Integer titleToId(String subject) {
+    private IDandType titleToIdanType(String subject) {
           int baseUriIndex = subject.indexOf(resourceURI);
           String title = subject.substring(baseUriIndex + resourceURI.length());
           if(title.startsWith(projectName)){
@@ -365,6 +373,15 @@ public class IndexCreator {
               } catch (final IOException e) {
                 e.printStackTrace();
               }
+            }
+          }
+          
+          private class IDandType{
+              Integer id;
+              String typeString;
+              public IDandType(int i, String ts) {
+                  id = i;
+                  typeString = ts;
             }
           }
 }
