@@ -21,6 +21,7 @@ import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.apache.lucene.search.BooleanClause;
@@ -45,6 +46,8 @@ public class CandidateSearcher {
     private final Logger log = LoggerFactory.getLogger(TripleIndex.class);
 
     public static final String FIELD_NAME_ID = "id";
+    public static final String FIELD_NAME_IDTYPE = "id_type";
+    
     public static final String FIELD_NAME_ANCHOR_PROB = "anchor_prob";
     public static final String FIELD_NAME_PAGE_RANK = "page_rank";
 
@@ -59,10 +62,12 @@ public class CandidateSearcher {
             "OR", "NOT", "TO");
     public static final String FIELD_FREQ = "freq";
 
+    
+
     private final int anchorTextLimit = 500;
     private final int inLinksLimit = 500;
     
-    public double matchThreshold = 0.90;
+    public double ANCHOR_MATCH_THRES = 0.90;
 
     private final Directory directory;
     private final IndexSearcher isearcher;
@@ -140,35 +145,36 @@ public class CandidateSearcher {
     }
     
     public List<AnchorDocument> searchAnchorText(final String anchorText){
-        List<AnchorDocument> results = search(null, null, anchorText, anchorTextLimit);
-        if(results.size() == 0){
+        List<AnchorDocument> results = search(null, IndexCreator.anchorTextURI, anchorText, anchorTextLimit);
+        if (results.size() == 0) {
             return results;
         }
-        Map<String, double[]> targetAnchorTextToPos = new HashMap<String, double[]>();
+        Map<Long, List<AnchorDocument>> targetAnchorTextToPos = new HashMap<Long, List<AnchorDocument>>();
         // double[] = {matchProb, startPos, endPos}
-        int index = 0;
         double maxScore = 0;
-        String topTargetAnchorText = null;
-        for(AnchorDocument doc: results){
-            
-            double[] metrics = targetAnchorTextToPos.get(doc.getAnchorText());
-            
-            if(null == metrics){
-                double matchScore = calculateMatch(anchorText, doc.getAnchorText());
-                if(matchScore > maxScore){
-                    maxScore = matchScore;
-                    topTargetAnchorText = doc.getAnchorText();
+        Long topTargetAnchorHash = null;
+        for (AnchorDocument doc : results) {
+            Long hash = Hasher.hash(doc.getAnchorText());
+            List<AnchorDocument> metrics = targetAnchorTextToPos.get(hash);
+            if (null == metrics) {
+                double matchScore = calculateMatch(anchorText,
+                        doc.getAnchorText());
+                if(matchScore == 0){
+                    matchScore = calculateMatch(doc.getAnchorText(), anchorText);
                 }
-                metrics = new double[]{matchScore, index, index};
-            }else{
-                metrics[2]++;
+                if (matchScore > maxScore) {
+                    maxScore = matchScore;
+                    topTargetAnchorHash = hash;
+                    metrics = new ArrayList<AnchorDocument>();
+                    metrics.add(doc);
+                    targetAnchorTextToPos.put(hash, metrics);
+                }
+            } else {
+                metrics.add(doc);
             }
-            targetAnchorTextToPos.put(doc.getAnchorText(), metrics);
-            index++;
         }
-        if(maxScore >= matchThreshold){
-            double[] metrics = targetAnchorTextToPos.get(topTargetAnchorText);
-            return results.subList((int)metrics[1], (int)metrics[2]);
+        if (maxScore >= ANCHOR_MATCH_THRES) {
+            return targetAnchorTextToPos.get(topTargetAnchorHash);
         }
         return null; // This should be very rare;
 
@@ -199,7 +205,6 @@ public class CandidateSearcher {
             final String predicate, String object, final int maxNumberOfResults) {
         final BooleanQuery bq = new BooleanQuery();
         List<AnchorDocument> triples;
-
         try {
             if (subject != null) {
                 final Query q = new TermQuery(new Term(FIELD_NAME_SUBJECT,
@@ -234,8 +239,12 @@ public class CandidateSearcher {
                     "I/O exception occurred while reading from the index. Corrupt?. StackTrace {}",
                     ExceptionUtils.getStackTrace(ioe), subject);
             return Lists.newLinkedList();
-        } catch (final Exception pe) {
+        } catch (final ParseException pe) {
             log.error("Unable to parse the object from the triple <{},{},{}>.",
+                    subject, predicate, object);
+            return Lists.newLinkedList();
+        } catch (final Exception pe) {
+            log.error("Unable to process the query triple <{},{},{}>.",
                     subject, predicate, object);
             return Lists.newLinkedList();
         }
@@ -243,58 +252,62 @@ public class CandidateSearcher {
     }
 
     private List<AnchorDocument> getFromIndex(final int maxNumberOfResults,
-            final BooleanQuery bq) throws IOException {
-        log.trace("start asking index...");
+            final BooleanQuery bq) throws IOException  {
+        
         final TopScoreDocCollector collector = TopScoreDocCollector.create(
                 maxNumberOfResults, true);
-        // Similarity BM25Similarity = new BM25Similarity();
-        // isearcher.setSimilarity(BM25Similarity);
-        isearcher.search(bq, collector);
-        final ScoreDoc[] hits = collector.topDocs().scoreDocs;
-
         final List<AnchorDocument> triples = new LinkedList<AnchorDocument>();
-        String idStr, s, p, o, probStr, pageRankStr;
-        for (final ScoreDoc hit : hits) {
-            final Document hitDoc = isearcher.doc(hit.doc);
-            idStr = hitDoc.get(FIELD_NAME_ID);
-            s = hitDoc.get(FIELD_NAME_SUBJECT);
-            p = hitDoc.get(FIELD_NAME_PREDICATE);
-            o = hitDoc.get(FIELD_NAME_OBJECT_URI);
-            if (o == null) {
-                o = hitDoc.get(FIELD_NAME_OBJECT_LITERAL);
-            }
+        
+        try {
+            log.trace("start asking index...");
+            isearcher.search(bq, collector);
+            final ScoreDoc[] hits = collector.topDocs().scoreDocs;
 
             
-            int id = -1;
-           
-            try {
-                id = Integer.parseInt(idStr);
-            } catch (NumberFormatException e) {
-                id = -1;
-            }
-            double anchorProb = 0d;
-            probStr = hitDoc.get(FIELD_NAME_ANCHOR_PROB);
-            if(null != probStr){
-                try {
-                    anchorProb = Double.parseDouble(probStr);
-                } catch (NumberFormatException e) {
-                    anchorProb = 0d;
+            String idStr, s, p, o, probStr, pageRankStr;
+            for (final ScoreDoc hit : hits) {
+                final Document hitDoc = isearcher.doc(hit.doc);
+                idStr = hitDoc.get(FIELD_NAME_ID);
+                s = hitDoc.get(FIELD_NAME_SUBJECT);
+                p = hitDoc.get(FIELD_NAME_PREDICATE);
+                o = hitDoc.get(FIELD_NAME_OBJECT_URI);
+                if (o == null) {
+                    o = hitDoc.get(FIELD_NAME_OBJECT_LITERAL);
                 }
-            }
-            double pageRank = 0d;
-            pageRankStr = hitDoc.get(FIELD_NAME_PAGE_RANK);
-            if(null != pageRankStr){
+                
+                int id = -1;
                 try {
-                    pageRank = Double.parseDouble(pageRankStr);
+                    id = Integer.parseInt(idStr);
                 } catch (NumberFormatException e) {
-                    pageRank = 0d;
+                    id = -1;
                 }
+                double anchorProb = 0d;
+                probStr = hitDoc.get(FIELD_NAME_ANCHOR_PROB);
+                if(null != probStr){
+                    try {
+                        anchorProb = Double.parseDouble(probStr);
+                    } catch (NumberFormatException e) {
+                        anchorProb = 0d;
+                    }
+                }
+                double pageRank = 0d;
+                pageRankStr = hitDoc.get(FIELD_NAME_PAGE_RANK);
+                if(null != pageRankStr){
+                    try {
+                        pageRank = Double.parseDouble(pageRankStr);
+                    } catch (NumberFormatException e) {
+                        pageRank = 0d;
+                    }
+                }
+                
+                final AnchorDocument triple = new AnchorDocument(id, s, p, o, anchorProb, pageRank);
+                triples.add(triple);
             }
-            
-            final AnchorDocument triple = new AnchorDocument(id, s, p, o, anchorProb, pageRank);
-            triples.add(triple);
+            log.trace("finished asking index...");
+        } catch (IOException e) {
+            log.error("problem searching the lucene index for a boolean query "+bq);
+            throw new IOException(e.getLocalizedMessage());
         }
-        log.trace("finished asking index...");
         return triples;
     }
 
