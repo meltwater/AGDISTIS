@@ -233,10 +233,10 @@ public class CandidateSearcher {
                 bq.add(q, BooleanClause.Occur.MUST);
             }
             // use the cache
-            //if (null == (triples = cache.getIfPresent(bq))) {
+            if (null == (triples = cache.getIfPresent(bq))) {
                 triples = getFromIndex(maxNumberOfResults, bq);
-              //  cache.put(bq, triples);
-            //}
+                cache.put(bq, triples);
+            }
             return triples;
         } catch (final IOException ioe) {
             log.error(
