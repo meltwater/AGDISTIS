@@ -74,7 +74,7 @@ public class IndexCreator {
     private Map<Integer, Map<String,Double>> idToAnchorTextToProb;
     private Map<Integer, Double> idToPageRank;
     private Map<Integer, String[]> idToInLinks; // id,{inlinkCount, inlinkStr} // eg:for "1 2 3" --> 1, {"2", "2 3"}
-    public static final int  INLINK_LIMIT = 500;
+    public static final int  INLINK_LIMIT = 200;
     
     public static void main(String[] args){
         
@@ -234,8 +234,20 @@ public class IndexCreator {
             if (line == null) break;
             String[] parts = line.split(" ");
             int id = Integer.parseInt(parts[0]);
-            Integer inlinkCount = parts.length - 1;
-            String inlinkStr = line.substring(line.indexOf(" ") + 1);
+            StringBuffer buff = new StringBuffer();
+            int cnt = 0;
+            for(String idStr: parts){
+                if(cnt == 0){
+                    // skip the first
+                    cnt++;
+                    continue;
+                }
+                if(cnt > INLINK_LIMIT)break;
+                buff.append(" ").append(idStr);
+                cnt++;
+            }
+            Integer inlinkCount = parts.length - (parts.length - cnt);
+            String inlinkStr = buff.toString();
             if(!idToInLinks.containsKey(id)){
                 idToInLinks.put(id, new String[]{inlinkCount.toString(), inlinkStr});
             }
