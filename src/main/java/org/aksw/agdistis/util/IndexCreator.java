@@ -74,7 +74,7 @@ public class IndexCreator {
     private Map<Integer, Map<String,Double>> idToAnchorTextToProb;
     private Map<Integer, Double> idToPageRank;
     private Map<Integer, String[]> idToInLinks; // id,{inlinkCount, inlinkStr} // eg:for "1 2 3" --> 1, {"2", "2 3"}
-    
+    public static final int  INLINK_LIMIT = 500;
     
     public static void main(String[] args){
         
@@ -256,7 +256,7 @@ public class IndexCreator {
           
           mapping.put(CandidateSearcher.FIELD_NAME_OBJECT_LITERAL, new LiteralAnalyzer(LUCENE_VERSION));
           
-          mapping.put(CandidateSearcher.FIELD_NAME_INLINKSTRING, new KeywordAnalyzer());
+          mapping.put(CandidateSearcher.FIELD_NAME_INLINKSTRING, new LiteralAnalyzer(LUCENE_VERSION));
           final PerFieldAnalyzerWrapper perFieldAnalyzer = new PerFieldAnalyzerWrapper(simpleAnalyzer, mapping);
 
           final File indexDirectory = new File(idxDirectory);
