@@ -255,6 +255,8 @@ public class IndexCreator {
           mapping.put(CandidateSearcher.FIELD_NAME_OBJECT_URI, simpleAnalyzer);
           
           mapping.put(CandidateSearcher.FIELD_NAME_OBJECT_LITERAL, new LiteralAnalyzer(LUCENE_VERSION));
+          
+          mapping.put(CandidateSearcher.FIELD_NAME_INLINKSTRING, new KeywordAnalyzer());
           final PerFieldAnalyzerWrapper perFieldAnalyzer = new PerFieldAnalyzerWrapper(simpleAnalyzer, mapping);
 
           final File indexDirectory = new File(idxDirectory);
