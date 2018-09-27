@@ -55,12 +55,16 @@ public class CandidateSearcher {
     public static final String FIELD_NAME_PREDICATE = "predicate";
     public static final String FIELD_NAME_OBJECT_URI = "object_uri";
     public static final String FIELD_NAME_OBJECT_LITERAL = "object_literal";
+    public static final String FIELD_NAME_INLINKCOUNT = "inlink_count";
+    public static final String FIELD_NAME_INLINKSTRING = "inlink_string";
 
     public static final String warmUpQueryPredicate = "http://www.w3.org/2000/01/rdf-schema#label";
 
     private static final Set<String> _LUCENE_KEYWORDS = Sets.newHashSet("AND",
             "OR", "NOT", "TO");
     public static final String FIELD_FREQ = "freq";
+
+    
 
     
 

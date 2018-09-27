@@ -73,7 +73,7 @@ public class IndexCreator {
     public static final String inlinkURI = "http://dbpedia.org/ontology/inlink";
     private Map<Integer, Map<String,Double>> idToAnchorTextToProb;
     private Map<Integer, Double> idToPageRank;
-    
+    private Map<Integer, String[]> idToInLinks; // id,{inlinkCount, inlinkStr} // eg:for "1 2 3" --> 1, {"2", "2 3"}
     
     
     public static void main(String[] args){
@@ -103,6 +103,11 @@ public class IndexCreator {
                 log.info("Setting pagerank  file path to: "+pageRankFilePath);
             }     
             
+            final String inLinksFilePath = AGDISTISConfiguration.INSTANCE.getInLinkFilePath().toString();
+            if(inLinksFilePath != null && !inLinksFilePath.isEmpty()){
+                log.info("Setting inlinks  file path to: "+inLinksFilePath);
+            }
+            
             final String folder = AGDISTISConfiguration.INSTANCE.getIndexTTLPath().toString();
             log.info("Getting triple data from: " + folder);
             final List<File> listOfFiles = new ArrayList<File>();
@@ -113,7 +118,7 @@ public class IndexCreator {
             }
     
             final IndexCreator ic = new IndexCreator();
-            ic.createIndex(listOfFiles, index, baseURI, pageIdsFilePath, anchorTextsFilePath, pageRankFilePath);
+            ic.createIndex(listOfFiles, index, baseURI, pageIdsFilePath, anchorTextsFilePath, pageRankFilePath, inLinksFilePath);
             ic.close();
         } catch (IOException e) {
             log.error("Error while creating index. Maybe the index is corrupt now.", e);
@@ -210,8 +215,36 @@ public class IndexCreator {
         }
         lnr.close();
     }
+    
+    private void readInLinks(String inLinksFilePath) throws IOException{
+        idToInLinks = new HashMap<Integer, String[]>();
+        InputStream is = new FileInputStream(inLinksFilePath);
+        InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+        LineNumberReader lnr = new LineNumberReader(isr);
+        System.out.println("Processing " + inLinksFilePath + " ...");
+        int lineCnt = 0;
+        while (true) {
+            lineCnt++;
+            if (lineCnt % 10000 == 0) System.out.print(".");
+            if (lineCnt % 1000000 == 0) {
+                System.out.println(lineCnt);
+            }
+            
+            String line = lnr.readLine();
+            if (line == null) break;
+            String[] parts = line.split(" ");
+            int id = Integer.parseInt(parts[0]);
+            Integer inlinkCount = parts.length - 1;
+            String inlinkStr = line.substring(line.indexOf(" ") + 1);
+            if(!idToInLinks.containsKey(id)){
+                idToInLinks.put(id, new String[]{inlinkCount.toString(), inlinkStr});
+            }
+        }
+        lnr.close();
+        
+    }
 
-    public void createIndex(final List<File> files, final String idxDirectory, final String baseURI, final String pageIdsFilePath, final String anchorTextsFilePath, final String pageRankFilePath) {
+    public void createIndex(final List<File> files, final String idxDirectory, final String baseURI, final String pageIdsFilePath, final String anchorTextsFilePath, final String pageRankFilePath, final String inLinksFilePath) {
         try {
           Analyzer simpleAnalyzer = new SimpleAnalyzer(LUCENE_VERSION);
           final Map<String, Analyzer> mapping = new HashMap<String, Analyzer>();
@@ -233,7 +266,7 @@ public class IndexCreator {
           for (final File file : files) {
             final String type = FileUtil.getFileExtension(file.getName());
             if (type.equals(TTL)) {
-              indexTTLFile(file, baseURI, pageIdsFilePath, anchorTextsFilePath, pageRankFilePath);
+              indexTTLFile(file, baseURI, pageIdsFilePath, anchorTextsFilePath, pageRankFilePath, inLinksFilePath);
             }
             iwriter.commit();
           }
@@ -244,11 +277,11 @@ public class IndexCreator {
         }
       }
 
-      private void indexTTLFile(final File file, final String baseURI, final String pageIdsFilePath, final String anchorTextsFilePath, final String pageRankFilePath)
+      private void indexTTLFile(final File file, final String baseURI, final String pageIdsFilePath, final String anchorTextsFilePath, final String pageRankFilePath, final String inLinksFilePath)
           throws RDFParseException, RDFHandlerException, FileNotFoundException, IOException {
         log.info("Start parsing: " + file);
         final RDFParser parser = new TurtleParser();
-        final OnlineStatementHandler osh = new OnlineStatementHandler(pageIdsFilePath, anchorTextsFilePath, pageRankFilePath);
+        final OnlineStatementHandler osh = new OnlineStatementHandler(pageIdsFilePath, anchorTextsFilePath, pageRankFilePath, inLinksFilePath);
         parser.setRDFHandler(osh);
         parser.setStopAtFirstError(false);
         parser.parse(new FileReader(file), baseURI);
@@ -258,8 +291,7 @@ public class IndexCreator {
       
       private void addDocumentToIndex(final IndexWriter iwriter, final String subject, final String predicate,
               final String object, final boolean isUri) throws IOException {
-            final Document doc = new Document();
-//            log.debug(subject + " " + predicate + " " + object);
+            
             
             IDandType idAndType = titleToIdanType(subject);
             if(idAndType == null){
@@ -283,6 +315,18 @@ public class IndexCreator {
                 // TODO this should not happen but happens
                 return;
             }
+            
+         // populate inlinks fields
+            String[] inlinkInfo = idtoInlink(idAndType.id);
+            if(null == inlinkInfo){
+               inlinkInfo = new String[]{"0",""};
+            }
+            
+            double pageRank = idToPageRank(idAndType.id);
+            
+            final Document doc = new Document();
+//          log.debug(subject + " " + predicate + " " + object);
+            
             doc.add(new IntField(CandidateSearcher.FIELD_NAME_ID, idAndType.id, Store.YES));
             doc.add(new StringField(CandidateSearcher.FIELD_NAME_IDTYPE, idAndType.typeString, Store.YES));
             
@@ -300,13 +344,23 @@ public class IndexCreator {
                 doc.add(new DoubleField(CandidateSearcher.FIELD_NAME_ANCHOR_PROB, anchorProb, Store.YES));
             }
             
-            double pageRank = idToPageRank(idAndType.id);
+            // add page rank
             doc.add(new DoubleField(CandidateSearcher.FIELD_NAME_PAGE_RANK, pageRank, Store.YES));
+            
+            // add inlinks info
+            doc.add(new DoubleField(CandidateSearcher.FIELD_NAME_INLINKCOUNT, Double.parseDouble(inlinkInfo[0]), Store.YES));
+            doc.add(new StringField(CandidateSearcher.FIELD_NAME_INLINKSTRING, inlinkInfo[1], Store.YES));
+            
             iwriter.addDocument(doc);
       }
       
       
       
+
+
+    private String[] idtoInlink(Integer id) {
+        return idToInLinks.get(id);
+    }
 
 
     private double idToPageRank(Integer id) {
@@ -347,7 +401,7 @@ public class IndexCreator {
 
           private class OnlineStatementHandler extends RDFHandlerBase {
               
-            public OnlineStatementHandler(final String pageIdsFilePath, final String anchorTextsFilePath, final String pageRankFilePath){
+            public OnlineStatementHandler(final String pageIdsFilePath, final String anchorTextsFilePath, final String pageRankFilePath, final String inLinksFilePath){
                 super();
                 if(null == resourceToId){
                     try {
@@ -370,7 +424,16 @@ public class IndexCreator {
                         log.error("Problem loading the page rank values");
                     }
                 }
+                if(null == idToInLinks){
+                    try {
+                        readInLinks(inLinksFilePath);
+                    } catch (IOException e) {
+                        log.error("Problem loading the in links");
+                    }
+                }
+                
             }
+           
             @Override
             public void handleStatement(final Statement st) {
               final String subject = st.getSubject().stringValue();

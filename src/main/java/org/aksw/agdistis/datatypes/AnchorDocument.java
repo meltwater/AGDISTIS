@@ -196,8 +196,8 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
     @Override
     public String toString() {
       return "AnchorDocument{" + "anchorText='" + subject + '\''+ ", Id="
-          + id + ", Anchor Probabilty= " + mentionProb
-          + ", Page Rank= " + pageRankDistance + ", Link Share= "+averageLinkShare+ '}';
+          + id + ", Anchor Probabilty= " + anchorProb
+          + ", Page Rank= " + pageRankDistance + ", Link Share= "+averageLinkShare+ ", Score= "+score+ '}';
     }
 
     
