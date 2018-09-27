@@ -351,7 +351,7 @@ public class IndexCreator {
             
             // add inlinks info
             doc.add(new DoubleField(CandidateSearcher.FIELD_NAME_INLINKCOUNT, Double.parseDouble(inlinkInfo[0]), Store.YES));
-            doc.add(new StringField(CandidateSearcher.FIELD_NAME_INLINKSTRING, inlinkInfo[1], Store.YES));
+            doc.add(new TextField(CandidateSearcher.FIELD_NAME_INLINKSTRING, inlinkInfo[1], Store.YES));
             
             try {
                 iwriter.addDocument(doc);
