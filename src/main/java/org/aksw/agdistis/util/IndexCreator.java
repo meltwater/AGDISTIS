@@ -74,7 +74,7 @@ public class IndexCreator {
     private Map<Integer, Map<String,Double>> idToAnchorTextToProb;
     private Map<Integer, Double> idToPageRank;
     private Map<Integer, String[]> idToInLinks; // id,{inlinkCount, inlinkStr} // eg:for "1 2 3" --> 1, {"2", "2 3"}
-    public static final int  INLINK_LIMIT = 200;
+    public static final int  INLINK_LIMIT = 500;
     
     public static void main(String[] args){
         
