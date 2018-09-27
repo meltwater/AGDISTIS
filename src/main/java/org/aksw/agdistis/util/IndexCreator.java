@@ -353,7 +353,12 @@ public class IndexCreator {
             doc.add(new DoubleField(CandidateSearcher.FIELD_NAME_INLINKCOUNT, Double.parseDouble(inlinkInfo[0]), Store.YES));
             doc.add(new StringField(CandidateSearcher.FIELD_NAME_INLINKSTRING, inlinkInfo[1], Store.YES));
             
-            iwriter.addDocument(doc);
+            try {
+                iwriter.addDocument(doc);
+            } catch (Exception e) {
+                System.out.println("error... "+ inlinkInfo[1]);
+                System.exit(1);
+            }
       }
       
       
