@@ -1,5 +1,6 @@
 package org.aksw.agdistis.datatypes;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -16,7 +17,7 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
     
     private double score;
     
-    public List<Integer> inLinks;
+    public List<Integer> inLinks = new ArrayList<Integer>();
     
     public int linkedMentionIndex;
 
@@ -53,10 +54,10 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
         this.pageRank = pageRank;
     }
     
+    
     public void reinitialize() {
         this.linkShare = 0d;
         this.score = 0d;
-        this.inLinks = null;
         this.linkedMentionIndex = -1;
         this.linkWeight = 0d;
         this.isTaboo = false;

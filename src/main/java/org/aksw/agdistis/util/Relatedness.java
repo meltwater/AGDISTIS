@@ -1,7 +1,6 @@
 package org.aksw.agdistis.util;
 
 import java.util.List;
-import java.util.Map;
 
 import org.aksw.agdistis.datatypes.AnchorDocument;
 
@@ -11,24 +10,16 @@ public class Relatedness {
 
     }
     
-    final double KG_SIZE = 3332692;
-    Map<Key, Double> idPairToScore;
+    final double KG_SIZE = 3682042;
     public static final int INLINKS_LIMIT = 500;
-    public Relatedness(){
-        //idPairToScore = new HashMap<Key, Double>();
-    }
     
     public double getRelatedness(AnchorDocument A, AnchorDocument B){
             
         if(A == null || B == null)return 0d;
-        Key key = new Key(A.id, B.id);
-        //Double  relatedNess = idPairToScore.get(key);
-        //if(relatedNess == null){
-            double relatedNess = relatedNessFunction(A.inLinks.size(), B.inLinks.size(), A.inLinks, B.inLinks);
-            //idPairToScore.put(key, relatedNess);
-//        }
-        return relatedNess;
+        return relatedNessFunction(A.inLinks.size(), B.inLinks.size(), A.inLinks, B.inLinks);
      }
+    
+    
     
     
     private double relatedNessFunction(int countA, int countB, List<Integer> A, List<Integer> B) {
@@ -91,7 +82,7 @@ public class Relatedness {
       }
     
     
-    private double distance(int countA, int countB, int countCommon) {
+    private double distance(double countA, double countB, double countCommon) {
         if (countCommon == 0) {
           return 0;
         }
@@ -99,8 +90,8 @@ public class Relatedness {
 //        double score = 2.0d * ((double)countCommon/((double)countA + (double)countB));
 //        return score;
        
-        final int maxCount = Math.max(countA, countB);
-        final int minCount = Math.min(countA, countB);
+        final double maxCount = Math.max(countA, countB);
+        final double minCount = Math.min(countA, countB);
 //        normalized google distance (logW: log(kgsize))
         final double kgsize = Math.log(KG_SIZE);
         return 1.0 - (Math.log(maxCount) - Math.log(countCommon)) / (kgsize - Math.log(minCount));

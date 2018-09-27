@@ -112,6 +112,7 @@ public class GraphResolver {
             double linkShareSum = 0;
             for(AnchorDocument entity2: trustedDocs){
                 
+               if(entity1.id == entity2.id)continue;
                double distance = Math.max(pageRank, entity2.getPageRank()) - Math.min(pageRank, entity2.getPageRank());
                distanceSum += distance;
                
@@ -201,10 +202,20 @@ public class GraphResolver {
             }
             previousMinWeightedDegree = minWeightedDegree;
         }
-       
+        
+      
        chooseTheTop(mentionOccurences);
        
-        
+       /** Used for debug
+       for(MentionOccurrence occ: mentionOccurences){
+           
+           System.out.println(" entity: "+occ.originalEntity.getLabel());
+           for(AnchorDocument doc:occ.anchorDocs){
+               System.out.println(doc);
+           }
+           
+       }
+       */
      
         
     }
@@ -326,7 +337,6 @@ public class GraphResolver {
             for (AnchorDocument anchorDocument : anchorDocuments) {
                 // reinitialize
                 anchorDocument.reinitialize();
-                anchorDocument.inLinks = searchForInLinks(anchorDocument);
                 anchorDocument.linkedMentionIndex = mentionOccurences.size() - 1;
             }
             

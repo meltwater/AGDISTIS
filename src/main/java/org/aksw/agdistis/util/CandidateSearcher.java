@@ -233,10 +233,10 @@ public class CandidateSearcher {
                 bq.add(q, BooleanClause.Occur.MUST);
             }
             // use the cache
-            if (null == (triples = cache.getIfPresent(bq))) {
+            //if (null == (triples = cache.getIfPresent(bq))) {
                 triples = getFromIndex(maxNumberOfResults, bq);
-                cache.put(bq, triples);
-            }
+              //  cache.put(bq, triples);
+            //}
             return triples;
         } catch (final IOException ioe) {
             log.error(
@@ -268,7 +268,7 @@ public class CandidateSearcher {
             final ScoreDoc[] hits = collector.topDocs().scoreDocs;
 
             
-            String idStr, idTypeStr, s, p, o, probStr, pageRankStr;
+            String idStr, idTypeStr, s, p, o, probStr, pageRankStr, inlinkCountStr, inlinkString;
             for (final ScoreDoc hit : hits) {
                 final Document hitDoc = isearcher.doc(hit.doc);
                 idStr = hitDoc.get(FIELD_NAME_ID);
@@ -305,7 +305,12 @@ public class CandidateSearcher {
                     }
                 }
                 
+                inlinkString = hitDoc.get(FIELD_NAME_INLINKSTRING);
                 final AnchorDocument triple = new AnchorDocument(id, idTypeStr, s, p, o, anchorProb, pageRank);
+                for(String linkid:inlinkString.split(" ")){
+                    if(linkid.trim().isEmpty())continue;
+                    triple.inLinks.add(Integer.parseInt(linkid));
+                }
                 triples.add(triple);
             }
             log.trace("finished asking index...");
