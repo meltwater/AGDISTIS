@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,8 +67,8 @@ public class GraphResolver {
         
         
         double mentionCount = mentionOccurences.size();
-       
-        double entityCount = trustedDocs.size(); 
+        
+        double entityCount = trustedDocs.size();
         /**
          * Calculate Entity - Mention distance
          */
@@ -111,7 +110,6 @@ public class GraphResolver {
             // avglinkShare
             double linkShareSum = 0;
             for(AnchorDocument entity2: trustedDocs){
-                
                if(entity1.id == entity2.id)continue;
                double distance = Math.max(pageRank, entity2.getPageRank()) - Math.min(pageRank, entity2.getPageRank());
                distanceSum += distance;
@@ -150,7 +148,7 @@ public class GraphResolver {
             for(AnchorDocument entity:trustedDocs){
                 
                 if(entity.isTaboo)continue;
-                if(mentionOccurences.get(entity.linkedMentionIndex).isTaboo)continue;
+                if((mentionOccurences.size() > entity.linkedMentionIndex) && mentionOccurences.get(entity.linkedMentionIndex).isTaboo)continue;
                 allTabooRemoved = false;
                 double currentMentionShareCount = (mentionCount - mentionToRemoveCnt);
                 double currentEntityCount = (entityCount  - entityToRemoveCnt);
@@ -180,7 +178,8 @@ public class GraphResolver {
             }
             if(entityToRemove == null)break;
             if(allTabooRemoved)break;
-            MentionOccurrence linkedMention = mentionOccurences.get(entityToRemove.linkedMentionIndex);
+            MentionOccurrence linkedMention = (mentionOccurences.size() > entityToRemove.linkedMentionIndex) ? mentionOccurences.get(entityToRemove.linkedMentionIndex) : null;
+            if(linkedMention == null)continue;
             if(linkedMention.totalDocs == 1){
                 linkedMention.isTaboo = true;
                 mentionToRemoveCnt++;
@@ -203,7 +202,6 @@ public class GraphResolver {
             previousMinWeightedDegree = minWeightedDegree;
         }
         
-      
        chooseTheTop(mentionOccurences);
        
        /** Used for debug
@@ -220,6 +218,7 @@ public class GraphResolver {
         
     }
     
+
     private void chooseTheTop(Collection<MentionOccurrence> mentionOccurences) {
 
         for (MentionOccurrence mentionOccurence : mentionOccurences) {
@@ -343,7 +342,8 @@ public class GraphResolver {
         }
         return mentionOccurences;
     }
-    
+    /**
+     * Not in USE -> inlinks are now part of the indexed document
     private List<Integer> searchForInLinks(AnchorDocument anchorDocument) {
         List<Integer> inLinkIds = Lists.newArrayList();
         List<AnchorDocument> inlinkDocs = searcher
@@ -358,6 +358,7 @@ public class GraphResolver {
 
         return inLinkIds;
     }
+    */
     
     private List<AnchorDocument> candidateSearch(String anchor) {
 

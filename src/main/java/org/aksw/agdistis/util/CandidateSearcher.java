@@ -232,11 +232,24 @@ public class CandidateSearcher {
                 }
                 bq.add(q, BooleanClause.Occur.MUST);
             }
-            // use the cache
-            if (null == (triples = cache.getIfPresent(bq))) {
-                triples = getFromIndex(maxNumberOfResults, bq);
-                cache.put(bq, triples);
+            
+            List<AnchorDocument> searchResults = cache.getIfPresent(bq);
+            if(null != searchResults){
+                //TODO create new objects when found in cache... This will help in true calculations
+                
+                // create new object from cache without querying the index.
+//                for(AnchorDocument anchorDocument:searchResults){
+//                    AnchorDocument newAnchorDocument = new AnchorDocument(anchorDocument.id, anchorDocument.getIdTypeString(), 
+//                            anchorDocument.subject, anchorDocument.predicate, anchorDocument.object, 
+//                            anchorDocument.getAnchorProb(), anchorDocument.getPageRank());
+//                    newAnchorDocument.inLinks = anchorDocument.inLinks;
+//                    triples.add(newAnchorDocument);
+//                }
+                return searchResults;
             }
+            // use the cache
+            triples = getFromIndex(maxNumberOfResults, bq);
+            cache.put(bq, triples);
             return triples;
         } catch (final IOException ioe) {
             log.error(
@@ -268,7 +281,7 @@ public class CandidateSearcher {
             final ScoreDoc[] hits = collector.topDocs().scoreDocs;
 
             
-            String idStr, idTypeStr, s, p, o, probStr, pageRankStr, inlinkCountStr, inlinkString;
+            String idStr, idTypeStr, s, p, o, probStr, pageRankStr, inlinkString;
             for (final ScoreDoc hit : hits) {
                 final Document hitDoc = isearcher.doc(hit.doc);
                 idStr = hitDoc.get(FIELD_NAME_ID);
