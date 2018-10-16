@@ -109,10 +109,12 @@ public class GraphResolver {
             
             // avglinkShare
             double linkShareSum = 0;
+            
             for(AnchorDocument entity2: trustedDocs){
                if(entity1.id == entity2.id)continue;
                double distance = Math.max(pageRank, entity2.getPageRank()) - Math.min(pageRank, entity2.getPageRank());
                distanceSum += distance;
+               
                
                double linkShare = relatednessP.getRelatedness(entity1, entity2);
                linkShareSum += linkShare;
@@ -204,6 +206,14 @@ public class GraphResolver {
         
        chooseTheTop(mentionOccurences);
        
+       for(MentionOccurrence occ: mentionOccurences){
+           
+           System.out.println(" entity: "+occ.originalEntity.getLabel());
+           for(AnchorDocument doc:occ.anchorDocs){
+               System.out.println(doc);
+           }
+           
+       }
        /** Used for debug
        for(MentionOccurrence occ: mentionOccurences){
            
@@ -240,10 +250,8 @@ public class GraphResolver {
                 //TODO get rid of hardcoding
                 if(type.equals("WIKI")){
                     types.add("WIKIPEDIA");
-                }else if(type.equals("DBPEDIA")){
-                    types.add("DBPEDIA");
-                }else if(type.equals("FHAI")){
-                    types.add("MELTWATER");
+                }else {
+                    types.add(type);
                 }
             }
             originalEntity.setDisambiguatedTypes(types);
