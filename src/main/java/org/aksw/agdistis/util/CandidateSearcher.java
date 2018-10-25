@@ -18,6 +18,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.jena.ext.com.google.common.collect.Lists;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.Term;
@@ -27,6 +29,7 @@ import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
@@ -68,10 +71,10 @@ public class CandidateSearcher {
 
     
 
-    private final int anchorTextLimit = 500;
+    private final int anchorTextLimit = 50;
     private final int inLinksLimit = 500;
     
-    public double ANCHOR_MATCH_THRES = 0.90;
+    public double ANCHOR_MATCH_THRES = 0.80;
 
     private final Directory directory;
     private final IndexSearcher isearcher;
@@ -99,10 +102,10 @@ public class CandidateSearcher {
                 .expireAfterWrite(30, TimeUnit.MINUTES).build();
     }
     
-    public List<AnchorDocument> search(final String id, final int maxNumberOfResults){
+    public List<AnchorDocument> search(final int id, final int maxNumberOfResults){
         final BooleanQuery bq = new BooleanQuery();
         List<AnchorDocument> results = new ArrayList<AnchorDocument>();
-        final Query tq = new TermQuery(new Term(FIELD_NAME_ID,id));
+        Query tq = NumericRangeQuery.newIntRange(FIELD_NAME_ID, 1, id, true, true);
         bq.add(tq, BooleanClause.Occur.MUST);
         try {
             results = getFromIndex(maxNumberOfResults, bq);
@@ -233,21 +236,12 @@ public class CandidateSearcher {
                 bq.add(q, BooleanClause.Occur.MUST);
             }
             
-            List<AnchorDocument> searchResults = cache.getIfPresent(bq);
-            if(null != searchResults){
-                //TODO create new objects when found in cache... This will help in true calculations
-                
-                // create new object from cache without querying the index.
-//                for(AnchorDocument anchorDocument:searchResults){
-//                    AnchorDocument newAnchorDocument = new AnchorDocument(anchorDocument.id, anchorDocument.getIdTypeString(), 
-//                            anchorDocument.subject, anchorDocument.predicate, anchorDocument.object, 
-//                            anchorDocument.getAnchorProb(), anchorDocument.getPageRank());
-//                    newAnchorDocument.inLinks = anchorDocument.inLinks;
-//                    triples.add(newAnchorDocument);
-//                }
-                return searchResults;
+         // use the cache
+            triples = cache.getIfPresent(bq);
+            if(null != triples){
+                return triples;
             }
-            // use the cache
+            
             triples = getFromIndex(maxNumberOfResults, bq);
             cache.put(bq, triples);
             return triples;

@@ -1,6 +1,10 @@
 package org.aksw.agdistis.util;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.aksw.agdistis.datatypes.AnchorDocument;
 
@@ -11,12 +15,22 @@ public class Relatedness {
     }
     
     final double KG_SIZE = 3682042;
-    public static final int INLINKS_LIMIT = 500;
-    
+    public static final int INLINKS_LIMIT = 300;
+    private Map<String, Double> cache = new HashMap<String, Double>();
     public double getRelatedness(AnchorDocument A, AnchorDocument B){
             
         if(A == null || B == null)return 0d;
-        return relatedNessFunction(A.inLinks.size(), B.inLinks.size(), A.inLinks, B.inLinks);
+        String key = A.id+"_"+B.id;
+        String inverseKey = B.id+"_"+A.id;
+        if(cache.containsKey(key)){
+            return cache.get(key);
+        }
+        if(cache.containsKey(inverseKey)){
+            return cache.get(inverseKey);
+        }
+        double relatedNess = relatedNessFunction(A.inLinks.size(), B.inLinks.size(), A.inLinks, B.inLinks);
+        cache.put(key, relatedNess);
+        return relatedNess;
      }
     
     
@@ -80,6 +94,67 @@ public class Relatedness {
           return distance(countA2, countB2, countCommon);
         }
       }
+    
+    
+    public Set<Integer> getOverLappingEntites(int countA, int countB, List<Integer> A, List<Integer> B){
+        Set<Integer> overlaps = new HashSet<Integer>();
+        int i = 0;
+        int j = 0;
+//        int countCommon = 0;
+        if ((INLINKS_LIMIT == -1) || ((countA <= INLINKS_LIMIT) && (countB <= INLINKS_LIMIT))) {
+          /**
+           * search in full id ranges
+           */
+          while ((i < countA) && (j < countB)) {
+            final int diff = A.get(i) - B.get(j);
+            if (diff < 0) {
+              i++;
+            } else if (diff > 0) {
+              j++;
+            } else {
+//              countCommon++;
+              overlaps.add(A.get(i));
+              overlaps.add(B.get(j));
+              i++;
+              j++;
+            }
+          }
+          return overlaps;
+        } else {
+          /**
+           * subsampled matching and extrapolating result
+           */
+          double ratioA = 1;
+          if (countA > INLINKS_LIMIT) {
+            ratioA = (double) countA / INLINKS_LIMIT;
+          }
+          double ratioB = 1;
+          if (countB > INLINKS_LIMIT) {
+            ratioB = (double) countB / INLINKS_LIMIT;
+          }
+          double iD = i;
+          double jD = j;
+          while ((i < countA) && (j < countB)) {
+            final int diff = A.get(i) - B.get(j);
+            if (diff < 0) {
+              iD += ratioA;
+              i = (int) iD;
+            } else if (diff > 0) {
+              jD += ratioB;
+              j = (int) jD;
+            } else {
+//              countCommon++;
+              iD += ratioA;
+              i = (int) iD;
+              overlaps.add(A.get(i));
+              jD += ratioB;
+              j = (int) jD;
+              overlaps.add(B.get(j));
+            }
+          }
+          return overlaps;
+        }
+    }
     
     
     private double distance(double countA, double countB, double countCommon) {

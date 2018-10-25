@@ -20,7 +20,7 @@ public class CorporationAffixCleaner {
     corporationAffixes.addAll(IOUtils.readLines(CorporationAffixCleaner.class.getResourceAsStream(path.toString())));
   }
 
-  String cleanLabelsfromCorporationIdentifier(String label) {
+  public String cleanLabelsfromCorporationIdentifier(String label) {
     label = StringUtils.remove(label, ',');
     final String[] tokens = StringUtils.split(label, _TOKEN_DELIMITERS);
     if ((tokens.length > 0) && corporationAffixes.contains(tokens[tokens.length - 1])) {

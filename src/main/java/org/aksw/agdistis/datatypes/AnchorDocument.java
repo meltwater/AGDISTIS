@@ -18,6 +18,7 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
     private double score;
     
     public List<Integer> inLinks = new ArrayList<Integer>();
+    public List<AnchorDocument> linkedDocuments = new ArrayList<AnchorDocument>();
     
     public int linkedMentionIndex;
 
@@ -196,9 +197,15 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
     
     @Override
     public String toString() {
-      return "AnchorDocument{" + "anchorText='" + subject + '\''+ ", Id="
-          + id + ", Anchor Probabilty= " + anchorProb
-          + ", Page Rank= " + pageRankDistance + ", Link Share= "+averageLinkShare+ ", Score= "+score+ '}';
+      return "AnchorDocument{" 
+          + "anchorText='" + subject 
+          + '\''
+          + ", Id="+ id 
+          + ", Anchor Probabilty= " + anchorProb
+          + ", Mention Probabilty= " + mentionProbStatic
+          + ", Link Share= "+averageLinkShareStatic
+          + ", Score= "+score
+          + '}';
     }
 
     
