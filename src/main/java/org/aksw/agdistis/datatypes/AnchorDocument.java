@@ -18,7 +18,7 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
     private double score;
     
     public List<Integer> inLinks = new ArrayList<Integer>();
-    public List<AnchorDocument> linkedDocuments = new ArrayList<AnchorDocument>();
+    public List<Integer> relatedDocumentIds = new ArrayList<Integer>();
     
     public int linkedMentionIndex;
 

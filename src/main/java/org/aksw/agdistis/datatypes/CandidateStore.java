@@ -21,6 +21,10 @@ public class CandidateStore {
     
     private String key;
     
+    
+    private int storeIndexStart;
+    private int storeIndexEnd;
+    
     private List<AnchorDocument> anchorDocuments;
     private List<NamedEntityInText> namedEntities;
     
@@ -31,6 +35,14 @@ public class CandidateStore {
     private List<Long> indexes;
     
     public CandidateStore(){};
+    
+    public CandidateStore(String anchorText, int indexStart, int indexEnd){
+        super();
+        this.candidateAnchorText = anchorText;
+        this.storeIndexStart = indexStart;
+        this.storeIndexEnd = indexEnd;
+        this.namedEntities = new ArrayList<NamedEntityInText>();
+    }
     
     public CandidateStore(String anchorText,
             List<AnchorDocument> anchorDocuments) {
@@ -50,6 +62,15 @@ public class CandidateStore {
         for (AnchorDocument anchorDocument : anchorDocuments) {
             anchorDocument.reinitialize();
         }
+    }
+    
+    
+    public int getStoreIndexStart() {
+        return storeIndexStart;
+    }
+
+    public int getStoreIndexEnd() {
+        return storeIndexEnd;
     }
     
     public AnchorDocument getBestDocument() {

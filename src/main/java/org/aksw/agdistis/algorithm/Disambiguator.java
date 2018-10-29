@@ -2,103 +2,113 @@ package org.aksw.agdistis.algorithm;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.aksw.agdistis.datatypes.AnchorDocument;
 import org.aksw.agdistis.datatypes.CandidateStore;
+import org.aksw.agdistis.datatypes.Document;
 import org.aksw.agdistis.datatypes.NamedEntityInText;
 import org.aksw.agdistis.util.CandidateSearcher;
 import org.aksw.agdistis.util.Relatedness;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
-
 public class Disambiguator {
-
+    
     private static String resourceURI = "http://dbpedia.org/resource/";
     private static final String projectName = "fhai";
     
     private final Logger LOGGER = LoggerFactory
             .getLogger(Disambiguator.class);
-    /**
-     * THRES_RANK is to pick only those document that have high links to other documents
-     */
-    private final static double THRES_RANK = 0.20;
+    
+    private CandidateSearcher searcher;
+    private CorporationAffixCleaner cleaner;
     
     /**
-     * TOPDOCS_THRES is to decide if we want to consider disambiguating a candidate.
+     * This is when we have lots of candidates in the top
+     * More the DISCARD_TOP_DOCS more we get rid of top documents
      */
-    private final static double TOPDOCS_THRES = 0.05;
+    private final static double FINAL_SCORE_THRES = 0.20;
     
-    private final static double TOPLINKEDDOCS_THRES = 0.10;
+    /**
+     * CAND_TOPDOCS_THRES is to decide if a candidate store should be considered for disambiguation
+     * Consider if above the threshold
+     */
+    private final static double CAND_TOPDOCS_THRES = 0.05;
     
-    private final static double ANCHOR_SHARE = 0.25;
-    private final static double LINK_SHARE = 0.75;
+    /**
+     * TOPDOCS_THRES is to check how many related documents the best document is linked to
+     */
+    private final static double TOPDOCS_THRES = 0.20;
     
-    private final static double toConsider = 0.10;
-    
-    private final static int minDocsToConsider = 5;
-    
-    CandidateSearcher searcher;
-    
+    private final static double ANCHOR_SHARE = 0.75;
+    private final static double LINK_SHARE = 0.25;
     
     public Disambiguator() {
+        
         try {
             searcher = new CandidateSearcher();
         } catch (IOException e) {
             LOGGER.error("problem initializing the searcher, check in the index.");
         }
+        try {
+            cleaner = new CorporationAffixCleaner();
+        } catch (IOException e) {
+            LOGGER.error("problem initializing the Affix cleaner");
+        }
     }
     
-    public CandidateSearcher getCandidateSearcher() {
-        return searcher;
-    }
     
-    
-    
-    public List<CandidateStore> resolve(Collection<CandidateStore> candidates){
+    public List<CandidateStore> resolve(final Document document){
         
-        Relatedness relatedNess = new Relatedness();
-        List<AnchorDocument> allCandidateAnchorDocs = new ArrayList<AnchorDocument>();
-        for(CandidateStore candidate1: candidates){
+        
+        
+        final List<AnchorDocument> anchorDocumentStore = new ArrayList<AnchorDocument>();
+        final Relatedness relatedNess = new Relatedness();
+        final List<CandidateStore> candidates = createCandidateStores(document.getNamedEntitiesInText().getNamedEntities(), anchorDocumentStore);
+        
+        if(anchorDocumentStore.isEmpty()){
+            /**
+             * No Documents to proces
+             * return.
+             */
+            return candidates;
+        }
+        /**
+         * Calculate contextual relatedness
+         * AnchorDocument V/S All Other AnchorDocument's except from its own store
+         */
+        double nonZeroDocs  = 0;
+        for(CandidateStore candidate1:candidates){
             
-            List<AnchorDocument> candidateDocuments  = candidate1.getAnchorDocuments();
-            double topIndex = (double)candidate1.getAnchorDocuments().size() * toConsider;
-            topIndex = Math.max(minDocsToConsider, topIndex);
-            if(topIndex > 0 && candidate1.getNamedEntities().isEmpty()){
-                candidateDocuments = candidate1.getAnchorDocuments().subList(0, Math.min(candidate1.getAnchorDocuments().size() - 1, (int)topIndex));
-            }
             
-            for(AnchorDocument anchorDocument1: candidateDocuments){
+            for(int i=candidate1.getStoreIndexStart(); i<candidate1.getStoreIndexEnd();i++){
                 
-                
+                AnchorDocument document1 =  anchorDocumentStore.get(i);
                 double relatedEntitySum = 0;
                 double mentionSum = 0;
                 
                 double noOfEntities = 0;
                 double noOfMentions = 0;
                 boolean isDocumentPresent = false;
+                
                 for(CandidateStore candidate2: candidates){
-                   
-                    if(candidate1.getKey().equals(candidate2.getKey())){
+                    
+                    if(candidate1.getCandidateAnchorText().equals(candidate2.getCandidateAnchorText())){
                         continue;
                     }
                     noOfMentions++;
-                    List<AnchorDocument> candidateDocuments2  = candidate2.getAnchorDocuments();
-                    double topIndex2 = (double)candidate2.getAnchorDocuments().size() * toConsider;
-                    topIndex2 = Math.max(minDocsToConsider, topIndex2);
-                    if(topIndex2 > 0 && candidate2.getNamedEntities().isEmpty()){
-                        candidateDocuments2 = candidate2.getAnchorDocuments().subList(0, Math.min(candidate2.getAnchorDocuments().size() - 1, (int)topIndex2));
-                    }
-                    for(AnchorDocument anchorDocument2: candidateDocuments2){
-                      
+                    for(int j=candidate2.getStoreIndexStart(); j<candidate2.getStoreIndexEnd();j++){
+                        
+                        AnchorDocument document2 =  anchorDocumentStore.get(j);
                         noOfEntities++;
                         
-                        if(anchorDocument1.id == anchorDocument2.id){
+                        if(document1.id == document2.id){
                             isDocumentPresent = true;
                         }
                         
@@ -107,93 +117,102 @@ public class Disambiguator {
                          * Calculate relatedness and page rank scores
                          * 
                          */
-                        double relatedNessScore = relatedNess.getRelatedness(anchorDocument1, anchorDocument2);
+                        double relatedNessScore = relatedNess.getRelatedness(document1, document2);
                         if(relatedNessScore > 0){
                             relatedEntitySum++;
-                            anchorDocument1.linkedDocuments.add(anchorDocument2);
+                            document1.relatedDocumentIds.add(j);
                         }
-                        
                         
                     }
                     if(isDocumentPresent){
                         mentionSum++;
                     }
-                   
                 }
-                
-                Double mentionProb = (1.0/(1.0 + Math.exp( - (mentionSum/noOfMentions))));
-                Double relatedEntityProb = relatedEntitySum/noOfEntities;
-                mentionProb = mentionProb.isNaN() ? 0d : mentionProb;
-                relatedEntityProb = relatedEntityProb.isNaN() ? 0d : relatedEntityProb;
-                anchorDocument1.setMentionProbStatic(mentionProb);
-                anchorDocument1.setAverageLinkShareStatic(relatedEntityProb);
-                allCandidateAnchorDocs.add(anchorDocument1);
-            }
-        }
-        LOGGER.debug("metrics calculation finished ...");
-        
-        /**
-         *  sort all the anchor Documents and treat top few as relevant candidates that agree with central content of the document
-         *  
-         */
-        allCandidateAnchorDocs.sort(Comparator.comparingDouble(AnchorDocument::getAverageLinkShareStatic).reversed());
-        
-        double topIndex = (double)allCandidateAnchorDocs.size() * THRES_RANK;
-        topIndex = Math.max(minDocsToConsider, topIndex);
-        List<AnchorDocument> topDocuments = allCandidateAnchorDocs.subList(0, Math.min(allCandidateAnchorDocs.size() - 1, (int)topIndex));
-        List<CandidateStore> resultSet = new ArrayList<CandidateStore>();
-        for(CandidateStore candidate:candidates){
-            if(candidate.getNamedEntities().isEmpty())continue; // these are context level terms
-            if(topDocuments == null || topDocuments.isEmpty())continue; // no top documents to rank;
-            
-            AnchorDocument bestDocument = null;
-            double maxLinkShareScore = 0d;
-            
-            double topDocumentsMatch = 0d;
-            for(AnchorDocument anchorDocument: candidate.getAnchorDocuments()){
                 
                 /**
-                 * Ignore if a document is not linked to any other document.
+                 * Calculate probabilities.
                  */
-                if(anchorDocument.getAverageLinkShareStatic() == 0)continue; 
-                
-                double linkShareScore = anchorDocument.getAverageLinkShareStatic() + anchorDocument.getMentionProbStatic();
-                if(linkShareScore > maxLinkShareScore){
-                    maxLinkShareScore = linkShareScore;
-                    bestDocument = anchorDocument;
+                double mentionProb = (1.0/(1.0 + Math.exp( - (mentionSum/noOfMentions)))); // sigmoid
+                double relatedEntityProb = relatedEntitySum/noOfEntities;
+                mentionProb = Double.isNaN(mentionProb) ? 0d : mentionProb;
+                relatedEntityProb = Double.isNaN(relatedEntityProb) ? 0d : relatedEntityProb;
+                document1.setMentionProbStatic(mentionProb);
+                document1.setAverageLinkShareStatic(relatedEntityProb);
+                if(relatedEntityProb > 0){
+                    nonZeroDocs++;
                 }
-                if(topDocuments.contains(anchorDocument)){
+            }
+            
+        }
+        
+        
+        /**
+         * Rank and sort anchor Document store based on link share only
+         */
+        
+        
+        List<AnchorDocument> topDocumentsStore = Lists.newArrayList(anchorDocumentStore);
+        topDocumentsStore.sort(Comparator.comparingDouble(AnchorDocument::getAverageLinkShareStatic).reversed());
+        
+        double anchor_docs_share = ((double)nonZeroDocs/(double)anchorDocumentStore.size());
+        int rank_index = (int)Math.round((double)((topDocumentsStore.size() - 1) * (anchor_docs_share)));
+        topDocumentsStore = topDocumentsStore.subList(0, rank_index);
+        
+        /**
+         * Finally calculate score of each candidate store
+         * Ignore a store if it doesn't contain any top documents
+         * 
+         */
+        
+        for(CandidateStore candidate: candidates){
+            
+            double topDocumentsMatch = 0d;
+            double maxScore = 0d;
+            AnchorDocument bestDocument = null;
+            for(int i=candidate.getStoreIndexStart(); i<candidate.getStoreIndexEnd(); i++){
+                
+                AnchorDocument doc =  anchorDocumentStore.get(i);
+                if(doc.getAverageLinkShareStatic() == 0)continue;
+                
+                double curScore = doc.getAverageLinkShareStatic() + doc.getMentionProbStatic();
+                if(curScore > maxScore){
+                    maxScore = curScore;
+                    bestDocument = doc;
+                }
+                if(topDocumentsStore.contains(doc)){
                     topDocumentsMatch++;
                 }
             }
             
-            double topDocumentShare = (topDocumentsMatch/(double)candidate.getAnchorDocuments().size());
-            
-            if(topDocumentShare < TOPDOCS_THRES || bestDocument == null)continue;
+            if(null == bestDocument)continue;
             
             
             /**
-             *  Calculate the link weight of best document
-             *  no of top documents it has linked it.
+             * Now that we have best document, check if its linked to top documents
              */
             
-            
-            double topDocumentsMatchOnBestDocument = 0d;
-            for(AnchorDocument linkedDocument: bestDocument.linkedDocuments){
-                if(topDocuments.contains(linkedDocument)){
-                    topDocumentsMatchOnBestDocument++;
+            double topDocumentsMatch_LD = 0d;
+            for(int index:bestDocument.relatedDocumentIds){
+                if(topDocumentsStore.contains(anchorDocumentStore.get(index))){
+                    topDocumentsMatch_LD++;
                 }
             }
+            double topDocumentsProb_LD = topDocumentsMatch_LD/((double)bestDocument.relatedDocumentIds.size());
+            double topDocumentsProb = topDocumentsMatch/((double)(candidate.getStoreIndexEnd() - candidate.getStoreIndexStart()));
             
-            double topDocumentOnBestDocumentShare = topDocumentsMatchOnBestDocument/(double)bestDocument.linkedDocuments.size();
-            if(topDocumentOnBestDocumentShare < TOPLINKEDDOCS_THRES)continue;
-            bestDocument.setAverageLinkShareStatic(topDocumentOnBestDocumentShare);
+            topDocumentsProb_LD = Double.isNaN(topDocumentsProb_LD) ? 0 : topDocumentsProb_LD;
+            topDocumentsProb = Double.isNaN(topDocumentsProb) ? 0 : topDocumentsProb;
+                   
+            if(topDocumentsProb < CAND_TOPDOCS_THRES && topDocumentsProb_LD < TOPDOCS_THRES)continue;
             
             candidate.setBestDocument(bestDocument);
             
-            double finalScore = ANCHOR_SHARE * bestDocument.getAnchorProb() + LINK_SHARE * bestDocument.getAverageLinkShareStatic();
-            bestDocument.setScore(finalScore);
+            bestDocument.setAverageLinkShareStatic(Math.max(topDocumentsProb_LD, topDocumentsProb));
             
+            double finalScore = ANCHOR_SHARE * bestDocument.getAnchorProb() + LINK_SHARE * bestDocument.getAverageLinkShareStatic();
+            if(finalScore < FINAL_SCORE_THRES)continue;
+            
+            bestDocument.setScore(finalScore);
             for(NamedEntityInText originalEntity :candidate.getNamedEntities()){
                 final String candidateURI = bestDocument.subject;
                 String canonicalName = extractLabel(bestDocument);
@@ -214,17 +233,10 @@ public class Disambiguator {
                 }
                 originalEntity.setDisambiguatedTypes(types);
             }
-            
-            resultSet.add(candidate);
         }
-        /* Used for debug
-        for(CandidateStore result: resultSet){
-            if(result.getBestDocument() == null)continue;
-            System.out.println(result.getCandidateAnchorText() + " --> "+result.getBestDocument());
-        }
-        */
-       return resultSet; 
-
+        
+        return candidates;
+        
     }
     
     private String extractLabel(AnchorDocument document) {
@@ -255,4 +267,54 @@ public class Disambiguator {
 
         return s.toString();
     }
+    
+    
+    private List<CandidateStore> createCandidateStores(final List<NamedEntityInText> namedEntities, final List<AnchorDocument> anchorDocumentStore){
+        Map<String, CandidateStore> candidateStores = new HashMap<String, CandidateStore>();
+        
+        for(final NamedEntityInText namedEntity: namedEntities){
+            String surfaceForm = namedEntity.getSurfaceForm();
+            // check if already have a store with the same surfaceform
+            /**
+             * WARN - Doesn't handle US Open (golf) and US Open (tennis). Both will end up in same store
+             * Also, this is very rare case. if this happens then it might be a single document with two different contents.
+             */
+            // clean surface form
+            surfaceForm = cleaner.cleanLabelsfromCorporationIdentifier(surfaceForm);
+            
+            CandidateStore store = candidateStores.get(surfaceForm);
+            
+            if(candidateStores.containsKey(surfaceForm)){
+                candidateStores.get(surfaceForm).getNamedEntities().add(namedEntity);
+                continue;
+            }
+            
+            // actual search to index happens here.
+            
+            List<AnchorDocument> anchorDocs = searcher.searchAnchorText(surfaceForm);
+            if(anchorDocs == null || anchorDocs.isEmpty()){
+                anchorDocs = searcher.searchAnchorText(surfaceForm.toLowerCase());
+            }
+            if(anchorDocs == null || anchorDocs.isEmpty())continue;
+            /**
+             * Re-initialize docs to avoid wrong calculation coz of cache.
+             */
+            int startIndex = anchorDocumentStore.size();
+            int endIndex = anchorDocumentStore.size();
+            for(AnchorDocument d:anchorDocs){
+                d.reinitialize();
+                anchorDocumentStore.add(d);
+                endIndex++;
+            }
+            store = new CandidateStore(surfaceForm, startIndex, endIndex);
+            store.getNamedEntities().add(namedEntity);
+            candidateStores.put(surfaceForm, store);
+            
+        }
+        if(candidateStores.values().isEmpty()){
+            return Lists.newArrayList();
+        }
+        return Lists.newArrayList(candidateStores.values());
+    }
+
 }
