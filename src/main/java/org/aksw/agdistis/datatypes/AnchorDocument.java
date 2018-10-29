@@ -18,7 +18,7 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
     private double score;
     
     public List<Integer> inLinks = new ArrayList<Integer>();
-    public List<Integer> relatedDocumentIds = new ArrayList<Integer>();
+    public List<Integer> relatedDocumentIds;
     
     public int linkedMentionIndex;
 
@@ -43,6 +43,7 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
         this.subject = subject;
         this.predicate = predicate;
         this.object = object;
+        relatedDocumentIds = new ArrayList<Integer>();
     }
     
     public AnchorDocument(final int id, final String idTypeString, final String subject, final String predicate, final String object, final double anchorProb, final double pageRank){
@@ -69,6 +70,9 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
         this.averageLinkShareStatic = 0d;
         this.pageRankDistance = 0d;
         this.pageRankDistanceStatic = 0d;
+        
+        this.relatedDocumentIds.clear();
+        this.relatedDocumentIds = new ArrayList<Integer>();
         
     }
     
