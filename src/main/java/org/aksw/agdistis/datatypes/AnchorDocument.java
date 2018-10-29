@@ -54,6 +54,7 @@ public class AnchorDocument implements Comparable<AnchorDocument>{
         this.predicate = predicate;
         this.object = object;
         this.pageRank = pageRank;
+        relatedDocumentIds = new ArrayList<Integer>();
     }
     
     
