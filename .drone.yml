@@ -105,28 +105,6 @@ pipeline:
       event: [ push ]
       branch: [ release ]
 
-  slack:
-    group: notifications
-    image: plugins/slack
-    webhook: https://hooks.slack.com/services/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
-    icon_url: https://logo.clearbit.com/drone.io
-    username: 'Drone'
-    channel: eng-karma-bots
-    template: |
-      {{#success build.status}}
-        Build succeeded.
-      {{else}}
-        Build failed.
-      {{/success}}
-      Repo: `{{ repo.name }}`
-      Branch: `{{ build.branch }}`
-      Author: `{{ build.author }}`
-      Commit: `{{ build.commit }}`
-      Build: `{{ build.number }}`
-    when:
-      status: [ success, failure ]
-      branch: [ master, release ]
-
   # Caching (create/refresh)
   rebuild-cache:
     image: drillster/drone-volume-cache
